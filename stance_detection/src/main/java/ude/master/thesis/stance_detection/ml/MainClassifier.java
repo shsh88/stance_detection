@@ -1,16 +1,28 @@
 package ude.master.thesis.stance_detection.ml;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+
+import org.apache.log4j.Logger;
 
 import ude.master.thesis.stance_detection.processor.FeatureExtractor;
+import weka.classifiers.Classifier;
+import weka.classifiers.evaluation.Evaluation;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
+import weka.core.converters.ArffSaver;
 
 public class MainClassifier {
 
+	final static Logger logger = Logger.getLogger(MainClassifier.class);
+
+	private static final String RELATION_NAME = "fnc-1";
 	// Baseline features settings
 	// TODO: split the feature types in a better way (like in hs project)
 	private boolean useOverlapFeature;
@@ -22,6 +34,27 @@ public class MainClassifier {
 														// ignores stopwords.
 	private boolean useCharGramsFeatures;
 	private boolean useWordGramsFeatures;
+
+	private Map<Integer, String> trainingIdBodyMap;
+	private List<List<String>> trainingStances;
+	private Instances trainingInstances;
+
+	private Classifier classifier;
+
+	public MainClassifier(Map<Integer, String> idBodyMap, List<List<String>> stances, Classifier classifier) {
+		this.trainingIdBodyMap = idBodyMap;
+		this.trainingStances = stances;
+
+		this.classifier = classifier;
+	}
+
+	private void init() {
+
+		// TODO here we also build embeddings
+		trainingInstances = initializeInstances("fnc-1", trainingStances, trainingIdBodyMap);
+
+		trainingInstances.setClassIndex(trainingInstances.numAttributes() - 1);
+	}
 
 	private Instances initializeInstances(String relationName, List<List<String>> stances,
 			Map<Integer, String> idBodyMap) {
@@ -79,8 +112,12 @@ public class MainClassifier {
 				// features.add(new Attribute("ngram_tail_hits" + size));
 			}
 		}
+		// Add the classs attribute
+		String stancesClasses[] = new String[] { "agree", "disagree", "discuss", "unrelated" };
+		List<String> stanceValues = Arrays.asList(stancesClasses);
+		features.add(new Attribute("stance", stanceValues));
 
-		Instances instances = new Instances("fnc-1", features, stances.size());
+		Instances instances = new Instances(RELATION_NAME, features, stances.size());
 
 		instances.setClassIndex(features.size() - 1);
 
@@ -90,13 +127,23 @@ public class MainClassifier {
 
 	private void assignFeaturesValues(List<List<String>> stances, Map<Integer, String> idBodyMap, Instances instances,
 			int featuresSize) {
-
+		System.out.println("Started getting instances");
+		int i = 0;
 		for (List<String> stance : stances) {
 			String headline = stance.get(0);
 			String body = idBodyMap.get(Integer.valueOf(stance.get(1)));
 
 			DenseInstance instance = createInstance(headline, body, instances, featuresSize);
+			// System.out.println(stance.get(2));
+			instance.setClassValue(stance.get(2));
+			instances.add(instance);
+
+			i++;
+			if (i % 10000 == 0)
+				System.out.println("Have read " + instances.size() + " instances");
 		}
+
+		System.out.println("Finished getting instances");
 
 	}
 
@@ -181,10 +228,10 @@ public class MainClassifier {
 			int[] ngramSizes = { 2, 3, 4, 5, 6 };
 			for (int size : ngramSizes) {
 				List<Integer> f = FeatureExtractor.getNGramsFeatures(headline, body, size);
-				
+
 				Attribute ngramHitAtt = instances.attribute("ngram_hits_" + size);
 				instance.setValue(ngramHitAtt, f.get(0));
-				
+
 				Attribute ngramEarlyHitsAtt = instances.attribute("ngram_early_hits_" + size);
 				instance.setValue(ngramEarlyHitsAtt, f.get(1));
 			}
@@ -247,6 +294,72 @@ public class MainClassifier {
 
 	public void setUseBinaryCooccurraneStopFeatures(boolean useBinaryCooccurraneStopFeatures) {
 		this.useBinaryCooccurraneStopFeatures = useBinaryCooccurraneStopFeatures;
+	}
+
+	public void evaluate() {
+
+		if (trainingInstances == null) {
+			long startTimeExtraction = System.currentTimeMillis();
+			init();
+			long endTimeExtraction = System.currentTimeMillis();
+			System.out.println((double) (endTimeExtraction - startTimeExtraction) / 1000 + "s Feature-Extraktion");
+			logger.info("\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
+
+		}
+		try {
+			Evaluation eval = new Evaluation(trainingInstances);
+			long startTimeEvaluation = System.currentTimeMillis();
+			eval.crossValidateModel(classifier, trainingInstances, 10, new Random(1));
+			long endTimeEvaluation = System.currentTimeMillis();
+
+			System.out.println((double) (endTimeEvaluation - startTimeEvaluation) / 1000 + "s Evaluationszeit");
+			logger.info("\n Evaluationzeit(s): " + (double) (endTimeEvaluation - startTimeEvaluation) / 1000);
+
+			System.out.println(eval.toSummaryString());
+			System.out.println(eval.toClassDetailsString());
+			System.out.println(trainingInstances.toSummaryString());
+
+			System.out.println("===== Evaluating on filtered (training) dataset done =====");
+			// logRunEvaluation(eval);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("Problem found when evaluating");
+		}
+	}
+
+	/**
+	 * Training the classifier on the training data
+	 */
+	public void train() {
+		try {
+
+			if (trainingInstances == null) {
+				init();
+			}
+
+			classifier.buildClassifier(trainingInstances);
+			System.out.println(classifier);
+			System.out.println("===== Training Finished... =====");
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println(e.getMessage());
+		}
+	}
+
+	public void saveInstancesToArff(String fileName) {
+		ArffSaver saver = new ArffSaver();
+		saver.setInstances(trainingInstances);
+		try {
+
+			System.out.println(trainingInstances.size());
+			saver.setFile(new File("resources/arff_data/" + fileName + ".arff"));
+			// saver.setDestination(new File("./data/test.arff")); // **not**
+			// necessary in 3.5.4 and later
+			saver.writeBatch();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 }
