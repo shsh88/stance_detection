@@ -16,19 +16,27 @@ import weka.classifiers.functions.SMO;
  *
  */
 public class StanceClassifier {
-	
+
+	public static final boolean USE_TRAINING_SET = true;
+	public static final boolean USE_TEST_SET = true;
+
 	public static void main(String[] args) throws IOException {
-		
-		long start=System.currentTimeMillis();
-		
-		StanceDetectionDataReader datasetReader = new StanceDetectionDataReader();
-		Map<Integer, String> trainingIdBodyMap = datasetReader.getIdBodyMap();
-		List<List<String>> trainingStances = datasetReader.getStances();
-		
-		//SMO smo = new SMO();
-		
-		MainClassifier classifier = new MainClassifier(trainingIdBodyMap, trainingStances, new SMO());
-		
+
+		long start = System.currentTimeMillis();
+
+		StanceDetectionDataReader datasetReader = new StanceDetectionDataReader(USE_TRAINING_SET, USE_TEST_SET);
+
+		Map<Integer, String> trainingIdBodyMap = datasetReader.getTrainIdBodyMap();
+		List<List<String>> trainingStances = datasetReader.getTrainStances();
+
+		Map<Integer, String> testIdBodyMap = datasetReader.getTestIdBodyMap();
+		List<List<String>> testStances = datasetReader.getTestStances();
+
+		// SMO smo = new SMO();
+
+		MainClassifier classifier = new MainClassifier(trainingIdBodyMap, trainingStances, testIdBodyMap, testStances,
+				new SMO());
+
 		classifier.setUseOverlapFeature(true);
 		classifier.setUseRefutingFeatures(true);
 		classifier.setUsePolarityFeatures(true);
@@ -38,15 +46,14 @@ public class StanceClassifier {
 		classifier.setUseWordGramsFeatures(true);
 		classifier.evaluate();
 		classifier.saveInstancesToArff("baseline_features" + getCurrentTimeStamp());
-		
-		classifier.train();
-		
-		
-		System.out.println(System.currentTimeMillis()-start);
+
+		//classifier.train();
+
+		System.out.println(System.currentTimeMillis() - start);
 	}
-	
+
 	public static String getCurrentTimeStamp() {
-	    return new SimpleDateFormat("MM-dd_HH-mm").format(new Date());
+		return new SimpleDateFormat("MM-dd_HH-mm").format(new Date());
 	}
 
 }

@@ -15,19 +15,26 @@ import com.opencsv.CSVReader;
  * This utility class is responsible for reading the data provided by FNC-1 and
  * save it in the corresponding data structures.
  * 
- * The data is only read as it is here / only the strings with no further processing
+ * The data is only read as it is here / only the strings with no further
+ * processing
  * 
  * @author Razan
  *
  */
 
 public class StanceDetectionDataReader {
-	private Map<String, String> titleIdMap;
-	private Map<Integer, String> idBodyMap;
-	private List<List<String>> stances;
+	private Map<String, String> trainTitleIdMap;
+	private Map<Integer, String> trainIdBodyMap;
+	private List<List<String>> trainStances;
+	
+	private HashMap<Integer, String> testIdBodyMap;
+	private List<List<String>> testStances;
 
-	private String TRAIN_BODIES_CSV_LOCATION = "resources/data/train_bodies.csv";
-	private String TRAIN_STANCES_CSV_LOCATION = "resources/data/train_stances.csv";
+	private static final String TRAIN_BODIES_CSV_LOCATION = "resources/data/train_bodies.csv";
+	private static final String TRAIN_STANCES_CSV_LOCATION = "resources/data/train_stances.csv";
+
+	private static final String TEST_BODIES_CSV_LOCATION = "resources/data/test_data/competition_test_bodies.csv";
+	private static final String TEST_STANCES_CSV_LOCATION = "resources/data/test_data/competition_test_stances.csv";
 
 	/**
 	 * By calling the constructor, the data is read and ready to be dealt with
@@ -35,20 +42,28 @@ public class StanceDetectionDataReader {
 	 * 
 	 * @throws IOException
 	 */
-	public StanceDetectionDataReader() throws IOException {
-		setData();
+	public StanceDetectionDataReader(boolean setTrainingData, boolean setTestData) throws IOException {
+		if(setTrainingData)
+			setTrainingData();
+		if(setTestData)
+			setTestData();
 	}
 
 	/**
-	 * Create a mapping for Id & body 
-	 * and Create a list of each line in the stances file
+	 * Create a mapping for Id & body and Create a list of each line in the
+	 * stances file
 	 * 
 	 * @throws IOException
 	 */
-	private void setData() throws IOException {
-		idBodyMap = readInIdBodiesMap(new File(TRAIN_BODIES_CSV_LOCATION));
+	private void setTrainingData() throws IOException {
+		trainIdBodyMap = readInIdBodiesMap(new File(TRAIN_BODIES_CSV_LOCATION));
+		trainStances = readStances(new File(TRAIN_STANCES_CSV_LOCATION));
 
-		stances = readStances(new File(TRAIN_STANCES_CSV_LOCATION));
+	}
+
+	private void setTestData() throws IOException {
+		testIdBodyMap = readInIdBodiesMap(new File(TEST_BODIES_CSV_LOCATION));
+		testStances = readStances(new File(TEST_STANCES_CSV_LOCATION));
 	}
 
 	private HashMap<Integer, String> readInIdBodiesMap(File bodiesFile) {
@@ -87,28 +102,44 @@ public class StanceDetectionDataReader {
 		return stances;
 	}
 
-	public Map<String, String> getTitleIdMap() {
-		return titleIdMap;
+	public Map<String, String> getTrainTitleIdMap() {
+		return trainTitleIdMap;
 	}
 
-	public void setTitleIdMap(Map<String, String> titleIdMap) {
-		this.titleIdMap = titleIdMap;
+	public void setTrainTitleIdMap(Map<String, String> titleIdMap) {
+		this.trainTitleIdMap = titleIdMap;
 	}
 
-	public Map<Integer, String> getIdBodyMap() {
-		return idBodyMap;
+	public Map<Integer, String> getTrainIdBodyMap() {
+		return trainIdBodyMap;
 	}
 
-	public void setIdBodyMap(Map<Integer, String> idBodyMap) {
-		this.idBodyMap = idBodyMap;
+	public void setTrainIdBodyMap(Map<Integer, String> idBodyMap) {
+		this.trainIdBodyMap = idBodyMap;
 	}
 
-	public List<List<String>> getStances() {
-		return stances;
+	public List<List<String>> getTrainStances() {
+		return trainStances;
 	}
 
-	public void setStances(List<List<String>> stances) {
-		this.stances = stances;
+	public void setTrainStances(List<List<String>> stances) {
+		this.trainStances = stances;
+	}
+
+	public HashMap<Integer, String> getTestIdBodyMap() {
+		return testIdBodyMap;
+	}
+
+	public void setTestIdBodyMap(HashMap<Integer, String> testIdBodyMap) {
+		this.testIdBodyMap = testIdBodyMap;
+	}
+
+	public List<List<String>> getTestStances() {
+		return testStances;
+	}
+
+	public void setTestStances(List<List<String>> testStances) {
+		this.testStances = testStances;
 	}
 
 }

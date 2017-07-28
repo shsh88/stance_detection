@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Random;
 
 import org.apache.log4j.Logger;
+import org.apache.lucene.search.UsageTrackingQueryCachingPolicy;
 
 import ude.master.thesis.stance_detection.processor.FeatureExtractor;
 import weka.classifiers.Classifier;
@@ -39,21 +40,50 @@ public class MainClassifier {
 	private List<List<String>> trainingStances;
 	private Instances trainingInstances;
 
+	private boolean useTestset;
+	private boolean useTainingSet;
+
+	private Map<Integer, String> testIdBodyMap;
+	private List<List<String>> testStances;
+	private Instances testInstances;
+
 	private Classifier classifier;
 
-	public MainClassifier(Map<Integer, String> idBodyMap, List<List<String>> stances, Classifier classifier) {
-		this.trainingIdBodyMap = idBodyMap;
-		this.trainingStances = stances;
+	public MainClassifier(Map<Integer, String> trainingIdBodyMap, List<List<String>> trainingStances,
+			Classifier classifier) {
+		this.trainingIdBodyMap = trainingIdBodyMap;
+		this.trainingStances = trainingStances;
 
+		this.classifier = classifier;
+	}
+
+	public MainClassifier(Map<Integer, String> trainingIdBodyMap, List<List<String>> trainingStances,
+			Map<Integer, String> testIdBodyMap, List<List<String>> testStances, Classifier classifier) {
+		this.trainingIdBodyMap = trainingIdBodyMap;
+		this.trainingStances = trainingStances;
+
+		this.useTestset = true;
+		this.testIdBodyMap = testIdBodyMap;
+		this.testStances = testStances;
+
+		this.useTainingSet = false;
 		this.classifier = classifier;
 	}
 
 	private void init() {
 
 		// TODO here we also build embeddings
-		trainingInstances = initializeInstances("fnc-1", trainingStances, trainingIdBodyMap);
+		if (useTainingSet) {
+			trainingInstances = initializeInstances("fnc-1", trainingStances, trainingIdBodyMap);
 
-		trainingInstances.setClassIndex(trainingInstances.numAttributes() - 1);
+			trainingInstances.setClassIndex(trainingInstances.numAttributes() - 1);
+		}
+
+		if (useTestset) {
+			testInstances = initializeInstances("fnc-1", testStances, testIdBodyMap);
+
+			testInstances.setClassIndex(testInstances.numAttributes() - 1);
+		}
 	}
 
 	private Instances initializeInstances(String relationName, List<List<String>> stances,
@@ -297,34 +327,46 @@ public class MainClassifier {
 	}
 
 	public void evaluate() {
+		if (useTainingSet) {
+			if (trainingInstances == null) {
+				long startTimeExtraction = System.currentTimeMillis();
+				init();
+				long endTimeExtraction = System.currentTimeMillis();
+				System.out.println((double) (endTimeExtraction - startTimeExtraction) / 1000 + "s Feature-Extraktion");
+				logger.info(
+						"\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
 
-		if (trainingInstances == null) {
-			long startTimeExtraction = System.currentTimeMillis();
-			init();
-			long endTimeExtraction = System.currentTimeMillis();
-			System.out.println((double) (endTimeExtraction - startTimeExtraction) / 1000 + "s Feature-Extraktion");
-			logger.info("\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
+			}
+			try {
+				Evaluation eval = new Evaluation(trainingInstances);
+				long startTimeEvaluation = System.currentTimeMillis();
+				eval.crossValidateModel(classifier, trainingInstances, 10, new Random(1));
+				long endTimeEvaluation = System.currentTimeMillis();
 
+				System.out.println((double) (endTimeEvaluation - startTimeEvaluation) / 1000 + "s Evaluationszeit");
+				logger.info("\n Evaluationzeit(s): " + (double) (endTimeEvaluation - startTimeEvaluation) / 1000);
+
+				System.out.println(eval.toSummaryString());
+				System.out.println(eval.toClassDetailsString());
+				System.out.println(trainingInstances.toSummaryString());
+
+				System.out.println("===== Evaluating on filtered (training) dataset done =====");
+				// logRunEvaluation(eval);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Problem found when evaluating");
+			}
 		}
-		try {
-			Evaluation eval = new Evaluation(trainingInstances);
-			long startTimeEvaluation = System.currentTimeMillis();
-			eval.crossValidateModel(classifier, trainingInstances, 10, new Random(1));
-			long endTimeEvaluation = System.currentTimeMillis();
+		if (useTestset)
+			if (testInstances == null) {
+				long startTimeExtraction = System.currentTimeMillis();
+				init();
+				long endTimeExtraction = System.currentTimeMillis();
+				System.out.println((double) (endTimeExtraction - startTimeExtraction) / 1000 + "s Feature-Extraktion");
+				logger.info(
+						"\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
 
-			System.out.println((double) (endTimeEvaluation - startTimeEvaluation) / 1000 + "s Evaluationszeit");
-			logger.info("\n Evaluationzeit(s): " + (double) (endTimeEvaluation - startTimeEvaluation) / 1000);
-
-			System.out.println(eval.toSummaryString());
-			System.out.println(eval.toClassDetailsString());
-			System.out.println(trainingInstances.toSummaryString());
-
-			System.out.println("===== Evaluating on filtered (training) dataset done =====");
-			// logRunEvaluation(eval);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("Problem found when evaluating");
-		}
+			}
 	}
 
 	/**
@@ -347,17 +389,34 @@ public class MainClassifier {
 	}
 
 	public void saveInstancesToArff(String fileName) {
-		ArffSaver saver = new ArffSaver();
-		saver.setInstances(trainingInstances);
-		try {
+		if (useTainingSet) {
+			ArffSaver saver = new ArffSaver();
+			saver.setInstances(trainingInstances);
+			try {
 
-			System.out.println(trainingInstances.size());
-			saver.setFile(new File("resources/arff_data/" + fileName + ".arff"));
-			// saver.setDestination(new File("./data/test.arff")); // **not**
-			// necessary in 3.5.4 and later
-			saver.writeBatch();
-		} catch (IOException e) {
-			e.printStackTrace();
+				System.out.println(trainingInstances.size());
+				saver.setFile(new File("resources/arff_data/" + fileName + ".arff"));
+				// saver.setDestination(new File("./data/test.arff")); //
+				// **not**
+				// necessary in 3.5.4 and later
+				saver.writeBatch();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		if (useTestset) {
+			ArffSaver saver = new ArffSaver();
+			System.out.println(saver);
+			System.out.println(testInstances);
+			saver.setInstances(testInstances);
+			try {
+
+				System.out.println(testInstances.size());
+				saver.setFile(new File("resources/arff_data/" + fileName + "_test.arff"));
+				saver.writeBatch();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 	}
