@@ -2,6 +2,7 @@ package ude.master.thesis.stance_detection.processor;
 
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -24,12 +25,17 @@ public class FeatureExtractor {
 	private static TreeSet<String> stopSet;
 	private static final String STOPWORDS_FILE = "resources/stopwords.txt";
 
+	public static String clean(String txt) {
+		return txt.replaceAll("\\W+", " ").toLowerCase();
+
+	}
+
 	// This method calculate the feature for one record
 	public static double getWordOverlapFeature(String headline, String body) {
 
 		// TODO: What about numbers ? (e.g. 1.96$ --> 1, 96)
-		List<String> headlineLem = new Lemmatizer().lemmatize(headline.toLowerCase());
-		List<String> bodyLem = new Lemmatizer().lemmatize(body.toLowerCase());
+		List<String> headlineLem = new Lemmatizer().lemmatize(clean(headline));
+		List<String> bodyLem = new Lemmatizer().lemmatize(clean(body));
 
 		Set<String> intersectinSet = new HashSet<>(headlineLem);
 		Set<String> bodySet = new HashSet<>(bodyLem);
@@ -46,7 +52,7 @@ public class FeatureExtractor {
 	// TODO Do we do this feature just for the headline ?
 	public static int getRefutingFeature(String headline, String refutingWord) {
 
-		List<String> headlineLem = new Lemmatizer().lemmatize(headline);
+		List<String> headlineLem = new Lemmatizer().lemmatize(clean(headline));
 
 		int f;
 		if (headlineLem.contains(refutingWord))
@@ -56,13 +62,14 @@ public class FeatureExtractor {
 		return f;
 	}
 
-	public static int getPolarityFeatures(String text, String polarityWord) {
+	public static int calculatePolarity(String text) {
 
-		List<String> textLem = new Lemmatizer().lemmatize(text);
+		List<String> textLem = new Lemmatizer().lemmatize(clean(text));
 
 		int sum = 0;
-		if (textLem.contains(polarityWord))
-			sum++;
+		for (String polarityWord : refutingWords)
+			if (textLem.contains(polarityWord))
+				sum++;
 
 		return sum % 2;
 	}
@@ -72,17 +79,17 @@ public class FeatureExtractor {
 		int binCount = 0;
 		int binCountEarly = 0;
 
-		List<String> cleanHeadLine = new Lemmatizer().lemmatize(headline);
+		List<String> cleanHeadline = Arrays.asList(clean(headline).split(" "));
 
-		List<String> cleanBody = new Lemmatizer().lemmatize(body);
+		String cleanBody = clean(body);
 
-		for (String token : cleanHeadLine) {
+		for (String token : cleanHeadline) {
 			if (cleanBody.contains(token)) // TODO traverse, won't we find this?
 											// --> verse
 				binCount++;
 
-			if (cleanBody.size() >= 255) {
-				if (cleanBody.subList(0, 255).contains(token))
+			if (cleanBody.length() >= 255) {
+				if (cleanBody.substring(0, 255).contains(token))
 					binCountEarly++;
 				// TODO Do we really need to add this if the text length < 255 ?
 			} else {
@@ -111,16 +118,16 @@ public class FeatureExtractor {
 		}
 
 		// String[] cleanHeadLine = cleanText(headline).split(" ");
-		List<String> cleanHead = removeStopWords(new Lemmatizer().lemmatize(headline));
+		List<String> cleanHead = removeStopWords(Arrays.asList(clean(headline).split(" ")));
 
-		List<String> cleanBody = new Lemmatizer().lemmatize(body);
+		String cleanBody = clean(body);
 
 		for (String token : cleanHead) {
 			if (cleanBody.contains(token)) // TODO traverse, won't we find this?
 											// --> verse
 				binCount++;
-			if (cleanBody.size() >= 255) {
-				if (cleanBody.subList(0, 255).contains(token))
+			if (cleanBody.length() >= 255) {
+				if (cleanBody.substring(0, 255).contains(token))
 					binCountEarly++;
 			} else {
 				if (cleanBody.contains(token))
@@ -148,10 +155,10 @@ public class FeatureExtractor {
 	}
 
 	private static boolean isStopword(String word) {
-		if (word.length() < 2)
-			return true;
-		if (word.charAt(0) >= '0' && word.charAt(0) <= '9')
-			return true; // remove numbers, "23rd", etc
+		// if (word.length() < 2)
+		// return true;
+		// if (word.charAt(0) >= '0' && word.charAt(0) <= '9')
+		// return true; // remove numbers, "23rd", etc
 		if (stopSet.contains(word))
 			return true;
 		else
@@ -179,7 +186,7 @@ public class FeatureExtractor {
 	// TODO in baseline they didnot fo lemmatization. Add some way to do text
 	// cleaning like the baseline
 	public static List<Integer> getCharGramsFeatures(String headline, String body, int size) {
-		List<String> h = removeStopWords(new Lemmatizer().lemmatize(headline));
+		List<String> h = removeStopWords(Arrays.asList(headline.split(" ")));
 
 		// get the string back
 		StringBuilder sb = new StringBuilder();
@@ -190,18 +197,16 @@ public class FeatureExtractor {
 		headline = sb.toString().trim();
 		List<String> grams = getCharGrams(headline, size);
 
-		List<String> bodyLem = new Lemmatizer().lemmatize(body);
-
 		int gramHits = 0;
 		int gramEarlyHits = 0;
 		int gramFirstHits = 0;
 
 		for (String gram : grams) {
-			if (bodyLem.contains(gram)) {
+			if (body.contains(gram)) {
 				gramHits++;
 			}
-			if (bodyLem.size() >= 255) {
-				if (bodyLem.subList(0, 255).contains(gram)) {
+			if (body.length() >= 255) {
+				if (body.substring(0, 255).contains(gram)) {
 					gramEarlyHits++;
 				}
 
@@ -211,7 +216,7 @@ public class FeatureExtractor {
 				 */
 
 			} else {
-				if (bodyLem.contains(gram)) {
+				if (body.contains(gram)) {
 					gramEarlyHits++;
 				}
 
@@ -220,8 +225,8 @@ public class FeatureExtractor {
 				 */
 			}
 
-			if (bodyLem.size() >= 100) {
-				if (bodyLem.subList(0, 100).contains(gram)) {
+			if (body.length() >= 100) {
+				if (body.substring(0, 100).contains(gram)) {
 					gramFirstHits++;
 				}
 
@@ -230,7 +235,7 @@ public class FeatureExtractor {
 				 * gramTailHits++; }
 				 */
 			} else {
-				if (bodyLem.contains(gram)) {
+				if (body.contains(gram)) {
 					gramFirstHits++;
 				}
 				/*
@@ -266,46 +271,36 @@ public class FeatureExtractor {
 		}
 		return ret;
 	}
-	
+
 	public static List<Integer> getNGramsFeatures(String headline, String body, int size) {
 
-		List<String> h = new Lemmatizer().lemmatize(headline);
-
-		// get the string back
-		StringBuilder sb = new StringBuilder();
-		for (String s : h) {
-			sb.append(s);
-			sb.append(" ");
-		}
-		headline = sb.toString().trim();
-		
 		List<String> grams = getNGrams(headline, size);
-		List<String> bodyLem = new Lemmatizer().lemmatize(body);
 
 		int gramHits = 0;
 		int gramEarlyHits = 0;
 
 		for (String gram : grams) {
-			if (bodyLem.contains(gram)) {
+			if (body.contains(gram)) {
 				gramHits++;
 			}
-			if (bodyLem.size() >= 255) {
-				if (bodyLem.subList(0, 255).contains(gram)) {
+			if (body.length() >= 255) {
+				if (body.substring(0, 255).contains(gram)) {
 					gramEarlyHits++;
 				}
 
-				/*if (bodyLem.substring(bodyLem.length() - 255).contains(gram)) {
-					gramTailHits++;
-				}*/
+				/*
+				 * if (bodyLem.substring(bodyLem.length() - 255).contains(gram))
+				 * { gramTailHits++; }
+				 */
 
 			} else {
-				if (bodyLem.contains(gram)) {
+				if (body.contains(gram)) {
 					gramEarlyHits++;
 				}
-				/*if (bodyLem.contains(gram)) { // TODO do we need to look in this
-											// case
-					gramTailHits++;
-				}*/
+				/*
+				 * if (bodyLem.contains(gram)) { // TODO do we need to look in
+				 * this // case gramTailHits++; }
+				 */
 			}
 
 		}

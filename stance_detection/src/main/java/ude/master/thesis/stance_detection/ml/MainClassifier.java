@@ -66,7 +66,7 @@ public class MainClassifier {
 		this.testIdBodyMap = testIdBodyMap;
 		this.testStances = testStances;
 
-		this.useTainingSet = false;
+		this.useTainingSet = true;
 		this.classifier = classifier;
 	}
 
@@ -169,6 +169,8 @@ public class MainClassifier {
 			instances.add(instance);
 
 			i++;
+			//if(i==20)
+				//break;
 			if (i % 10000 == 0)
 				System.out.println("Have read " + instances.size() + " instances");
 		}
@@ -207,13 +209,11 @@ public class MainClassifier {
 
 		// TODO: split to 2 features use
 		if (usePolarityFeatures) {
-			for (String refute : FeatureExtractor.refutingWords) {
 				Attribute headPolarityAtt = instances.attribute("pol_head");
-				instance.setValue(headPolarityAtt, FeatureExtractor.getPolarityFeatures(headline, refute));
+				instance.setValue(headPolarityAtt, FeatureExtractor.calculatePolarity(headline));
 
 				Attribute bodyPolarityAtt = instances.attribute("pol_body");
-				instance.setValue(bodyPolarityAtt, FeatureExtractor.getPolarityFeatures(body, refute));
-			}
+				instance.setValue(bodyPolarityAtt, FeatureExtractor.calculatePolarity(body));
 		}
 		// TODO: split to 2 features use
 		if (useBinaryCooccurraneFeatures) {
@@ -234,11 +234,14 @@ public class MainClassifier {
 			instance.setValue(binCoOccEarlyAtt, f.get(1));
 		}
 
+		String cleanHeadline = FeatureExtractor.clean(headline);
+		String cleanBody = FeatureExtractor.clean(body);
+		
 		// TODO: split to 3 features use
 		if (useCharGramsFeatures) {
 			int[] cgramSizes = { 2, 8, 4, 16 };
 			for (int size : cgramSizes) {
-				List<Integer> f = FeatureExtractor.getCharGramsFeatures(headline, body, size);
+				List<Integer> f = FeatureExtractor.getCharGramsFeatures(cleanHeadline, cleanBody, size);
 
 				Attribute cgramHitsAtt = instances.attribute("cgram_hits_" + size);
 				instance.setValue(cgramHitsAtt, f.get(0));
@@ -257,7 +260,7 @@ public class MainClassifier {
 		if (useWordGramsFeatures) {
 			int[] ngramSizes = { 2, 3, 4, 5, 6 };
 			for (int size : ngramSizes) {
-				List<Integer> f = FeatureExtractor.getNGramsFeatures(headline, body, size);
+				List<Integer> f = FeatureExtractor.getNGramsFeatures(cleanHeadline, cleanBody, size);
 
 				Attribute ngramHitAtt = instances.attribute("ngram_hits_" + size);
 				instance.setValue(ngramHitAtt, f.get(0));
@@ -357,7 +360,7 @@ public class MainClassifier {
 				System.out.println("Problem found when evaluating");
 			}
 		}
-		if (useTestset)
+		/*if (useTestset)
 			if (testInstances == null) {
 				long startTimeExtraction = System.currentTimeMillis();
 				init();
@@ -366,7 +369,7 @@ public class MainClassifier {
 				logger.info(
 						"\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
 
-			}
+			}*/
 	}
 
 	/**
