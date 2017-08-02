@@ -9,6 +9,7 @@ import java.util.Map;
 import ude.master.thesis.stance_detection.ml.MainClassifier;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
 import weka.classifiers.functions.SMO;
+import weka.classifiers.functions.LibSVM;
 
 /**
  * 
@@ -35,7 +36,7 @@ public class StanceClassifier {
 		// SMO smo = new SMO();
 
 		MainClassifier classifier = new MainClassifier(trainingIdBodyMap, trainingStances, testIdBodyMap, testStances,
-				new SMO());
+				new LibSVM());
 
 		classifier.setUseOverlapFeature(true);
 		classifier.setUseRefutingFeatures(true);
