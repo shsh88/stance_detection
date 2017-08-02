@@ -23,10 +23,11 @@ import com.opencsv.CSVReader;
  */
 
 public class StanceDetectionDataReader {
+	//TODO still trainTitleIdMap not filled / not used.. maybe should use title-body map instead
 	private Map<String, String> trainTitleIdMap;
 	private Map<Integer, String> trainIdBodyMap;
 	private List<List<String>> trainStances;
-	
+
 	private HashMap<Integer, String> testIdBodyMap;
 	private List<List<String>> testStances;
 
@@ -36,6 +37,8 @@ public class StanceDetectionDataReader {
 	private static final String TEST_BODIES_CSV_LOCATION = "resources/data/test_data/competition_test_bodies.csv";
 	private static final String TEST_STANCES_CSV_LOCATION = "resources/data/test_data/competition_test_stances.csv";
 
+	private boolean defaultLocation;
+
 	/**
 	 * By calling the constructor, the data is read and ready to be dealt with
 	 * by calling the variables that hold them
@@ -43,10 +46,45 @@ public class StanceDetectionDataReader {
 	 * @throws IOException
 	 */
 	public StanceDetectionDataReader(boolean setTrainingData, boolean setTestData) throws IOException {
-		if(setTrainingData)
+		this.defaultLocation = true;
+		if (setTrainingData)
 			setTrainingData();
-		if(setTestData)
+		if (setTestData)
 			setTestData();
+	}
+
+	/**
+	 * Set testDataLocation to "" if you don't want to use test data
+	 * 
+	 * @param setTrainingData
+	 * @param setTestData
+	 * @param trainingDataLoc
+	 * @param testDataLocation
+	 * @throws IOException
+	 */
+	public StanceDetectionDataReader(boolean setTrainingData, boolean setTestData, String trainingStanceDataLoc,
+			String trainingBodiesDataLoc, String testStanceDataLocation, String testBodiesDataLocation)
+			throws IOException {
+		this.defaultLocation = false;
+		if (setTrainingData)
+			setTrainingData(trainingStanceDataLoc, trainingBodiesDataLoc);
+		if (setTestData)
+			if (!testBodiesDataLocation.equals("") & !testStanceDataLocation.equals(""))
+				setTestData(testStanceDataLocation, testBodiesDataLocation);
+			else
+				setTestData();
+	}
+
+	private void setTestData(String testStanceDataLocation, String testBodiesDataLocation)
+			throws FileNotFoundException, IOException {
+		testIdBodyMap = readInIdBodiesMap(new File(testBodiesDataLocation));
+		testStances = readStances(new File(testStanceDataLocation));
+	}
+
+	private void setTrainingData(String trainingStanceDataLoc, String trainingBodiesDataLoc)
+			throws FileNotFoundException, IOException {
+		trainIdBodyMap = readInIdBodiesMap(new File(trainingBodiesDataLoc));
+		trainStances = readStances(new File(trainingStanceDataLoc));
 	}
 
 	/**
@@ -89,7 +127,7 @@ public class StanceDetectionDataReader {
 		String[] stancesline;
 		List<List<String>> stances = new ArrayList<>();
 		stancesReader.readNext();
-
+		System.out.println(stancesReader.getLinesRead());
 		while ((stancesline = stancesReader.readNext()) != null) {
 			List<String> record = new ArrayList<>();
 			record.add(stancesline[0]);
@@ -140,6 +178,14 @@ public class StanceDetectionDataReader {
 
 	public void setTestStances(List<List<String>> testStances) {
 		this.testStances = testStances;
+	}
+
+	public boolean isDefaultLocation() {
+		return defaultLocation;
+	}
+
+	public void setDefaultLocation(boolean defaultLocation) {
+		this.defaultLocation = defaultLocation;
 	}
 
 }
