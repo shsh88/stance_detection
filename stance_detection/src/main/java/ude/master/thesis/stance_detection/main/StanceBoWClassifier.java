@@ -8,16 +8,9 @@ import java.util.Map;
 
 import ude.master.thesis.stance_detection.ml.MainClassifier;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
-import weka.classifiers.functions.SMO;
 import weka.classifiers.functions.LibSVM;
 
-/**
- * 
- * @author Razan
- *
- */
-public class StanceClassifier {
-
+public class StanceBoWClassifier {
 	public static final boolean USE_TRAINING_SET = true;
 	public static final boolean USE_TEST_SET = true;
 
@@ -38,18 +31,12 @@ public class StanceClassifier {
 		MainClassifier classifier = new MainClassifier(trainingIdBodyMap, trainingStances, testIdBodyMap, testStances,
 				new LibSVM());
 
-		classifier.setUseOverlapFeature(true);
-		classifier.setUseRefutingFeatures(true);
-		classifier.setUsePolarityFeatures(true);
-		classifier.setUseBinaryCooccurraneFeatures(true);
-		classifier.setUseBinaryCooccurraneStopFeatures(true);
-		classifier.setUseCharGramsFeatures(true);
-		classifier.setUseWordGramsFeatures(true);
-		//classifier.setUseTitle(true);
-		//classifier.setUseArticle(true);
-		//classifier.setUseWordGramsFeatures(true);
+
+		classifier.setUseTitle(true);
+		classifier.setUseArticle(true);
+		classifier.setUseAttributeSelectionFilter(true);
 		classifier.evaluate();
-		classifier.saveInstancesToArff("baseline_features_BoW" + getCurrentTimeStamp());
+		classifier.saveInstancesToArff("BoW_features_" + getCurrentTimeStamp());
 
 		//classifier.train();
 
@@ -59,5 +46,4 @@ public class StanceClassifier {
 	public static String getCurrentTimeStamp() {
 		return new SimpleDateFormat("MM-dd_HH-mm").format(new Date());
 	}
-
 }

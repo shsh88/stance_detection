@@ -12,12 +12,21 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.search.UsageTrackingQueryCachingPolicy;
 
 import ude.master.thesis.stance_detection.processor.FeatureExtractor;
+import weka.attributeSelection.InfoGainAttributeEval;
+import weka.attributeSelection.Ranker;
 import weka.classifiers.Classifier;
 import weka.classifiers.evaluation.Evaluation;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
+import weka.core.SelectedTag;
 import weka.core.converters.ArffSaver;
+import weka.core.stemmers.SnowballStemmer;
+import weka.core.stopwords.WordsFromFile;
+import weka.core.tokenizers.NGramTokenizer;
+import weka.filters.Filter;
+import weka.filters.supervised.attribute.AttributeSelection;
+import weka.filters.unsupervised.attribute.StringToWordVector;
 
 public class MainClassifier {
 
@@ -26,28 +35,40 @@ public class MainClassifier {
 	private static final String RELATION_NAME = "fnc-1";
 	// Baseline features settings
 	// TODO: split the feature types in a better way (like in hs project)
-	private boolean useOverlapFeature;
-	private boolean useRefutingFeatures;
-	private boolean usePolarityFeatures;
-	private boolean useBinaryCooccurraneFeatures;
-	private boolean useBinaryCooccurraneStopFeatures; // Same as binary
-														// cooccurrence but
-														// ignores stopwords.
-	private boolean useCharGramsFeatures;
-	private boolean useWordGramsFeatures;
+	private boolean useOverlapFeature = false;
+	private boolean useRefutingFeatures = false;
+	private boolean usePolarityFeatures = false;
+	private boolean useBinaryCooccurraneFeatures = false;
+	private boolean useBinaryCooccurraneStopFeatures = false; // Same as binary
+	// cooccurrence but
+	// ignores stopwords.
+	private boolean useCharGramsFeatures = false;
+	private boolean useWordGramsFeatures = false;
+
+	private boolean useTitle = false;
+	private boolean useArticle = false;
 
 	private Map<Integer, String> trainingIdBodyMap;
 	private List<List<String>> trainingStances;
 	private Instances trainingInstances;
 
-	private boolean useTestset;
-	private boolean useTainingSet;
+	private boolean useTestset = false;
+	private boolean useTainingSet = false;
+
+	private boolean useAttributeSelectionFilter = false;
 
 	private Map<Integer, String> testIdBodyMap;
 	private List<List<String>> testStances;
 	private Instances testInstances;
 
+	private StringToWordVector str2WordFilter;
+
+	private int textNGramMinSize = 1;
+	private int textNGramMaxSize = 1;
+
 	private Classifier classifier;
+
+	private AttributeSelection attributeFilter;
 
 	public MainClassifier(Map<Integer, String> trainingIdBodyMap, List<List<String>> trainingStances,
 			Classifier classifier) {
@@ -84,6 +105,93 @@ public class MainClassifier {
 
 			testInstances.setClassIndex(testInstances.numAttributes() - 1);
 		}
+
+		if (useTitle || useArticle) {
+			initBoWFilter();
+		}
+
+		if (useAttributeSelectionFilter) {
+			applyAttributSelectionFilter();
+		}
+	}
+
+	private void applyAttributSelectionFilter() {
+		attributeFilter = new AttributeSelection();
+
+		// ChiSquaredAttributeEval ev2=new ChiSquaredAttributeEval();
+		InfoGainAttributeEval ev = new InfoGainAttributeEval();
+		Ranker ranker = new Ranker();
+		// ranker.setNumToSelect(4500);
+
+		attributeFilter.setEvaluator(ev);
+		attributeFilter.setSearch(ranker);
+
+		try {
+			attributeFilter.setInputFormat(trainingInstances);
+			System.out.println("Calculated NumToSelect: " + ranker.getCalculatedNumToSelect() + " from "
+					+ trainingInstances.numAttributes());
+			trainingInstances = Filter.useFilter(trainingInstances, attributeFilter);
+
+			if (useTestset) {
+				attributeFilter.setInputFormat(testInstances);
+				System.out.println("Calculated NumToSelect: " + ranker.getCalculatedNumToSelect() + " from "
+						+ testInstances.numAttributes());
+				trainingInstances = Filter.useFilter(testInstances, attributeFilter);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private void initBoWFilter() {
+		NGramTokenizer tokenizer = new NGramTokenizer();
+
+		// By using NGram tokenizer
+		tokenizer.setNGramMinSize(textNGramMinSize);
+		tokenizer.setNGramMaxSize(textNGramMaxSize);
+		tokenizer.setDelimiters("[^0-9a-zA-Z]");
+
+		str2WordFilter = new StringToWordVector();
+
+		str2WordFilter.setTokenizer(tokenizer);
+		str2WordFilter.setWordsToKeep(1000000);
+		// str2WordFilter.setDoNotOperateOnPerClassBasis(true);
+		str2WordFilter.setLowerCaseTokens(true);
+		str2WordFilter.setMinTermFreq(3);
+
+		// Apply Stopwordlist
+		WordsFromFile stopwords = new WordsFromFile();
+		stopwords.setStopwords(new File("resources/stopwords.txt"));
+		str2WordFilter.setStopwordsHandler(stopwords);
+
+		// Apply Stemmer
+		SnowballStemmer stemmer = new SnowballStemmer();
+		str2WordFilter.setStemmer(stemmer);
+
+		// Apply IDF-TF Weighting + DocLength-Normalization
+		str2WordFilter.setTFTransform(true);
+		str2WordFilter.setIDFTransform(true);
+		str2WordFilter.setNormalizeDocLength(
+				new SelectedTag(StringToWordVector.FILTER_NORMALIZE_ALL, StringToWordVector.TAGS_FILTER));
+
+		// experimental
+		str2WordFilter.setOutputWordCounts(true);
+
+		// always first attribute
+		str2WordFilter.setAttributeIndices("first,2");
+		try {
+			str2WordFilter.setInputFormat(trainingInstances);
+			trainingInstances = Filter.useFilter(trainingInstances, str2WordFilter);
+			if (useTestset) {
+				str2WordFilter.setMinTermFreq(1);
+				testInstances = Filter.useFilter(testInstances, str2WordFilter);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	private Instances initializeInstances(String relationName, List<List<String>> stances,
@@ -96,6 +204,12 @@ public class MainClassifier {
 		 * 3. see initializeBOWFilter() in hs and useMessage in
 		 * initializeInstances(...)
 		 */
+		if (useTitle) {
+			features.add(new Attribute("title", (List<String>) null));
+		}
+		if (useArticle) {
+			features.add(new Attribute("article", (List<String>) null));
+		}
 		if (useOverlapFeature) {
 			features.add(new Attribute("word_overlap"));
 		}
@@ -142,6 +256,7 @@ public class MainClassifier {
 				// features.add(new Attribute("ngram_tail_hits" + size));
 			}
 		}
+
 		// Add the classs attribute
 		String stancesClasses[] = new String[] { "agree", "disagree", "discuss", "unrelated" };
 		List<String> stanceValues = Arrays.asList(stancesClasses);
@@ -169,7 +284,7 @@ public class MainClassifier {
 			instances.add(instance);
 
 			i++;
-			//if(i==20)
+			//if (i == 20)
 				//break;
 			if (i % 10000 == 0)
 				System.out.println("Have read " + instances.size() + " instances");
@@ -195,6 +310,16 @@ public class MainClassifier {
 
 		instance.setDataset(instances);
 
+		if (useTitle) {
+			Attribute titleAtt = instances.attribute("title");
+			instance.setValue(titleAtt, headline);
+		}
+
+		if (useArticle) {
+			Attribute articleAtt = instances.attribute("article");
+			instance.setValue(articleAtt, body);
+		}
+
 		if (useOverlapFeature) {
 			Attribute wordOverlapAtt = instances.attribute("word_overlap");
 			instance.setValue(wordOverlapAtt, FeatureExtractor.getWordOverlapFeature(headline, body));
@@ -209,11 +334,11 @@ public class MainClassifier {
 
 		// TODO: split to 2 features use
 		if (usePolarityFeatures) {
-				Attribute headPolarityAtt = instances.attribute("pol_head");
-				instance.setValue(headPolarityAtt, FeatureExtractor.calculatePolarity(headline));
+			Attribute headPolarityAtt = instances.attribute("pol_head");
+			instance.setValue(headPolarityAtt, FeatureExtractor.calculatePolarity(headline));
 
-				Attribute bodyPolarityAtt = instances.attribute("pol_body");
-				instance.setValue(bodyPolarityAtt, FeatureExtractor.calculatePolarity(body));
+			Attribute bodyPolarityAtt = instances.attribute("pol_body");
+			instance.setValue(bodyPolarityAtt, FeatureExtractor.calculatePolarity(body));
 		}
 		// TODO: split to 2 features use
 		if (useBinaryCooccurraneFeatures) {
@@ -236,7 +361,7 @@ public class MainClassifier {
 
 		String cleanHeadline = FeatureExtractor.clean(headline);
 		String cleanBody = FeatureExtractor.clean(body);
-		
+
 		// TODO: split to 3 features use
 		if (useCharGramsFeatures) {
 			int[] cgramSizes = { 2, 8, 4, 16 };
@@ -321,12 +446,36 @@ public class MainClassifier {
 		this.useWordGramsFeatures = useWordGramsFeatures;
 	}
 
+	public boolean isUseTitle() {
+		return useTitle;
+	}
+
+	public void setUseTitle(boolean useTitle) {
+		this.useTitle = useTitle;
+	}
+
+	public boolean isUseArticle() {
+		return useArticle;
+	}
+
+	public void setUseArticle(boolean useArticle) {
+		this.useArticle = useArticle;
+	}
+
 	public boolean isUseBinaryCooccurraneStopFeatures() {
 		return useBinaryCooccurraneStopFeatures;
 	}
 
 	public void setUseBinaryCooccurraneStopFeatures(boolean useBinaryCooccurraneStopFeatures) {
 		this.useBinaryCooccurraneStopFeatures = useBinaryCooccurraneStopFeatures;
+	}
+
+	public boolean isUseAttributeSelectionFilter() {
+		return useAttributeSelectionFilter;
+	}
+
+	public void setUseAttributeSelectionFilter(boolean useAttributeSelectionFilter) {
+		this.useAttributeSelectionFilter = useAttributeSelectionFilter;
 	}
 
 	public void evaluate() {
@@ -360,16 +509,17 @@ public class MainClassifier {
 				System.out.println("Problem found when evaluating");
 			}
 		}
-		/*if (useTestset)
-			if (testInstances == null) {
-				long startTimeExtraction = System.currentTimeMillis();
-				init();
-				long endTimeExtraction = System.currentTimeMillis();
-				System.out.println((double) (endTimeExtraction - startTimeExtraction) / 1000 + "s Feature-Extraktion");
-				logger.info(
-						"\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
-
-			}*/
+		/*
+		 * if (useTestset) if (testInstances == null) { long startTimeExtraction
+		 * = System.currentTimeMillis(); init(); long endTimeExtraction =
+		 * System.currentTimeMillis(); System.out.println((double)
+		 * (endTimeExtraction - startTimeExtraction) / 1000 +
+		 * "s Feature-Extraktion"); logger.info(
+		 * "\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction -
+		 * startTimeExtraction) / 1000);
+		 * 
+		 * }
+		 */
 	}
 
 	/**
@@ -397,7 +547,7 @@ public class MainClassifier {
 			saver.setInstances(trainingInstances);
 			try {
 
-				System.out.println(trainingInstances.size());
+				// System.out.println(trainingInstances.size());
 				saver.setFile(new File("resources/arff_data/" + fileName + ".arff"));
 				// saver.setDestination(new File("./data/test.arff")); //
 				// **not**
@@ -409,12 +559,12 @@ public class MainClassifier {
 		}
 		if (useTestset) {
 			ArffSaver saver = new ArffSaver();
-			System.out.println(saver);
-			System.out.println(testInstances);
+			// System.out.println(saver);
+			// System.out.println(testInstances);
 			saver.setInstances(testInstances);
 			try {
 
-				System.out.println(testInstances.size());
+				// System.out.println(testInstances.size());
 				saver.setFile(new File("resources/arff_data/" + fileName + "_test.arff"));
 				saver.writeBatch();
 			} catch (IOException e) {
