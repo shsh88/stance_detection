@@ -1,9 +1,15 @@
 package ude.master.thesis.stance_detection.ml;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -16,9 +22,12 @@ import weka.attributeSelection.InfoGainAttributeEval;
 import weka.attributeSelection.Ranker;
 import weka.classifiers.Classifier;
 import weka.classifiers.evaluation.Evaluation;
+import weka.classifiers.evaluation.output.prediction.CSV;
+import weka.classifiers.evaluation.output.prediction.PlainText;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
+import weka.core.Range;
 import weka.core.SelectedTag;
 import weka.core.converters.ArffSaver;
 import weka.core.stemmers.SnowballStemmer;
@@ -27,6 +36,8 @@ import weka.core.tokenizers.NGramTokenizer;
 import weka.filters.Filter;
 import weka.filters.supervised.attribute.AttributeSelection;
 import weka.filters.unsupervised.attribute.StringToWordVector;
+
+import weka.attributeSelection.ChiSquaredAttributeEval;
 
 public class MainClassifier {
 
@@ -47,6 +58,9 @@ public class MainClassifier {
 
 	private boolean useTitle = false;
 	private boolean useArticle = false;
+
+	private boolean useTitleEmbedding = false;
+	private boolean useArticleEmbedding = false;
 
 	private Map<Integer, String> trainingIdBodyMap;
 	private List<List<String>> trainingStances;
@@ -69,6 +83,8 @@ public class MainClassifier {
 	private Classifier classifier;
 
 	private AttributeSelection attributeFilter;
+
+	private boolean evaluate = true;
 
 	public MainClassifier(Map<Integer, String> trainingIdBodyMap, List<List<String>> trainingStances,
 			Classifier classifier) {
@@ -117,26 +133,33 @@ public class MainClassifier {
 
 	private void applyAttributSelectionFilter() {
 		attributeFilter = new AttributeSelection();
-
-		// ChiSquaredAttributeEval ev2=new ChiSquaredAttributeEval();
-		InfoGainAttributeEval ev = new InfoGainAttributeEval();
+		
+		ChiSquaredAttributeEval ev2 = new ChiSquaredAttributeEval();
+		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
 		Ranker ranker = new Ranker();
 		// ranker.setNumToSelect(4500);
+		ranker.setNumToSelect(5000);
+		ranker.setThreshold(0);
 
-		attributeFilter.setEvaluator(ev);
+		attributeFilter.setEvaluator(ev2);
 		attributeFilter.setSearch(ranker);
 
 		try {
 			attributeFilter.setInputFormat(trainingInstances);
-			System.out.println("Calculated NumToSelect: " + ranker.getCalculatedNumToSelect() + " from "
-					+ trainingInstances.numAttributes());
+			System.out.println("Calculated NumToSelect:  + ranker.getCalculatedNumToSelect() + " + "from "
+					+ +trainingInstances.numAttributes());
+			System.out.println(trainingInstances.get(0).numAttributes());
 			trainingInstances = Filter.useFilter(trainingInstances, attributeFilter);
+			System.out.println(trainingInstances.get(0).numAttributes());
+			System.out.println("**trian size = " + trainingInstances.size());
 
 			if (useTestset) {
-				attributeFilter.setInputFormat(testInstances);
-				System.out.println("Calculated NumToSelect: " + ranker.getCalculatedNumToSelect() + " from "
+				System.out.println("Calculated NumToSelect: + ranker.getCalculatedNumToSelect()  " + " from "
 						+ testInstances.numAttributes());
-				trainingInstances = Filter.useFilter(testInstances, attributeFilter);
+				System.out.println(testInstances.get(0).numAttributes());
+				testInstances = Filter.useFilter(testInstances, attributeFilter);
+				System.out.println(testInstances.get(0).numAttributes());
+				System.out.println("**test size = " + testInstances.size());
 			}
 
 		} catch (Exception e) {
@@ -147,7 +170,7 @@ public class MainClassifier {
 
 	private void initBoWFilter() {
 		NGramTokenizer tokenizer = new NGramTokenizer();
-
+		System.out.println("Heeeeere");
 		// By using NGram tokenizer
 		tokenizer.setNGramMinSize(textNGramMinSize);
 		tokenizer.setNGramMaxSize(textNGramMaxSize);
@@ -183,10 +206,12 @@ public class MainClassifier {
 		str2WordFilter.setAttributeIndices("first,2");
 		try {
 			str2WordFilter.setInputFormat(trainingInstances);
+			// trainingInstances.addAll(testInstances);
 			trainingInstances = Filter.useFilter(trainingInstances, str2WordFilter);
+			System.out.println("train size = " + trainingInstances.size());
 			if (useTestset) {
-				str2WordFilter.setMinTermFreq(1);
 				testInstances = Filter.useFilter(testInstances, str2WordFilter);
+				System.out.println("test size = " + testInstances.size());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -205,10 +230,10 @@ public class MainClassifier {
 		 * initializeInstances(...)
 		 */
 		if (useTitle) {
-			features.add(new Attribute("title", (List<String>) null));
+			features.add(new Attribute("title_head", (List<String>) null));
 		}
 		if (useArticle) {
-			features.add(new Attribute("article", (List<String>) null));
+			features.add(new Attribute("article_body", (List<String>) null));
 		}
 		if (useOverlapFeature) {
 			features.add(new Attribute("word_overlap"));
@@ -260,7 +285,7 @@ public class MainClassifier {
 		// Add the classs attribute
 		String stancesClasses[] = new String[] { "agree", "disagree", "discuss", "unrelated" };
 		List<String> stanceValues = Arrays.asList(stancesClasses);
-		features.add(new Attribute("stance", stanceValues));
+		features.add(new Attribute("stance_class", stanceValues));
 
 		Instances instances = new Instances(RELATION_NAME, features, stances.size());
 
@@ -285,7 +310,7 @@ public class MainClassifier {
 
 			i++;
 			//if (i == 20)
-				//break;
+			//break;
 			if (i % 10000 == 0)
 				System.out.println("Have read " + instances.size() + " instances");
 		}
@@ -311,12 +336,12 @@ public class MainClassifier {
 		instance.setDataset(instances);
 
 		if (useTitle) {
-			Attribute titleAtt = instances.attribute("title");
+			Attribute titleAtt = instances.attribute("title_head");
 			instance.setValue(titleAtt, headline);
 		}
 
 		if (useArticle) {
-			Attribute articleAtt = instances.attribute("article");
+			Attribute articleAtt = instances.attribute("article_body");
 			instance.setValue(articleAtt, body);
 		}
 
@@ -478,6 +503,46 @@ public class MainClassifier {
 		this.useAttributeSelectionFilter = useAttributeSelectionFilter;
 	}
 
+	public boolean isUseTitleEmbedding() {
+		return useTitleEmbedding;
+	}
+
+	public void setUseTitleEmbedding(boolean useTitleEmbedding) {
+		this.useTitleEmbedding = useTitleEmbedding;
+	}
+
+	public boolean isUseArticleEmbedding() {
+		return useArticleEmbedding;
+	}
+
+	public void setUseArticleEmbedding(boolean useArticleEmbedding) {
+		this.useArticleEmbedding = useArticleEmbedding;
+	}
+
+	public boolean isEvaluate() {
+		return evaluate;
+	}
+
+	public void setEvaluate(boolean evaluate) {
+		this.evaluate = evaluate;
+	}
+
+	public Instances getTrainingInstances() {
+		return trainingInstances;
+	}
+
+	public void setTrainingInstances(Instances trainingInstances) {
+		this.trainingInstances = trainingInstances;
+	}
+
+	public Instances getTestInstances() {
+		return testInstances;
+	}
+
+	public void setTestInstances(Instances testInstances) {
+		this.testInstances = testInstances;
+	}
+
 	public void evaluate() {
 		if (useTainingSet) {
 			if (trainingInstances == null) {
@@ -489,37 +554,66 @@ public class MainClassifier {
 						"\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
 
 			}
-			try {
-				Evaluation eval = new Evaluation(trainingInstances);
-				long startTimeEvaluation = System.currentTimeMillis();
-				eval.crossValidateModel(classifier, trainingInstances, 10, new Random(1));
-				long endTimeEvaluation = System.currentTimeMillis();
+			if (evaluate)
+				try {
+					System.out.println("=== Evaluation ===");
+					Evaluation eval = new Evaluation(trainingInstances);
+					StringBuffer predsBuffer = new StringBuffer();
+					CSV csv = new CSV();
+					csv.setHeader(trainingInstances);
+					csv.setBuffer(predsBuffer);
+					long startTimeEvaluation = System.currentTimeMillis();
+					eval.crossValidateModel(classifier, trainingInstances, 10, new Random(1), csv);
+					long endTimeEvaluation = System.currentTimeMillis();
 
-				System.out.println((double) (endTimeEvaluation - startTimeEvaluation) / 1000 + "s Evaluationszeit");
-				logger.info("\n Evaluationzeit(s): " + (double) (endTimeEvaluation - startTimeEvaluation) / 1000);
+					System.out.println((double) (endTimeEvaluation - startTimeEvaluation) / 1000 + "s Evaluationszeit");
+					logger.info("\n Evaluationzeit(s): " + (double) (endTimeEvaluation - startTimeEvaluation) / 1000);
 
-				System.out.println(eval.toSummaryString());
-				System.out.println(eval.toClassDetailsString());
-				System.out.println(trainingInstances.toSummaryString());
+					System.out.println(eval.toSummaryString());
+					System.out.println(eval.toClassDetailsString());
+					System.out.println(trainingInstances.toSummaryString());
+					//System.out.println(predsBuffer.toString());
 
-				System.out.println("===== Evaluating on filtered (training) dataset done =====");
-				// logRunEvaluation(eval);
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println("Problem found when evaluating");
-			}
+					// classifier.classifyInstance(instance)
+					saveEvaluation(eval, predsBuffer, "_without_test_", trainingInstances);
+
+					predsBuffer = new StringBuffer();
+					csv = new CSV();
+					csv.setHeader(testInstances);
+					csv.setBuffer(predsBuffer);
+					classifier.buildClassifier(trainingInstances);
+					eval.evaluateModel(classifier, testInstances, csv);
+					saveEvaluation(eval, predsBuffer, "_with_test_", testInstances);
+
+					// serialize model
+					 ObjectOutputStream oos = new ObjectOutputStream(
+					                            new FileOutputStream("resources/models/libsvm_"+ getCurrentTimeStamp()+ ".model"));
+					 oos.writeObject(classifier);
+					 oos.flush();
+					 oos.close();
+					System.out.println("===== Evaluating on filtered (training) dataset done =====");
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.out.println("Problem found when evaluating");
+				}
 		}
-		/*
-		 * if (useTestset) if (testInstances == null) { long startTimeExtraction
-		 * = System.currentTimeMillis(); init(); long endTimeExtraction =
-		 * System.currentTimeMillis(); System.out.println((double)
-		 * (endTimeExtraction - startTimeExtraction) / 1000 +
-		 * "s Feature-Extraktion"); logger.info(
-		 * "\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction -
-		 * startTimeExtraction) / 1000);
-		 * 
-		 * }
-		 */
+
+	}
+
+	private void saveEvaluation(Evaluation eval, StringBuffer predsBuffer, String addName, Instances data)
+			throws Exception {
+		PrintWriter out = new PrintWriter(
+				"resources/arff_data/" + "evaluation_svm_cv_BoW_" + addName + getCurrentTimeStamp() + ".txt");
+		out.println(eval.toSummaryString());
+		out.println(eval.toClassDetailsString());
+		out.println(eval.toMatrixString());
+		out.println(data.toSummaryString());
+		out.println(predsBuffer.toString());
+		out.close();
+	}
+
+	private static String getCurrentTimeStamp() {
+		return new SimpleDateFormat("MM-dd_HH-mm").format(new Date());
 	}
 
 	/**
