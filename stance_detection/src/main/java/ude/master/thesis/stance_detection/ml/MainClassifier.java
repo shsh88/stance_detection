@@ -16,8 +16,12 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.search.UsageTrackingQueryCachingPolicy;
+import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 import ude.master.thesis.stance_detection.processor.FeatureExtractor;
+import ude.master.thesis.stance_detection.processor.Lemmatizer;
+import ude.master.thesis.stance_detection.wordembeddings.DocToVec;
 import weka.attributeSelection.InfoGainAttributeEval;
 import weka.attributeSelection.Ranker;
 import weka.classifiers.Classifier;
@@ -29,13 +33,18 @@ import weka.core.DenseInstance;
 import weka.core.Instances;
 import weka.core.Range;
 import weka.core.SelectedTag;
+import weka.core.converters.ArffLoader;
 import weka.core.converters.ArffSaver;
+import weka.core.converters.CSVLoader;
 import weka.core.stemmers.SnowballStemmer;
 import weka.core.stopwords.WordsFromFile;
 import weka.core.tokenizers.NGramTokenizer;
 import weka.filters.Filter;
 import weka.filters.supervised.attribute.AttributeSelection;
+import weka.filters.unsupervised.attribute.Remove;
+import weka.filters.unsupervised.attribute.RemoveByName;
 import weka.filters.unsupervised.attribute.StringToWordVector;
+import weka.filters.unsupervised.attribute.FixedDictionaryStringToWordVector;
 
 import weka.attributeSelection.ChiSquaredAttributeEval;
 
@@ -44,6 +53,8 @@ public class MainClassifier {
 	final static Logger logger = Logger.getLogger(MainClassifier.class);
 
 	private static final String RELATION_NAME = "fnc-1";
+
+	private static final Instances ArffLoader = null;
 	// Baseline features settings
 	// TODO: split the feature types in a better way (like in hs project)
 	private boolean useOverlapFeature = false;
@@ -59,8 +70,11 @@ public class MainClassifier {
 	private boolean useTitle = false;
 	private boolean useArticle = false;
 
+	// not used
 	private boolean useTitleEmbedding = false;
 	private boolean useArticleEmbedding = false;
+
+	private boolean useParagraphsEmbeddings = false;
 
 	private Map<Integer, String> trainingIdBodyMap;
 	private List<List<String>> trainingStances;
@@ -75,16 +89,25 @@ public class MainClassifier {
 	private List<List<String>> testStances;
 	private Instances testInstances;
 
+	private Instances testInstancesUnlabeled;
+
 	private StringToWordVector str2WordFilter;
 
 	private int textNGramMinSize = 1;
-	private int textNGramMaxSize = 1;
+	private int textNGramMaxSize = 3;
 
 	private Classifier classifier;
 
 	private AttributeSelection attributeFilter;
 
 	private boolean evaluate = true;
+
+	private boolean BOW_useLemmatization = false;
+
+	private ParagraphVectors paragraphVectors;
+	private List<String> paragraphsList;
+	private List<String> labelsList;
+	private Map<String, String> titleIdMap;
 
 	public MainClassifier(Map<Integer, String> trainingIdBodyMap, List<List<String>> trainingStances,
 			Classifier classifier) {
@@ -110,6 +133,16 @@ public class MainClassifier {
 	private void init() {
 
 		// TODO here we also build embeddings
+		if (useParagraphsEmbeddings) {
+			try {
+				paragraphVectors = DocToVec.loadParagraphVectors();
+				DocToVec.extractParagraphLabels(paragraphsList, labelsList, titleIdMap);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		if (useTainingSet) {
 			trainingInstances = initializeInstances("fnc-1", trainingStances, trainingIdBodyMap);
 
@@ -123,7 +156,12 @@ public class MainClassifier {
 		}
 
 		if (useTitle || useArticle) {
-			initBoWFilter();
+			try {
+				initBoWFilter();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		if (useAttributeSelectionFilter) {
@@ -133,7 +171,7 @@ public class MainClassifier {
 
 	private void applyAttributSelectionFilter() {
 		attributeFilter = new AttributeSelection();
-		
+
 		ChiSquaredAttributeEval ev2 = new ChiSquaredAttributeEval();
 		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
 		Ranker ranker = new Ranker();
@@ -143,6 +181,8 @@ public class MainClassifier {
 
 		attributeFilter.setEvaluator(ev2);
 		attributeFilter.setSearch(ranker);
+
+		System.out.println(trainingInstances.toSummaryString());
 
 		try {
 			attributeFilter.setInputFormat(trainingInstances);
@@ -182,7 +222,7 @@ public class MainClassifier {
 		str2WordFilter.setWordsToKeep(1000000);
 		// str2WordFilter.setDoNotOperateOnPerClassBasis(true);
 		str2WordFilter.setLowerCaseTokens(true);
-		str2WordFilter.setMinTermFreq(3);
+		str2WordFilter.setMinTermFreq(2);
 
 		// Apply Stopwordlist
 		WordsFromFile stopwords = new WordsFromFile();
@@ -190,8 +230,11 @@ public class MainClassifier {
 		str2WordFilter.setStopwordsHandler(stopwords);
 
 		// Apply Stemmer
-		SnowballStemmer stemmer = new SnowballStemmer();
-		str2WordFilter.setStemmer(stemmer);
+		if (!BOW_useLemmatization) {
+			SnowballStemmer stemmer = new SnowballStemmer();
+			str2WordFilter.setStemmer(stemmer);
+		} else
+			str2WordFilter.setStemmer(null);
 
 		// Apply IDF-TF Weighting + DocLength-Normalization
 		str2WordFilter.setTFTransform(true);
@@ -219,6 +262,33 @@ public class MainClassifier {
 
 	}
 
+	private FixedDictionaryStringToWordVector getVectorizer(NGramTokenizer tokenizer, WordsFromFile stopwords,
+			SnowballStemmer stemmer, boolean TF, boolean IDF, boolean normDoc, boolean useWordCount, File DicFile) {
+		FixedDictionaryStringToWordVector fdStr2W = new FixedDictionaryStringToWordVector();
+
+		fdStr2W.setTokenizer(tokenizer);
+		// str2WordFilter.setDoNotOperateOnPerClassBasis(true);
+		fdStr2W.setLowerCaseTokens(true);
+
+		// Apply Stopwordlist
+		stopwords.setStopwords(new File("resources/stopwords.txt"));
+		fdStr2W.setStopwordsHandler(stopwords);
+
+		// Apply Stemmer
+		fdStr2W.setStemmer(stemmer);
+
+		// Apply IDF-TF Weighting + DocLength-Normalization
+		fdStr2W.setTFTransform(false);
+		fdStr2W.setIDFTransform(true);
+		fdStr2W.setNormalizeDocLength(true);
+
+		// experimental
+		fdStr2W.setOutputWordCounts(true);
+
+		fdStr2W.setDictionaryFile(new File("resources/dictionary"));
+		return fdStr2W;
+	}
+
 	private Instances initializeInstances(String relationName, List<List<String>> stances,
 			Map<Integer, String> idBodyMap) {
 		ArrayList<Attribute> features = new ArrayList<>();
@@ -229,6 +299,7 @@ public class MainClassifier {
 		 * 3. see initializeBOWFilter() in hs and useMessage in
 		 * initializeInstances(...)
 		 */
+		// The next two conditions are for BoW features
 		if (useTitle) {
 			features.add(new Attribute("title_head", (List<String>) null));
 		}
@@ -282,6 +353,14 @@ public class MainClassifier {
 			}
 		}
 
+		if (useParagraphsEmbeddings) {
+			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
+				features.add(new Attribute("vechead_" + i));
+
+			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
+				features.add(new Attribute("vecbody_" + i));
+		}
+
 		// Add the classs attribute
 		String stancesClasses[] = new String[] { "agree", "disagree", "discuss", "unrelated" };
 		List<String> stanceValues = Arrays.asList(stancesClasses);
@@ -303,14 +382,14 @@ public class MainClassifier {
 			String headline = stance.get(0);
 			String body = idBodyMap.get(Integer.valueOf(stance.get(1)));
 
-			DenseInstance instance = createInstance(headline, body, instances, featuresSize);
+			DenseInstance instance = createInstance(headline, body, stance.get(1), instances, featuresSize);
 			// System.out.println(stance.get(2));
 			instance.setClassValue(stance.get(2));
 			instances.add(instance);
 
 			i++;
-			//if (i == 20)
-			//break;
+			// if (i == 1000)
+			// break;
 			if (i % 10000 == 0)
 				System.out.println("Have read " + instances.size() + " instances");
 		}
@@ -329,7 +408,8 @@ public class MainClassifier {
 	 * @param featuresSize
 	 * @return
 	 */
-	private DenseInstance createInstance(String headline, String body, Instances instances, int featuresSize) {
+	private DenseInstance createInstance(String headline, String body, String bodyId, Instances instances,
+			int featuresSize) {
 		// Create instance and set the number of features
 		DenseInstance instance = new DenseInstance(featuresSize);
 
@@ -337,12 +417,20 @@ public class MainClassifier {
 
 		if (useTitle) {
 			Attribute titleAtt = instances.attribute("title_head");
-			instance.setValue(titleAtt, headline);
+			if (BOW_useLemmatization) {
+				String headlineLem = FeatureExtractor.getLemmatizedCleanStr(headline);
+				instance.setValue(titleAtt, headlineLem);
+			} else
+				instance.setValue(titleAtt, headline);
 		}
 
 		if (useArticle) {
 			Attribute articleAtt = instances.attribute("article_body");
-			instance.setValue(articleAtt, body);
+			if (BOW_useLemmatization) {
+				String bodyLem = FeatureExtractor.getLemmatizedCleanStr(body);
+				instance.setValue(articleAtt, bodyLem);
+			} else
+				instance.setValue(articleAtt, body);
 		}
 
 		if (useOverlapFeature) {
@@ -418,6 +506,16 @@ public class MainClassifier {
 				Attribute ngramEarlyHitsAtt = instances.attribute("ngram_early_hits_" + size);
 				instance.setValue(ngramEarlyHitsAtt, f.get(1));
 			}
+		}
+
+		if (useParagraphsEmbeddings) {
+			INDArray titleVec = paragraphVectors.getLookupTable().vector(titleIdMap.get(headline));
+			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
+				instance.setValue(instances.attribute("vechead_" + i), titleVec.getDouble(i));
+
+			INDArray bodyVec = paragraphVectors.getLookupTable().vector(bodyId);
+			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
+				instance.setValue(instances.attribute("vecbody_" + i), bodyVec.getDouble(i));
 		}
 
 		return instance;
@@ -519,6 +617,30 @@ public class MainClassifier {
 		this.useArticleEmbedding = useArticleEmbedding;
 	}
 
+	public boolean isBOW_useLemmatization() {
+		return BOW_useLemmatization;
+	}
+
+	public void setBOW_useLemmatization(boolean bOW_useLemmatization) {
+		BOW_useLemmatization = bOW_useLemmatization;
+	}
+
+	public boolean isUseParagraphsEmbeddings() {
+		return useParagraphsEmbeddings;
+	}
+
+	public void setUseParagraphsEmbeddings(boolean useParagraphsEmbeddings) {
+		this.useParagraphsEmbeddings = useParagraphsEmbeddings;
+	}
+
+	public Instances getTestInstancesUnlabeled() {
+		return testInstancesUnlabeled;
+	}
+
+	public void setTestInstancesUnlabeled(Instances testInstancesUnlabeled) {
+		this.testInstancesUnlabeled = testInstancesUnlabeled;
+	}
+
 	public boolean isEvaluate() {
 		return evaluate;
 	}
@@ -572,7 +694,7 @@ public class MainClassifier {
 					System.out.println(eval.toSummaryString());
 					System.out.println(eval.toClassDetailsString());
 					System.out.println(trainingInstances.toSummaryString());
-					//System.out.println(predsBuffer.toString());
+					// System.out.println(predsBuffer.toString());
 
 					// classifier.classifyInstance(instance)
 					saveEvaluation(eval, predsBuffer, "_without_test_", trainingInstances);
@@ -586,11 +708,11 @@ public class MainClassifier {
 					saveEvaluation(eval, predsBuffer, "_with_test_", testInstances);
 
 					// serialize model
-					 ObjectOutputStream oos = new ObjectOutputStream(
-					                            new FileOutputStream("resources/models/libsvm_"+ getCurrentTimeStamp()+ ".model"));
-					 oos.writeObject(classifier);
-					 oos.flush();
-					 oos.close();
+					ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(
+							"resources/models/libsvm_joined_data_BoW" + getCurrentTimeStamp() + ".model"));
+					oos.writeObject(classifier);
+					oos.flush();
+					oos.close();
 					System.out.println("===== Evaluating on filtered (training) dataset done =====");
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -603,7 +725,7 @@ public class MainClassifier {
 	private void saveEvaluation(Evaluation eval, StringBuffer predsBuffer, String addName, Instances data)
 			throws Exception {
 		PrintWriter out = new PrintWriter(
-				"resources/arff_data/" + "evaluation_svm_cv_BoW_" + addName + getCurrentTimeStamp() + ".txt");
+				"C:/arff_data/" + "evaluation_svm_cv_BoW_" + addName + getCurrentTimeStamp() + ".txt");
 		out.println(eval.toSummaryString());
 		out.println(eval.toClassDetailsString());
 		out.println(eval.toMatrixString());
@@ -642,10 +764,7 @@ public class MainClassifier {
 			try {
 
 				// System.out.println(trainingInstances.size());
-				saver.setFile(new File("resources/arff_data/" + fileName + ".arff"));
-				// saver.setDestination(new File("./data/test.arff")); //
-				// **not**
-				// necessary in 3.5.4 and later
+				saver.setFile(new File("C:/arff_data/" + fileName + ".arff"));
 				saver.writeBatch();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -659,7 +778,7 @@ public class MainClassifier {
 			try {
 
 				// System.out.println(testInstances.size());
-				saver.setFile(new File("resources/arff_data/" + fileName + "_test.arff"));
+				saver.setFile(new File("C:/arff_data/" + fileName + "_test.arff"));
 				saver.writeBatch();
 			} catch (IOException e) {
 				e.printStackTrace();
