@@ -18,11 +18,11 @@
 
 
 		<!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-analyzers-common -->
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-analyzers-common</artifactId>
 			<version>6.6.0</version>
-		</dependency>
+		</dependency>-->
 
 		<!-- https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/weka-stable -->
 		<dependency>
