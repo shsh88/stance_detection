@@ -326,4 +326,13 @@ public class FeatureExtractor {
 		return ret;
 	}
 
+	public static String getLemmatizedCleanStr(String str) {
+		List<String> strLem = new Lemmatizer().lemmatize(clean(str));
+
+		String lem = "";
+		for (String w : strLem)
+			lem += w + " ";
+		return lem.trim();
+	}
+
 }
