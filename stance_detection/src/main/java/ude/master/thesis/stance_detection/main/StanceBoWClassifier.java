@@ -32,7 +32,7 @@ public class StanceBoWClassifier {
 
 		MainClassifier classifier = new MainClassifier(trainingIdBodyMap, trainingStances, testIdBodyMap, testStances,
 				new LibSVM());
-
+/*
 				DataSource trainDataSource = new DataSource("resources/arff_data/BoW_features_Chi_thre0_500008-11_10-36.arff");
 				Instances trainData = trainDataSource.getDataSet();
 				trainData.setClassIndex(trainData.numAttributes() - 1);
@@ -42,13 +42,14 @@ public class StanceBoWClassifier {
 				Instances testData = testDataSource.getDataSet();
 				testData.setClassIndex(testData.numAttributes() - 1);
 				classifier.setTestInstances(testData);
-
+*/
 		classifier.setUseTitle(true);
 		classifier.setUseArticle(true);
 		classifier.setUseAttributeSelectionFilter(true);
+		classifier.setBOW_useLemmatization(true);
 		//classifier.setEvaluate(false);
 		classifier.evaluate();
-		//classifier.saveInstancesToArff("BoW_features_Chi_thre0_5000" + getCurrentTimeStamp());
+		classifier.saveInstancesToArff("BoW_features_Chi_thre0_5000_lemma_trainv" + getCurrentTimeStamp());
 
 		//classifier.train();
 
