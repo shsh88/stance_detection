@@ -1,6 +1,5 @@
 package ude.master.thesis.stance_detection.wordembeddings;
 
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,9 +24,10 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
 
 public class DocToVec {
-	
+
 	final static Logger logger = Logger.getLogger(DocToVec.class);
-	
+
+
 	private TokenizerFactory tokenizerFactory;
 	private ParagraphVectors vec;
 
@@ -58,73 +58,113 @@ public class DocToVec {
 
 		return vec;
 	}
-	
+
 	public static void main(String[] args) throws IOException {
-		/*List<String> paragraphsList = new ArrayList<>();
+
+		// ================================================================
+		List<String> paragraphsList = new ArrayList<>();
 		List<String> labelsList = new ArrayList<>();
-		
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true);
-		
-		//Training Data
-		Map<Integer, String> bodiesIdsMapTraining = sddr.getTrainIdBodyMap();
-		List<List<String>> stancesTraining = sddr.getTrainStances();
-		
-		//Test data
-		HashMap<Integer, String> bodiesIdsMapTest = sddr.getTestIdBodyMap();
-		List<List<String>> stanceTest = sddr.getTestStances();
-		
-		Map<Integer, String> allBodies = bodiesIdsMapTraining;
-		allBodies.putAll(bodiesIdsMapTest);
-		
-		List<List<String>> allStances = stancesTraining;
-		allStances.addAll(stanceTest);
-		
-		for (Entry<Integer, String> e : allBodies.entrySet()) {
-			paragraphsList.add(e.getValue());
-			labelsList.add(String.valueOf(e.getKey()));
-		}
-		
-		int i = 0;
-		int j = 0; //stances
-		
 		Map<String, String> titleIdMap = new HashMap<>();
-		List<List<String>> titleBodyPairs = new ArrayList<>();
-		
-		for (List<String> stance : allStances) {
-			if (!titleIdMap.containsKey(stance.get(0))) {
-				titleIdMap.put(stance.get(0),"title_" + i);
-				paragraphsList.add(stance.get(0));
-				labelsList.add("title_" + i);
 
-				List<String> pair = new ArrayList<>();
-				pair.add("title_" + i);
-				pair.add(stance.get(1));
-				titleBodyPairs.add(pair);
-				i++;
-			
-			} else {
+		extractParagraphLabels(paragraphsList, labelsList, titleIdMap);
+		// ===============================================================================
 
-				List<String> pair = new ArrayList<>();
-				pair.add(titleIdMap.get(stance.get(0)));
-				pair.add(stance.get(1));
-				titleBodyPairs.add(pair);
-			}
-			j++;
-			if(j==49972)
-				System.out.println(i);
-		}*/
-		
-		DocToVec paraVec = new DocToVec();
-		// ParagraphVectors docVec = paraVec.buildParagraphVectors(paragraphsList,
-		 //labelsList);
-		 //WordVectorSerializer.writeParagraphVectors(docVec, "resources/docvec_070817");
+		/** ==== Test the word embeddings ==== **/
+		// bulding the paragraph vectors (only once and then saving them)
+		// DocToVec paraVec = new DocToVec();
 
-		ParagraphVectors pvecs = WordVectorSerializer.readParagraphVectors("resources/docvec_070817");
-		
+		// ParagraphVectors docVec =
+		// paraVec.buildParagraphVectors(paragraphsList,
+		// labelsList);
+
+		// WordVectorSerializer.writeParagraphVectors(docVec,
+		// "resources/docvec_070817");
+
+		// Loading the saved paragraph vectors
+		ParagraphVectors pvecs = loadParagraphVectors();
+
 		System.out.println(pvecs.similarWordsInVocabTo("isis", 0.9));
 		System.out.println(pvecs.similarWordsInVocabTo("Steve", 0.9));
 		System.out.println(pvecs.similarWordsInVocabTo("money", 0.8));
 	}
 
+	public static ParagraphVectors loadParagraphVectors() throws IOException {
+		return WordVectorSerializer.readParagraphVectors("resources/docvec_070817");
+	}
+
+	/**
+	 * 
+	 * @param paragraphsList
+	 * @param labelsList
+	 * @throws IOException
+	 */
+	public static void extractParagraphLabels(List<String> paragraphsList, List<String> labelsList,
+			Map<String, String> titleIdMap) throws IOException {
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true);
+
+		// paragraphsList hold all the bodies and all the titles as complete
+		// strings
+		// labelList holds all the labels for title and bodies
+		// Training Data
+		Map<Integer, String> bodiesIdsMapTraining = sddr.getTrainIdBodyMap();
+		List<List<String>> stancesTraining = sddr.getTrainStances();
+
+		// Test data
+		HashMap<Integer, String> bodiesIdsMapTest = sddr.getTestIdBodyMap();
+		List<List<String>> stanceTest = sddr.getTestStances();
+
+		Map<Integer, String> allBodies = bodiesIdsMapTraining;
+		allBodies.putAll(bodiesIdsMapTest);
+
+		List<List<String>> allStances = stancesTraining;
+		allStances.addAll(stanceTest);
+
+		// adding the bodies an and their labels
+		// using the same ids for the bodies
+		for (Entry<Integer, String> e : allBodies.entrySet()) {
+			paragraphsList.add(e.getValue());
+			labelsList.add(String.valueOf(e.getKey()));
+		}
+
+		int i = 0;
+		int j = 0; // stances
+
+		titleIdMap = new HashMap<>();
+		List<List<String>> titleBodyPairs = new ArrayList<>();
+
+		// adding the title and their labels
+		// using title_i as a label for titles
+		for (List<String> stance : allStances) {
+			// keys are the titles and they are repeated in the set
+			// So if the title don't have a label yet
+			if (!titleIdMap.containsKey(stance.get(0))) {
+				titleIdMap.put(stance.get(0), "title_" + i); // then give it a
+																// label
+				paragraphsList.add(stance.get(0));
+				labelsList.add("title_" + i); // and add it to the labels list
+
+				// and then add it to the list of title labels and body labels
+				// list
+				List<String> pair = new ArrayList<>();
+				pair.add("title_" + i);
+				pair.add(stance.get(1));
+				titleBodyPairs.add(pair);
+				i++;
+
+			} else { // the title already has a label
+
+				List<String> pair = new ArrayList<>();
+				pair.add(titleIdMap.get(stance.get(0)));// add the title label
+														// (after getting it
+														// from the labels map)
+				pair.add(stance.get(1)); // add the body_id
+				titleBodyPairs.add(pair); // add the pair
+			}
+			j++;
+			if (j == 49972)
+				System.out.println(i);
+		}
+
+	}
 
 }
