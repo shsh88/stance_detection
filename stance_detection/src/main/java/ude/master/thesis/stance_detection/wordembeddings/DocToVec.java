@@ -70,15 +70,13 @@ public class DocToVec {
 		// ===============================================================================
 
 		/** ==== Test the word embeddings ==== **/
-		// bulding the paragraph vectors (only once and then saving them)
-		// DocToVec paraVec = new DocToVec();
+		//bulding the paragraph vectors (only once and then saving them)
+		/*DocToVec paraVec = new DocToVec();
 
-		// ParagraphVectors docVec =
-		// paraVec.buildParagraphVectors(paragraphsList,
-		// labelsList);
+		ParagraphVectors docVec =
+		paraVec.buildParagraphVectors(paragraphsList, labelsList);*/
 
-		// WordVectorSerializer.writeParagraphVectors(docVec,
-		// "resources/docvec_070817");
+		//WordVectorSerializer.writeParagraphVectors(docVec, "resources/docvec_150817");
 
 		// Loading the saved paragraph vectors
 		ParagraphVectors pvecs = loadParagraphVectors();
@@ -89,7 +87,7 @@ public class DocToVec {
 	}
 
 	public static ParagraphVectors loadParagraphVectors() throws IOException {
-		return WordVectorSerializer.readParagraphVectors("resources/docvec_070817");
+		return WordVectorSerializer.readParagraphVectors("resources/docvec_150817");
 	}
 
 	/**
@@ -100,6 +98,9 @@ public class DocToVec {
 	 */
 	public static void extractParagraphLabels(List<String> paragraphsList, List<String> labelsList,
 			Map<String, String> titleIdMap) throws IOException {
+		
+		//paragraphsList = new ArrayList<>();
+		//labelsList = new ArrayList<>();
 		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true);
 
 		// paragraphsList hold all the bodies and all the titles as complete
@@ -129,7 +130,7 @@ public class DocToVec {
 		int i = 0;
 		int j = 0; // stances
 
-		titleIdMap = new HashMap<>();
+		//titleIdMap = new HashMap<>();
 		List<List<String>> titleBodyPairs = new ArrayList<>();
 
 		// adding the title and their labels
