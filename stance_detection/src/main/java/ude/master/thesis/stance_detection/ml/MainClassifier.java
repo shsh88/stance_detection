@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -75,6 +76,7 @@ public class MainClassifier {
 	private boolean useArticleEmbedding = false;
 
 	private boolean useParagraphsEmbeddings = false;
+	private boolean useParagraphVectorsSimilarity = false;
 
 	private Map<Integer, String> trainingIdBodyMap;
 	private List<List<String>> trainingStances;
@@ -132,15 +134,33 @@ public class MainClassifier {
 
 	private void init() {
 
-		// TODO here we also build embeddings
 		if (useParagraphsEmbeddings) {
 			try {
 				paragraphVectors = DocToVec.loadParagraphVectors();
+				paragraphsList = new ArrayList<>();
+				labelsList = new ArrayList<>();
+				titleIdMap = new HashMap<>();
 				DocToVec.extractParagraphLabels(paragraphsList, labelsList, titleIdMap);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
+
+		if (useParagraphVectorsSimilarity) {
+			if (paragraphsList == null || labelsList == null || titleIdMap == null || paragraphVectors == null) {
+				paragraphsList = new ArrayList<>();
+				labelsList = new ArrayList<>();
+				titleIdMap = new HashMap<>();
+				try {
+					DocToVec.extractParagraphLabels(paragraphsList, labelsList, titleIdMap);
+					paragraphVectors = DocToVec.loadParagraphVectors();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
 		}
 
 		if (useTainingSet) {
@@ -176,7 +196,7 @@ public class MainClassifier {
 		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
 		Ranker ranker = new Ranker();
 		// ranker.setNumToSelect(4500);
-		ranker.setNumToSelect(5000);
+		// ranker.setNumToSelect(5000);
 		ranker.setThreshold(0);
 
 		attributeFilter.setEvaluator(ev2);
@@ -360,6 +380,10 @@ public class MainClassifier {
 			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
 				features.add(new Attribute("vecbody_" + i));
 		}
+		
+		if(useParagraphVectorsSimilarity){
+			features.add(new Attribute("pvecs_sim"));
+		}
 
 		// Add the classs attribute
 		String stancesClasses[] = new String[] { "agree", "disagree", "discuss", "unrelated" };
@@ -517,8 +541,17 @@ public class MainClassifier {
 			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
 				instance.setValue(instances.attribute("vecbody_" + i), bodyVec.getDouble(i));
 		}
+		
+		if(useParagraphVectorsSimilarity){
+			Attribute sim = instances.attribute("pvecs_sim");
+			instance.setValue(sim, (double) getSimilarityFeature(headline, bodyId));
+		}
 
 		return instance;
+	}
+
+	private Object getSimilarityFeature(String headline, String bodyId) {
+		return paragraphVectors.similarity(titleIdMap.get(headline), bodyId);
 	}
 
 	public boolean isUseOverlapFeature() {
@@ -641,6 +674,14 @@ public class MainClassifier {
 		this.testInstancesUnlabeled = testInstancesUnlabeled;
 	}
 
+	public boolean isUseParagraphVectorsSimilarity() {
+		return useParagraphVectorsSimilarity;
+	}
+
+	public void setUseParagraphVectorsSimilarity(boolean useParagraphVectorsSimilarity) {
+		this.useParagraphVectorsSimilarity = useParagraphVectorsSimilarity;
+	}
+
 	public boolean isEvaluate() {
 		return evaluate;
 	}
@@ -681,26 +722,31 @@ public class MainClassifier {
 					System.out.println("=== Evaluation ===");
 					Evaluation eval = new Evaluation(trainingInstances);
 					StringBuffer predsBuffer = new StringBuffer();
-					CSV csv = new CSV();
-					csv.setHeader(trainingInstances);
-					csv.setBuffer(predsBuffer);
-					long startTimeEvaluation = System.currentTimeMillis();
-					eval.crossValidateModel(classifier, trainingInstances, 10, new Random(1), csv);
-					long endTimeEvaluation = System.currentTimeMillis();
-
-					System.out.println((double) (endTimeEvaluation - startTimeEvaluation) / 1000 + "s Evaluationszeit");
-					logger.info("\n Evaluationzeit(s): " + (double) (endTimeEvaluation - startTimeEvaluation) / 1000);
-
-					System.out.println(eval.toSummaryString());
-					System.out.println(eval.toClassDetailsString());
-					System.out.println(trainingInstances.toSummaryString());
-					// System.out.println(predsBuffer.toString());
-
-					// classifier.classifyInstance(instance)
-					saveEvaluation(eval, predsBuffer, "_without_test_", trainingInstances);
-
+					/*
+					 * <-- CSV csv = new CSV();
+					 * csv.setHeader(trainingInstances);
+					 * csv.setBuffer(predsBuffer); long startTimeEvaluation =
+					 * System.currentTimeMillis();
+					 * eval.crossValidateModel(classifier, trainingInstances,
+					 * 10, new Random(1), csv); long endTimeEvaluation =
+					 * System.currentTimeMillis();
+					 * 
+					 * System.out.println((double) (endTimeEvaluation -
+					 * startTimeEvaluation) / 1000 + "s Evaluationszeit");
+					 * logger.info("\n Evaluationzeit(s): " + (double)
+					 * (endTimeEvaluation - startTimeEvaluation) / 1000);
+					 * 
+					 * System.out.println(eval.toSummaryString());
+					 * System.out.println(eval.toClassDetailsString());
+					 * System.out.println(trainingInstances.toSummaryString());
+					 * // System.out.println(predsBuffer.toString());
+					 * 
+					 * // classifier.classifyInstance(instance)
+					 * saveEvaluation(eval, predsBuffer, "_without_test_",
+					 * trainingInstances); -->
+					 */
 					predsBuffer = new StringBuffer();
-					csv = new CSV();
+					CSV csv = new CSV();
 					csv.setHeader(testInstances);
 					csv.setBuffer(predsBuffer);
 					classifier.buildClassifier(trainingInstances);
@@ -709,7 +755,7 @@ public class MainClassifier {
 
 					// serialize model
 					ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(
-							"resources/models/libsvm_joined_data_BoW" + getCurrentTimeStamp() + ".model"));
+							"resources/models/libsvm_pvecs_sim" + getCurrentTimeStamp() + ".model"));
 					oos.writeObject(classifier);
 					oos.flush();
 					oos.close();
@@ -725,7 +771,7 @@ public class MainClassifier {
 	private void saveEvaluation(Evaluation eval, StringBuffer predsBuffer, String addName, Instances data)
 			throws Exception {
 		PrintWriter out = new PrintWriter(
-				"C:/arff_data/" + "evaluation_svm_cv_BoW_" + addName + getCurrentTimeStamp() + ".txt");
+				"C:/arff_data/" + "evaluation_svm_cv_BoW_combined" + addName + getCurrentTimeStamp() + ".txt");
 		out.println(eval.toSummaryString());
 		out.println(eval.toClassDetailsString());
 		out.println(eval.toMatrixString());
