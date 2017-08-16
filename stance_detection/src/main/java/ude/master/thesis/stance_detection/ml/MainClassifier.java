@@ -102,7 +102,6 @@ public class MainClassifier {
 
 	private AttributeSelection attributeFilter;
 
-	private boolean evaluate = true;
 
 	private boolean BOW_useLemmatization = false;
 
@@ -117,6 +116,13 @@ public class MainClassifier {
 		this.trainingStances = trainingStances;
 
 		this.classifier = classifier;
+
+		long startTimeExtraction = System.currentTimeMillis();
+		init();
+		long endTimeExtraction = System.currentTimeMillis();
+		System.out.println((double) (endTimeExtraction - startTimeExtraction) / 1000 + "s Feature-Extraktion");
+		logger.info("\n Feature-Extraction: " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
+
 	}
 
 	public MainClassifier(Map<Integer, String> trainingIdBodyMap, List<List<String>> trainingStances,
@@ -380,8 +386,8 @@ public class MainClassifier {
 			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
 				features.add(new Attribute("vecbody_" + i));
 		}
-		
-		if(useParagraphVectorsSimilarity){
+
+		if (useParagraphVectorsSimilarity) {
 			features.add(new Attribute("pvecs_sim"));
 		}
 
@@ -541,8 +547,8 @@ public class MainClassifier {
 			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
 				instance.setValue(instances.attribute("vecbody_" + i), bodyVec.getDouble(i));
 		}
-		
-		if(useParagraphVectorsSimilarity){
+
+		if (useParagraphVectorsSimilarity) {
 			Attribute sim = instances.attribute("pvecs_sim");
 			instance.setValue(sim, (double) getSimilarityFeature(headline, bodyId));
 		}
@@ -682,14 +688,6 @@ public class MainClassifier {
 		this.useParagraphVectorsSimilarity = useParagraphVectorsSimilarity;
 	}
 
-	public boolean isEvaluate() {
-		return evaluate;
-	}
-
-	public void setEvaluate(boolean evaluate) {
-		this.evaluate = evaluate;
-	}
-
 	public Instances getTrainingInstances() {
 		return trainingInstances;
 	}
@@ -706,59 +704,31 @@ public class MainClassifier {
 		this.testInstances = testInstances;
 	}
 
-	public void evaluateWithCrossValidation() {
+	public void evaluateWithCrossValidation(String filename) {
 		if (useTainingSet) {
-			if (trainingInstances == null) {
-				long startTimeExtraction = System.currentTimeMillis();
-				init();
-				long endTimeExtraction = System.currentTimeMillis();
-				System.out.println((double) (endTimeExtraction - startTimeExtraction) / 1000 + "s Feature-Extraktion");
-				logger.info(
-						"\n Feature-Extraktionszeit(s): " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
 
-			}
-			if (evaluate)
 				try {
-					System.out.println("=== Evaluation ===");
+					System.out.println("=== Cross Validation Evaluation ===");
 					Evaluation eval = new Evaluation(trainingInstances);
-					StringBuffer predsBuffer = new StringBuffer();
-					/*
-					 * <-- CSV csv = new CSV();
-					 * csv.setHeader(trainingInstances);
-					 * csv.setBuffer(predsBuffer); long startTimeEvaluation =
-					 * System.currentTimeMillis();
-					 * eval.crossValidateModel(classifier, trainingInstances,
-					 * 10, new Random(1), csv); long endTimeEvaluation =
-					 * System.currentTimeMillis();
-					 * 
-					 * System.out.println((double) (endTimeEvaluation -
-					 * startTimeEvaluation) / 1000 + "s Evaluationszeit");
-					 * logger.info("\n Evaluationzeit(s): " + (double)
-					 * (endTimeEvaluation - startTimeEvaluation) / 1000);
-					 * 
-					 * System.out.println(eval.toSummaryString());
-					 * System.out.println(eval.toClassDetailsString());
-					 * System.out.println(trainingInstances.toSummaryString());
-					 * // System.out.println(predsBuffer.toString());
-					 * 
-					 * // classifier.classifyInstance(instance)
-					 * saveEvaluation(eval, predsBuffer, "_without_test_",
-					 * trainingInstances); -->
-					 */
-					predsBuffer = new StringBuffer();
-					CSV csv = new CSV();
-					csv.setHeader(testInstances);
-					csv.setBuffer(predsBuffer);
-					classifier.buildClassifier(trainingInstances);
-					eval.evaluateModel(classifier, testInstances, csv);
-					saveEvaluation(eval, predsBuffer, "_with_test_", testInstances);
 
-					// serialize model
-					ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(
-							"resources/models/libsvm_pvecs_sim" + getCurrentTimeStamp() + ".model"));
-					oos.writeObject(classifier);
-					oos.flush();
-					oos.close();
+					StringBuffer predsBuffer = new StringBuffer();
+					CSV csv = initCSV(predsBuffer);
+
+					long startTimeEvaluation = System.currentTimeMillis();
+					eval.crossValidateModel(classifier, trainingInstances, 10, new Random(1), csv);
+					long endTimeEvaluation = System.currentTimeMillis();
+
+					System.out.println((double) (endTimeEvaluation - startTimeEvaluation) / 1000 + "s Evaluationszeit");
+					logger.info("\n Evaluation with Cross Validation took: "
+							+ (double) (endTimeEvaluation - startTimeEvaluation) / 1000);
+
+					System.out.println(eval.toSummaryString());
+					System.out.println(eval.toClassDetailsString());
+					System.out.println(trainingInstances.toSummaryString());
+					// System.out.println(predsBuffer.toString());
+
+					saveEvaluation(classifier, eval, predsBuffer, "cv" + filename, trainingInstances);
+
 					System.out.println("===== Evaluating on filtered (training) dataset done =====");
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -768,10 +738,35 @@ public class MainClassifier {
 
 	}
 
-	private void saveEvaluation(Evaluation eval, StringBuffer predsBuffer, String addName, Instances data)
-			throws Exception {
-		PrintWriter out = new PrintWriter(
-				"C:/arff_data/" + "evaluation_svm_cv_BoW_combined" + addName + getCurrentTimeStamp() + ".txt");
+	public void evaluateOnTestset(){
+		StringBuffer predsBuffer;
+		predsBuffer = new StringBuffer();
+		CSV csv = initCSV(predsBuffer);
+
+		Evaluation eval;
+		try {
+			eval = new Evaluation(trainingInstances);
+			eval.evaluateModel(classifier, testInstances, csv);
+			saveEvaluation(classifier, eval, predsBuffer, "_with_test_", testInstances);
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	private CSV initCSV(StringBuffer predsBuffer) {
+		CSV csv = new CSV();
+		csv.setHeader(trainingInstances);
+		csv.setBuffer(predsBuffer);
+		return csv;
+	}
+
+	private void saveEvaluation(Classifier cls, Evaluation eval, StringBuffer predsBuffer, String filename,
+			Instances data) throws Exception {
+		PrintWriter out = new PrintWriter("C:/arff_data/" + filename + getCurrentTimeStamp() + ".txt");
+		out.println(cls.toString()); // TODO see if it prints what it meant to
 		out.println(eval.toSummaryString());
 		out.println(eval.toClassDetailsString());
 		out.println(eval.toMatrixString());
@@ -787,16 +782,20 @@ public class MainClassifier {
 	/**
 	 * Training the classifier on the training data
 	 */
-	public void train() {
+	public void train(boolean saveModel, String modelFilename) {
 		try {
-
-			if (trainingInstances == null) {
-				init();
-			}
-
 			classifier.buildClassifier(trainingInstances);
 			System.out.println(classifier);
 			System.out.println("===== Training Finished... =====");
+			
+			if (saveModel) {
+				// serialize model
+				ObjectOutputStream oos = new ObjectOutputStream(
+						new FileOutputStream("resources/models/" + modelFilename + getCurrentTimeStamp() + ".model"));
+				oos.writeObject(classifier);
+				oos.flush();
+				oos.close();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println(e.getMessage());

@@ -40,21 +40,24 @@ public class ParagraphVectorsSimClassifier {
 		MainClassifier classifier = new MainClassifier(trainingIdBodyMap, trainingStances, testIdBodyMap, testStances,
 				new LibSVM());
 /*
-		DataSource trainDataSource = new DataSource("resources/arff_data/baseline_features08-01_02-19.arff");
+		DataSource trainDataSource = new DataSource("??");
 		Instances trainData = trainDataSource.getDataSet();
 		trainData.setClassIndex(trainData.numAttributes() - 1);
 		classifier.setTrainingInstances(trainData);
 
-		DataSource testDataSource = new DataSource("resources/arff_data/baseline_features08-01_02-19_test.arff");
+		DataSource testDataSource = new DataSource("??");
 		Instances testData = testDataSource.getDataSet();
 		testData.setClassIndex(testData.numAttributes() - 1);
 		classifier.setTestInstances(testData);
 */
 		classifier.setUseParagraphVectorsSimilarity(true);
-		classifier.evaluateWithCrossValidation();
+		//classifier.evaluateWithCrossValidation("libsvm_ParagraphVectorsSimilarity_features_");
+		classifier.train(true, "libsvm_ParagraphVectorsSimilarity");
+		classifier.evaluateOnTestset();
+		
 		classifier.saveInstancesToArff("ParagraphVectorsSimilarity_features_" + getCurrentTimeStamp());
 
-		// classifier.train();
+	
 
 		System.out.println(System.currentTimeMillis() - start);
 	}
