@@ -47,7 +47,7 @@ public class StanceWord2VecClassifier {
 		//classifier.setBOW_useLemmatization(true);
 		//classifier.setEvaluate(false);
 		classifier.setUseParagraphsEmbeddings(true);
-		classifier.evaluate();
+		classifier.evaluateWithCrossValidation();
 		classifier.saveInstancesToArff("Doc2Vec_features_" + getCurrentTimeStamp());
 
 		// classifier.train();

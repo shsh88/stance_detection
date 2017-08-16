@@ -706,7 +706,7 @@ public class MainClassifier {
 		this.testInstances = testInstances;
 	}
 
-	public void evaluate() {
+	public void evaluateWithCrossValidation() {
 		if (useTainingSet) {
 			if (trainingInstances == null) {
 				long startTimeExtraction = System.currentTimeMillis();

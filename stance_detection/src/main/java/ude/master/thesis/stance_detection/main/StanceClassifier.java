@@ -59,7 +59,7 @@ public class StanceClassifier {
 		classifier.setUseWordGramsFeatures(true);
 		// classifier.setUseTitle(true);
 		// classifier.setUseArticle(true);
-		classifier.evaluate();
+		classifier.evaluateWithCrossValidation();
 		//classifier.saveInstancesToArff("baseline_features_" + getCurrentTimeStamp());
 
 		// classifier.train();

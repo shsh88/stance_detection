@@ -48,7 +48,7 @@ public class StanceBoWClassifierWithCombinedVec {
 		classifier.setUseAttributeSelectionFilter(true);
 		classifier.setBOW_useLemmatization(true);
 		//classifier.setEvaluate(false);
-		classifier.evaluate();
+		classifier.evaluateWithCrossValidation();
 		classifier.saveInstancesToArff("BoW_features_combined_vecs" + getCurrentTimeStamp());
 
 		//classifier.train();

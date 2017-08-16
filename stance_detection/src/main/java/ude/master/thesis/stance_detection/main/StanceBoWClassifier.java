@@ -48,7 +48,7 @@ public class StanceBoWClassifier {
 		classifier.setUseAttributeSelectionFilter(true);
 		classifier.setBOW_useLemmatization(true);
 		//classifier.setEvaluate(false);
-		classifier.evaluate();
+		classifier.evaluateWithCrossValidation();
 		classifier.saveInstancesToArff("BoW_features_Chi_thre0_5000_lemma_trainv" + getCurrentTimeStamp());
 
 		//classifier.train();
