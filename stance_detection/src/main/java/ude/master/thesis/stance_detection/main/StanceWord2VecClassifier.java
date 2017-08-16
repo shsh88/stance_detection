@@ -32,13 +32,13 @@ public class StanceWord2VecClassifier {
 				new LibSVM());
 		/*
 		 * DataSource trainDataSource = new DataSource(
-		 * "resources/arff_data/BoW_features_Chi_thre0_500008-11_10-36.arff");
+		 * "??");
 		 * Instances trainData = trainDataSource.getDataSet();
 		 * trainData.setClassIndex(trainData.numAttributes() - 1);
 		 * classifier.setTrainingInstances(trainData);
 		 * 
 		 * DataSource testDataSource = new DataSource(
-		 * "resources/arff_data/BoW_features_Chi_thre0_500008-11_10-36_test.arff"
+		 * "??"
 		 * ); Instances testData = testDataSource.getDataSet();
 		 * testData.setClassIndex(testData.numAttributes() - 1);
 		 * classifier.setTestInstances(testData);
