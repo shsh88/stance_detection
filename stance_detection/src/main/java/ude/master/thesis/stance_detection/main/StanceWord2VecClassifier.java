@@ -43,9 +43,9 @@ public class StanceWord2VecClassifier {
 		 * testData.setClassIndex(testData.numAttributes() - 1);
 		 * classifier.setTestInstances(testData);
 		 */
-		//classifier.setUseAttributeSelectionFilter(true);
+		classifier.setUseAttributeSelectionFilter(false);
 		//classifier.setBOW_useLemmatization(true);
-		// classifier.setEvaluate(false);
+		//classifier.setEvaluate(false);
 		classifier.setUseParagraphsEmbeddings(true);
 		classifier.evaluate();
 		classifier.saveInstancesToArff("Doc2Vec_features_" + getCurrentTimeStamp());
