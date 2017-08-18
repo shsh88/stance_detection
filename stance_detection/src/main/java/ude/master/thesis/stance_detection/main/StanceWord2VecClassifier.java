@@ -49,7 +49,7 @@ public class StanceWord2VecClassifier {
 		classifier.setUseParagraphsEmbeddings(true);
 		
 		classifier.train(true, "libsvm_Doc2Vec_features_");
-		classifier.evaluateOnTestset();
+		classifier.evaluateOnTestset("libsvm_Doc2Vec_");
 		classifier.saveInstancesToArff("Doc2Vec_features_" + getCurrentTimeStamp());
 		System.out.println(System.currentTimeMillis() - start);
 	}

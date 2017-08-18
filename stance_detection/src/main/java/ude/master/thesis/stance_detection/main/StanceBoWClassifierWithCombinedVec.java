@@ -33,12 +33,12 @@ public class StanceBoWClassifierWithCombinedVec {
 		MainClassifier classifier = new MainClassifier(trainingIdBodyMap, trainingStances, testIdBodyMap, testStances,
 				new LibSVM());
 
-				DataSource trainDataSource = new DataSource("C:/arff_data/combined_train_08-15_17-44.arff");
+				DataSource trainDataSource = new DataSource("C:/arff_data/combined_train_08-17_18-04.arff");
 				Instances trainData = trainDataSource.getDataSet();
 				trainData.setClassIndex(trainData.numAttributes() - 1);
 				classifier.setTrainingInstances(trainData);
 
-				DataSource testDataSource = new DataSource("C:/arff_data/combined_test_08-15_17-44.arff");
+				DataSource testDataSource = new DataSource("C:/arff_data/combined_test_08-17_18-04.arff");
 				Instances testData = testDataSource.getDataSet();
 				testData.setClassIndex(testData.numAttributes() - 1);
 				classifier.setTestInstances(testData);
@@ -49,9 +49,9 @@ public class StanceBoWClassifierWithCombinedVec {
 		classifier.setBOW_useLemmatization(true);
 		
 		//classifier.evaluateWithCrossValidation("BoW_features_combined_vecs");
-		classifier.train(true, "libsvm_BoW_features_combined_vecs");
-		classifier.evaluateOnTestset();
-		classifier.saveInstancesToArff("BoW_features_combined_vecs" + getCurrentTimeStamp());
+		classifier.train(true, "libsvm_article_not_onClassBasis_wordcount_TF_freq2_08-17_18-04");
+		classifier.evaluateOnTestset("libsvm_article_not_onClassBasis_wordcount_TF_freq2_08-17_18-04");
+		classifier.saveInstancesToArff("libsvm_article_not_onClassBasis_wordcount_TF_freq2_08-17_18-04" + getCurrentTimeStamp());
 
 		//classifier.train();
 
