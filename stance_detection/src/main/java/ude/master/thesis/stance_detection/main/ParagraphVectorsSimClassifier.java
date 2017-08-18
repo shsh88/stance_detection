@@ -53,7 +53,7 @@ public class ParagraphVectorsSimClassifier {
 		classifier.setUseParagraphVectorsSimilarity(true);
 		//classifier.evaluateWithCrossValidation("libsvm_ParagraphVectorsSimilarity_features_");
 		classifier.train(true, "libsvm_ParagraphVectorsSimilarity");
-		classifier.evaluateOnTestset();
+		classifier.evaluateOnTestset("libsvm_ParagraphVectorsSimilarity");
 		
 		classifier.saveInstancesToArff("ParagraphVectorsSimilarity_features_" + getCurrentTimeStamp());
 
