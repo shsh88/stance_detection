@@ -91,7 +91,7 @@ public class FeatureExtractor {
 			if (cleanBody.length() >= 255) {
 				if (cleanBody.substring(0, 255).contains(token))
 					binCountEarly++;
-				// TODO Do we really need to add this if the text length < 255 ?
+				// TODO Do we really need to add this if the text length < 255 (the next else) ?
 			} else {
 				if (cleanBody.contains(token))
 					binCountEarly++;
@@ -155,10 +155,10 @@ public class FeatureExtractor {
 	}
 
 	private static boolean isStopword(String word) {
-		// if (word.length() < 2)
-		// return true;
-		// if (word.charAt(0) >= '0' && word.charAt(0) <= '9')
-		// return true; // remove numbers, "23rd", etc
+		if (word.length() < 2)
+		    return true;
+		if (word.charAt(0) >= '0' && word.charAt(0) <= '9')
+			return true; // remove numbers, "23rd", etc
 		if (stopSet.contains(word))
 			return true;
 		else
