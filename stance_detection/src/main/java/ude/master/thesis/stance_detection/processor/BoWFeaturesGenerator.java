@@ -59,13 +59,14 @@ public class BoWFeaturesGenerator {
 	private boolean useAttributeFilter = false;
 
 	public void process() throws IOException {
-		// generateArticleInstances(true, true);
+		generateArticleInstances(true, true);
 		// System.out.println("***");
 		// System.out.println(articleInstances == null);
-		// saveVocabularyOnDisk(articleInstances, true, 1, 1, 5000, true, 3,
-		// false, true, "first");
-		// generateHeadlinesAndBodiesArff(true);
-		loadData(true);
+		saveVocabularyOnDisk(articleInstances, true, 1, 1, 10000, true, 2, true, true, "first");
+		generateHeadlinesAndBodiesArff(true);
+		
+		//****** trying with batch StringToWordVector filter only   *******//
+		/*loadData(true);
 		ArffLoader loader1 = new ArffLoader();
 		loader1.setSource(new File("C:/arff_data/titles_08-15_13-11.arff"));
 		titlesInstances = loader1.getDataSet();
@@ -89,17 +90,18 @@ public class BoWFeaturesGenerator {
 			titlesInstances = renameAttributes(titlesInstances, "h_");
 			bodiesInstances = renameAttributes(bodiesInstances, "b_");
 
-			saveInstancesToArff("v_article", articleInstances);
-			saveInstancesToArff("v_titles", titlesInstances);
-			saveInstancesToArff("v_bodies", bodiesInstances);
+			saveInstancesToArff("v_article_yes_onClassBasis_wordcount_TF_freq2", articleInstances);
+			saveInstancesToArff("v_article_yes_onClassBasis_wordcount_TF_freq2", titlesInstances);
+			saveInstancesToArff("v_article_yes_onClassBasis_wordcount_TF_freq2", bodiesInstances);
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		combineVectors();*/
 
-		// vectorizeBodiesInstances();
-		// vectorizeTitlesInstances();
+		vectorizeBodiesInstances();
+		vectorizeTitlesInstances();
 		combineVectors();
 	}
 
@@ -140,7 +142,7 @@ public class BoWFeaturesGenerator {
 
 		str2WordFilter.setTokenizer(tokenizer);
 		str2WordFilter.setWordsToKeep(5000);
-		// str2WordFilter.setDoNotOperateOnPerClassBasis(true);
+		str2WordFilter.setDoNotOperateOnPerClassBasis(false);
 		str2WordFilter.setLowerCaseTokens(true);
 		str2WordFilter.setMinTermFreq(2);
 
@@ -153,12 +155,12 @@ public class BoWFeaturesGenerator {
 
 		// Apply IDF-TF Weighting + DocLength-Normalization
 		str2WordFilter.setTFTransform(true);
-		str2WordFilter.setIDFTransform(true);
+		str2WordFilter.setIDFTransform(false);
 		str2WordFilter.setNormalizeDocLength(
 				new SelectedTag(StringToWordVector.FILTER_NORMALIZE_ALL, StringToWordVector.TAGS_FILTER));
 
 		// experimental
-		str2WordFilter.setOutputWordCounts(false);
+		str2WordFilter.setOutputWordCounts(true);
 
 		// always first attribute
 		str2WordFilter.setAttributeIndices("first");
@@ -220,13 +222,13 @@ public class BoWFeaturesGenerator {
 		// By using NGram tokenizer
 		tokenizer.setNGramMinSize(1);
 		tokenizer.setNGramMaxSize(1);
-		tokenizer.setDelimiters("[^0-9a-zA-Z]");
+		//tokenizer.setDelimiters("[^0-9a-zA-Z]");
 
 		WordsFromFile stopwords = new WordsFromFile();
 		stopwords.setStopwords(new File("resources/stopwords.txt"));
 
-		FixedDictionaryStringToWordVector fdStr = getVectorizer(tokenizer, stopwords, false, true, true, false,
-				new File("resources/dic_5000"));
+		FixedDictionaryStringToWordVector fdStr = getVectorizer(tokenizer, stopwords, true, true, true, true,
+				new File("resources/dic_10000"));
 		fdStr.setAttributeIndices("first");
 		fdStr.setAttributeNamePrefix("h_");
 
@@ -240,7 +242,7 @@ public class BoWFeaturesGenerator {
 			e.printStackTrace();
 		}
 
-		saveInstancesToArff("vectorized_titles", titlesInstances);
+		saveInstancesToArff("vectorized_titles2", titlesInstances);
 		System.out.println("finished vectorizeTitlesInstances");
 	}
 
@@ -251,26 +253,26 @@ public class BoWFeaturesGenerator {
 		// By using NGram tokenizer
 		tokenizer.setNGramMinSize(1);
 		tokenizer.setNGramMaxSize(1);
-		tokenizer.setDelimiters("[^0-9a-zA-Z]");
+		//tokenizer.setDelimiters("[^0-9a-zA-Z]");
 
 		WordsFromFile stopwords = new WordsFromFile();
 		stopwords.setStopwords(new File("resources/stopwords.txt"));
 
-		FixedDictionaryStringToWordVector fdStr = getVectorizer(tokenizer, stopwords, false, true, true, false,
-				new File("resources/dic_5000"));
+		FixedDictionaryStringToWordVector fdStr = getVectorizer(tokenizer, stopwords, true, true, true, true,
+				new File("resources/dic_10000"));
 		fdStr.setAttributeIndices("first");
 		fdStr.setAttributeNamePrefix("b_");
 
 		try {
-			System.out.println("bodies instances size = " + titlesInstances.size());
+			System.out.println("bodies instances size = " + bodiesInstances.size());
 			fdStr.setInputFormat(bodiesInstances);
 			bodiesInstances = Filter.useFilter(bodiesInstances, fdStr);
-			System.out.println("v bodies instances size = " + titlesInstances.size());
+			System.out.println("v bodies instances size = " + bodiesInstances.size());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		saveInstancesToArff("vectorized_bodies", bodiesInstances);
+		saveInstancesToArff("vectorized_bodies2", bodiesInstances);
 		System.out.println("finished vectorizeBodiesInstances");
 	}
 
@@ -365,7 +367,7 @@ public class BoWFeaturesGenerator {
 		// By using NGram tokenizer
 		tokenizer.setNGramMinSize(ngram_min);
 		tokenizer.setNGramMaxSize(ngram_max);
-		tokenizer.setDelimiters("[^0-9a-zA-Z]");
+		//tokenizer.setDelimiters("[^0-9a-zA-Z]");
 
 		StringToWordVector str2WordFilter = new StringToWordVector();
 
@@ -398,7 +400,7 @@ public class BoWFeaturesGenerator {
 
 		// always first attribute
 		str2WordFilter.setAttributeIndices(attIndices);
-		str2WordFilter.setDictionaryFileToSaveTo(new File("resources/dic_5000"));
+		str2WordFilter.setDictionaryFileToSaveTo(new File("resources/dic_10000"));
 		try {
 			System.out.println("ERROR");
 			System.out.println(instances == null);
