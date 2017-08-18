@@ -49,6 +49,8 @@ public class StanceClassifier {
 		Instances testData = testDataSource.getDataSet();
 		testData.setClassIndex(testData.numAttributes() - 1);
 		classifier.setTestInstances(testData);
+		
+		classifier.setUseSummarization(true);
 
 		classifier.setUseOverlapFeature(true);
 		classifier.setUseRefutingFeatures(true);
@@ -59,7 +61,9 @@ public class StanceClassifier {
 		classifier.setUseWordGramsFeatures(true);
 		// classifier.setUseTitle(true);
 		// classifier.setUseArticle(true);
-		classifier.evaluateWithCrossValidation("libsvm_baseline_features");
+		classifier.initialize();
+		classifier.train(true, "libsvm_baseline_features_summarized");
+		classifier.evaluateWithCrossValidation("libsvm_baseline_features_summarized");
 		//classifier.saveInstancesToArff("baseline_features_" + getCurrentTimeStamp());
 
 		// classifier.train();
