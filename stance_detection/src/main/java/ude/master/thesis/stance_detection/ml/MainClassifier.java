@@ -3,6 +3,7 @@ package ude.master.thesis.stance_detection.ml;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -14,11 +15,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.search.UsageTrackingQueryCachingPolicy;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.simmetrics.StringDistance;
+import org.simmetrics.metrics.CosineSimilarity;
+import org.simmetrics.simplifiers.Simplifiers;
+import org.simmetrics.tokenizers.Tokenizers;
+import static com.google.common.base.Predicates.in;
+import static org.simmetrics.builders.StringDistanceBuilder.with;
+
+import com.google.common.base.Predicates;
+//import com.google.common.collect.Sets;
 
 import ude.master.thesis.stance_detection.processor.FeatureExtractor;
 import ude.master.thesis.stance_detection.processor.Lemmatizer;
@@ -68,6 +81,8 @@ public class MainClassifier {
 	private boolean useCharGramsFeatures = false;
 	private boolean useWordGramsFeatures = false;
 
+	private boolean useCosineSimilarity = false;
+
 	private boolean useTitle = false;
 	private boolean useArticle = false;
 
@@ -95,13 +110,14 @@ public class MainClassifier {
 
 	private StringToWordVector str2WordFilter;
 
+	private static StringDistance cosSimMetric;
+
 	private int textNGramMinSize = 1;
 	private int textNGramMaxSize = 3;
 
 	private Classifier classifier;
 
 	private AttributeSelection attributeFilter;
-
 
 	private boolean BOW_useLemmatization = false;
 
@@ -110,18 +126,14 @@ public class MainClassifier {
 	private List<String> labelsList;
 	private Map<String, String> titleIdMap;
 
+	private boolean useSummarization;
+
 	public MainClassifier(Map<Integer, String> trainingIdBodyMap, List<List<String>> trainingStances,
 			Classifier classifier) {
 		this.trainingIdBodyMap = trainingIdBodyMap;
 		this.trainingStances = trainingStances;
 
 		this.classifier = classifier;
-
-		long startTimeExtraction = System.currentTimeMillis();
-		init();
-		long endTimeExtraction = System.currentTimeMillis();
-		System.out.println((double) (endTimeExtraction - startTimeExtraction) / 1000 + "s Feature-Extraktion");
-		logger.info("\n Feature-Extraction: " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
 
 	}
 
@@ -136,10 +148,25 @@ public class MainClassifier {
 
 		this.useTainingSet = true;
 		this.classifier = classifier;
+
+	}
+
+	public void initialize() {
+		long startTimeExtraction = System.currentTimeMillis();
+		init();
+		long endTimeExtraction = System.currentTimeMillis();
+		System.out.println((double) (endTimeExtraction - startTimeExtraction) / 1000 + "s Feature-Extraction");
+		logger.info("\n Feature-Extraction: " + (double) (endTimeExtraction - startTimeExtraction) / 1000);
 	}
 
 	private void init() {
+		System.out.println("********");
 
+		if (useCosineSimilarity) {
+			System.out.println("*1*");
+			initCosSimilarityMetric();
+		}
+		
 		if (useParagraphsEmbeddings) {
 			try {
 				paragraphVectors = DocToVec.loadParagraphVectors();
@@ -195,6 +222,31 @@ public class MainClassifier {
 		}
 	}
 
+	private void initCosSimilarityMetric() {
+		System.out.println("init metric");
+		//TreeSet<String> stopSet = initializeStopwords("resources/stopwords.txt");
+
+		//Set<String> commonWords = Sets.newHashSet(stopSet);
+		cosSimMetric = with(new CosineSimilarity<String>()).simplify(Simplifiers.toLowerCase())
+				.simplify(Simplifiers.removeNonWord()).tokenize(Tokenizers.whitespace())
+				.tokenize(Tokenizers.qGram(3)).build();
+	}
+
+	private TreeSet<String> initializeStopwords(String stopFile) {
+		TreeSet<String> stopSet = new TreeSet<>();
+		Scanner s;
+		try {
+			s = new Scanner(new FileReader(stopFile));
+			while (s.hasNext())
+				stopSet.add(s.next());
+			s.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return stopSet;
+	}
+
 	private void applyAttributSelectionFilter() {
 		attributeFilter = new AttributeSelection();
 
@@ -202,7 +254,7 @@ public class MainClassifier {
 		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
 		Ranker ranker = new Ranker();
 		// ranker.setNumToSelect(4500);
-		// ranker.setNumToSelect(5000);
+		ranker.setNumToSelect(5000);
 		ranker.setThreshold(0);
 
 		attributeFilter.setEvaluator(ev2);
@@ -379,6 +431,11 @@ public class MainClassifier {
 			}
 		}
 
+		if (useCosineSimilarity) {
+			features.add(new Attribute("cos_sim"));
+			System.out.println("*2*");
+		}
+
 		if (useParagraphsEmbeddings) {
 			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
 				features.add(new Attribute("vechead_" + i));
@@ -538,6 +595,15 @@ public class MainClassifier {
 			}
 		}
 
+		if (useCosineSimilarity) {
+			Attribute cosAtt = instances.attribute("cos_sim");
+
+			String headlineLem = FeatureExtractor.getLemmatizedCleanStr(headline);
+			String bodyLem = FeatureExtractor.getLemmatizedCleanStr(body);
+			instance.setValue(cosAtt, cosSimMetric.distance(headlineLem, bodyLem));
+			System.out.println("*3*");
+		}
+
 		if (useParagraphsEmbeddings) {
 			INDArray titleVec = paragraphVectors.getLookupTable().vector(titleIdMap.get(headline));
 			for (int i = 0; i < paragraphVectors.getLayerSize(); i++)
@@ -608,6 +674,14 @@ public class MainClassifier {
 		this.useWordGramsFeatures = useWordGramsFeatures;
 	}
 
+	public boolean isUseCosineSimilarity() {
+		return useCosineSimilarity;
+	}
+
+	public void setUseCosineSimilarity(boolean useCosineSimilarity) {
+		this.useCosineSimilarity = useCosineSimilarity;
+	}
+
 	public boolean isUseTitle() {
 		return useTitle;
 	}
@@ -672,6 +746,14 @@ public class MainClassifier {
 		this.useParagraphsEmbeddings = useParagraphsEmbeddings;
 	}
 
+	public boolean isUseSummarization() {
+		return useSummarization;
+	}
+
+	public void setUseSummarization(boolean useSummarization) {
+		this.useSummarization = useSummarization;
+	}
+
 	public Instances getTestInstancesUnlabeled() {
 		return testInstancesUnlabeled;
 	}
@@ -707,38 +789,38 @@ public class MainClassifier {
 	public void evaluateWithCrossValidation(String filename) {
 		if (useTainingSet) {
 
-				try {
-					System.out.println("=== Cross Validation Evaluation ===");
-					Evaluation eval = new Evaluation(trainingInstances);
+			try {
+				System.out.println("=== Cross Validation Evaluation ===");
+				Evaluation eval = new Evaluation(trainingInstances);
 
-					StringBuffer predsBuffer = new StringBuffer();
-					CSV csv = initCSV(predsBuffer);
+				StringBuffer predsBuffer = new StringBuffer();
+				CSV csv = initCSV(predsBuffer);
 
-					long startTimeEvaluation = System.currentTimeMillis();
-					eval.crossValidateModel(classifier, trainingInstances, 10, new Random(1), csv);
-					long endTimeEvaluation = System.currentTimeMillis();
+				long startTimeEvaluation = System.currentTimeMillis();
+				eval.crossValidateModel(classifier, trainingInstances, 10, new Random(1), csv);
+				long endTimeEvaluation = System.currentTimeMillis();
 
-					System.out.println((double) (endTimeEvaluation - startTimeEvaluation) / 1000 + "s Evaluationszeit");
-					logger.info("\n Evaluation with Cross Validation took: "
-							+ (double) (endTimeEvaluation - startTimeEvaluation) / 1000);
+				System.out.println((double) (endTimeEvaluation - startTimeEvaluation) / 1000 + "s Evaluationszeit");
+				logger.info("\n Evaluation with Cross Validation took: "
+						+ (double) (endTimeEvaluation - startTimeEvaluation) / 1000);
 
-					System.out.println(eval.toSummaryString());
-					System.out.println(eval.toClassDetailsString());
-					System.out.println(trainingInstances.toSummaryString());
-					// System.out.println(predsBuffer.toString());
+				// System.out.println(eval.toSummaryString());
+				// System.out.println(eval.toClassDetailsString());
+				// System.out.println(trainingInstances.toSummaryString());
+				// System.out.println(predsBuffer.toString());
 
-					saveEvaluation(classifier, eval, predsBuffer, "cv" + filename, trainingInstances);
+				saveEvaluation(classifier, eval, predsBuffer, "cv" + filename, trainingInstances);
 
-					System.out.println("===== Evaluating on filtered (training) dataset done =====");
-				} catch (Exception e) {
-					e.printStackTrace();
-					System.out.println("Problem found when evaluating");
-				}
+				System.out.println("===== Evaluating on filtered (training) dataset done =====");
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Problem found when evaluating");
+			}
 		}
 
 	}
 
-	public void evaluateOnTestset(){
+	public void evaluateOnTestset(String resultsFilename) {
 		StringBuffer predsBuffer;
 		predsBuffer = new StringBuffer();
 		CSV csv = initCSV(predsBuffer);
@@ -747,8 +829,8 @@ public class MainClassifier {
 		try {
 			eval = new Evaluation(trainingInstances);
 			eval.evaluateModel(classifier, testInstances, csv);
-			saveEvaluation(classifier, eval, predsBuffer, "_with_test_", testInstances);
-			
+			saveEvaluation(classifier, eval, predsBuffer, resultsFilename + "_with_test_", testInstances);
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -787,7 +869,7 @@ public class MainClassifier {
 			classifier.buildClassifier(trainingInstances);
 			System.out.println(classifier);
 			System.out.println("===== Training Finished... =====");
-			
+
 			if (saveModel) {
 				// serialize model
 				ObjectOutputStream oos = new ObjectOutputStream(
@@ -831,5 +913,6 @@ public class MainClassifier {
 		}
 
 	}
+
 
 }
