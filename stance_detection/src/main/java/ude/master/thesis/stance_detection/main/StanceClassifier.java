@@ -40,7 +40,7 @@ public class StanceClassifier {
 		MainClassifier classifier = new MainClassifier(trainingIdBodyMap, trainingStances, testIdBodyMap, testStances,
 				new LibSVM());
 
-		DataSource trainDataSource = new DataSource("resources/arff_data/baseline_features08-01_02-19.arff");
+		/*DataSource trainDataSource = new DataSource("resources/arff_data/baseline_features08-01_02-19.arff");
 		Instances trainData = trainDataSource.getDataSet();
 		trainData.setClassIndex(trainData.numAttributes() - 1);
 		classifier.setTrainingInstances(trainData);
@@ -48,7 +48,7 @@ public class StanceClassifier {
 		DataSource testDataSource = new DataSource("resources/arff_data/baseline_features08-01_02-19_test.arff");
 		Instances testData = testDataSource.getDataSet();
 		testData.setClassIndex(testData.numAttributes() - 1);
-		classifier.setTestInstances(testData);
+		classifier.setTestInstances(testData);*/
 		
 		classifier.setUseSummarization(true);
 
@@ -63,10 +63,10 @@ public class StanceClassifier {
 		// classifier.setUseArticle(true);
 		classifier.initialize();
 		classifier.train(true, "libsvm_baseline_features_summarized");
-		classifier.evaluateWithCrossValidation("libsvm_baseline_features_summarized");
-		//classifier.saveInstancesToArff("baseline_features_" + getCurrentTimeStamp());
+		//classifier.evaluateWithCrossValidation("libsvm_baseline_features_summarized");
+		classifier.evaluateOnTestset("libsvm_baseline_features_summarized");
+		classifier.saveInstancesToArff("libsvm_baseline_features_summarized" + getCurrentTimeStamp());
 
-		// classifier.train();
 
 		System.out.println(System.currentTimeMillis() - start);
 	}
