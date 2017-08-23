@@ -23,7 +23,8 @@ import com.opencsv.CSVReader;
  */
 
 public class StanceDetectionDataReader {
-	//TODO still trainTitleIdMap not filled / not used.. maybe should use title-body map instead
+	// TODO still trainTitleIdMap not filled / not used.. maybe should use
+	// title-body map instead
 	private Map<String, String> trainTitleIdMap;
 	private Map<Integer, String> trainIdBodyMap;
 	private List<List<String>> trainStances;
@@ -75,16 +76,30 @@ public class StanceDetectionDataReader {
 				setTestData();
 	}
 
+	public StanceDetectionDataReader(boolean setTrainingData, boolean setTestData, String trainingBodiesDataLoc,
+			String testBodiesDataLocation) throws IOException {
+		this.defaultLocation = false;
+		if (setTrainingData)
+			setTrainingData(null, trainingBodiesDataLoc);
+		if (setTestData)
+			if (!testBodiesDataLocation.equals(""))
+				setTestData(null, testBodiesDataLocation);
+			else
+				setTestData();
+	}
+
 	private void setTestData(String testStanceDataLocation, String testBodiesDataLocation)
 			throws FileNotFoundException, IOException {
 		testIdBodyMap = readInIdBodiesMap(new File(testBodiesDataLocation));
-		testStances = readStances(new File(testStanceDataLocation));
+		if (testStanceDataLocation != null)
+			testStances = readStances(new File(testStanceDataLocation));
 	}
 
 	private void setTrainingData(String trainingStanceDataLoc, String trainingBodiesDataLoc)
 			throws FileNotFoundException, IOException {
 		trainIdBodyMap = readInIdBodiesMap(new File(trainingBodiesDataLoc));
-		trainStances = readStances(new File(trainingStanceDataLoc));
+		if (trainingStanceDataLoc != null)
+			trainStances = readStances(new File(trainingStanceDataLoc));
 	}
 
 	/**
