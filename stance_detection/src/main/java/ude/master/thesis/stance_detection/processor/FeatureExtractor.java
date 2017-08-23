@@ -1,5 +1,6 @@
 package ude.master.thesis.stance_detection.processor;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,8 +20,33 @@ public class FeatureExtractor {
 
 	// TODO: Needs investigation--> look at what words used in discussing
 	// articles (Maybe find the words that shows more often / intersect)
-	public static String[] discussWords = { "according", "maybe", "reporting", "reports", "say", "says", "claim",
-			"claims", "purportedly", "investigating", "told", "tells", "allegedly", "validate", "verify" };
+	/*public static String[] discussWords = { "according", "maybe", "reporting", "reports", "say", 
+			"says", "claim",
+			"claims", "purportedly", "investigating", "told", "tells", "allegedly", "validate", "verify" };*/
+	
+	//_hedging words by Ferreira
+	public static String[] discussWords = {"alleged", "allegedly",
+	        "apparently",
+	        "appear", "appears",
+	        "claim", "claims",
+	        "could",
+	        "evidently",
+	        "largely",
+	        "likely",
+	        "mainly",
+	        "may", "maybe", "might",
+	        "mostly",
+	        "perhaps",
+	        "presumably",
+	        "probably",
+	        "purported", "purportedly",
+	        "reported", "reportedly",
+	        "rumor", "rumour", "rumors", "rumours", "rumored", "rumoured",
+	        "says",
+	        "seem",
+	        "somewhat",
+	        // "supposedly",
+	"unconfirmed"};
 
 	private static TreeSet<String> stopSet;
 	private static final String STOPWORDS_FILE = "resources/stopwords.txt";
@@ -47,6 +73,22 @@ public class FeatureExtractor {
 
 		return (double) intersectinSet.size() / (double) UnionSet.size();
 
+	}
+	
+	public static Set<String> getOverlappedWords(String headline, String body) {
+		
+		List<String> headlineLem = removeStopWords(new Lemmatizer().lemmatize(clean(headline)));
+		List<String> bodyLem = removeStopWords(new Lemmatizer().lemmatize(clean(body)));
+
+		Set<String> intersectinSet = new HashSet<>(headlineLem);
+		Set<String> bodySet = new HashSet<>(bodyLem);
+
+		Set<String> unionSet = new HashSet<>(headlineLem);
+
+		intersectinSet.retainAll(bodySet);
+		unionSet.addAll(bodySet);
+		
+		return unionSet;
 	}
 
 	// TODO Do we do this feature just for the headline ?
@@ -141,20 +183,27 @@ public class FeatureExtractor {
 		return f;
 	}
 
-	private static List<String> removeStopWords(List<String> tokens) {
+	public static List<String> removeStopWords(List<String> tokens) {
 		List<String> wordsNoStop = new ArrayList<>();
 
 		for (String word : tokens) {
 			if (word.isEmpty())
 				continue;
-			if (isStopword(word))
-				continue; // remove stopwords
+			try {
+				if (isStopword(word))
+					continue;
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} // remove stopwords
 			wordsNoStop.add(word);
 		}
 		return wordsNoStop;
 	}
 
-	private static boolean isStopword(String word) {
+	private static boolean isStopword(String word) throws Exception {
+		if(stopSet == null)
+			initializeStopwords(STOPWORDS_FILE);
 		if (word.length() < 2)
 		    return true;
 		if (word.charAt(0) >= '0' && word.charAt(0) <= '9')
@@ -165,12 +214,19 @@ public class FeatureExtractor {
 			return false;
 	}
 
-	private static void initializeStopwords(String stopFile) throws Exception {
+	private static void initializeStopwords(String stopFile){
 		stopSet = new TreeSet<>();
-		Scanner s = new Scanner(new FileReader(stopFile));
-		while (s.hasNext())
-			stopSet.add(s.next());
-		s.close();
+		Scanner s;
+		try {
+			s = new Scanner(new FileReader(stopFile));
+			while (s.hasNext())
+				stopSet.add(s.next());
+			s.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	/**
