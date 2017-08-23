@@ -166,7 +166,7 @@ public class MainClassifier {
 			System.out.println("*1*");
 			initCosSimilarityMetric();
 		}
-		
+
 		if (useParagraphsEmbeddings) {
 			try {
 				paragraphVectors = DocToVec.loadParagraphVectors();
@@ -224,27 +224,13 @@ public class MainClassifier {
 
 	private void initCosSimilarityMetric() {
 		System.out.println("init metric");
-		//TreeSet<String> stopSet = initializeStopwords("resources/stopwords.txt");
+		// TreeSet<String> stopSet =
+		// initializeStopwords("resources/stopwords.txt");
 
-		//Set<String> commonWords = Sets.newHashSet(stopSet);
+		// Set<String> commonWords = Sets.newHashSet(stopSet);
 		cosSimMetric = with(new CosineSimilarity<String>()).simplify(Simplifiers.toLowerCase())
-				.simplify(Simplifiers.removeNonWord()).tokenize(Tokenizers.whitespace())
-				.tokenize(Tokenizers.qGram(3)).build();
-	}
-
-	private TreeSet<String> initializeStopwords(String stopFile) {
-		TreeSet<String> stopSet = new TreeSet<>();
-		Scanner s;
-		try {
-			s = new Scanner(new FileReader(stopFile));
-			while (s.hasNext())
-				stopSet.add(s.next());
-			s.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return stopSet;
+				.simplify(Simplifiers.removeNonWord()).tokenize(Tokenizers.whitespace()).tokenize(Tokenizers.qGram(3))
+				.build();
 	}
 
 	private void applyAttributSelectionFilter() {
@@ -502,6 +488,12 @@ public class MainClassifier {
 
 		instance.setDataset(instances);
 
+		if (useSummarization) {
+			String summBody = "";
+			body = summarize(body);
+			//System.out.println(body);
+		}
+
 		if (useTitle) {
 			Attribute titleAtt = instances.attribute("title_head");
 			if (BOW_useLemmatization) {
@@ -620,6 +612,40 @@ public class MainClassifier {
 		}
 
 		return instance;
+	}
+
+	private String summarize(String body) {
+		String summBody;
+		if (body.length() > 1000) {
+
+			int periodPos = body.indexOf('.');
+
+			if (periodPos == -1) {
+				periodPos = body.indexOf(' ', 256);
+				summBody = body.substring(0, periodPos);
+				// summBody += body.substring(body.indexOf(' ',
+				// body.length()-300));
+			} else {
+				while (periodPos < 256) {
+					periodPos = body.indexOf('.', periodPos + 1);
+				}
+				summBody = body.substring(0, periodPos);
+			}
+			
+			periodPos = body.indexOf('.', body.length() - 400);
+			if (periodPos == -1) {
+				periodPos = body.indexOf(' ', body.length() - 300);
+				summBody = body.substring(periodPos);
+			} else {
+				int shift = 100;
+				while (periodPos > (body.length() - 200)) {
+					periodPos = body.lastIndexOf('.', periodPos - shift);
+				}
+				summBody += body.substring(periodPos);
+			}
+			body = summBody;
+		}
+		return body;
 	}
 
 	private Object getSimilarityFeature(String headline, String bodyId) {
@@ -913,6 +939,5 @@ public class MainClassifier {
 		}
 
 	}
-
 
 }
