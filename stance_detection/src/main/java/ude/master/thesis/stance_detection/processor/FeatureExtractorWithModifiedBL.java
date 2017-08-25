@@ -155,6 +155,14 @@ public class FeatureExtractorWithModifiedBL {
 	}
 
 	private static boolean isStopword(String word) {
+		if(stopSet == null)
+			try {
+				initializeStopwords(STOPWORDS_FILE);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
 		if (word.length() < 2)
 		    return true;
 		if (word.charAt(0) >= '0' && word.charAt(0) <= '9')
