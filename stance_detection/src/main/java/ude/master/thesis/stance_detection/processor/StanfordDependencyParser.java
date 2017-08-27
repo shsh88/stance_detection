@@ -23,6 +23,7 @@ import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.EnhancedDependenciesAnnotation;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.EnhancedPlusPlusDependenciesAnnotation;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.BasicDependenciesAnnotation;
 import edu.stanford.nlp.trees.GrammaticalRelation;
 import edu.stanford.nlp.util.CoreMap;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
@@ -141,7 +142,7 @@ public class StanfordDependencyParser {
 		int id = 0;
 
 		for (SemanticGraph graph : graphs) {
-			IndexedWord root = graph.getFirstRoot();
+			IndexedWord root = graph.getFirstRoot(); // TODO: it it precise to take only the first root
 			for (int i = 1; i <= graph.size(); i++) {
 				// System.out.println("graph size: " + graph.size());
 				IndexedWord idxW = graph.getNodeByIndexSafe(i);
