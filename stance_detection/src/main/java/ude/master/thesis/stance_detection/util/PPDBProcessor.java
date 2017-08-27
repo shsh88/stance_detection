@@ -6,11 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.DoubleStream;
 
 import org.clapper.util.misc.FileHashMap;
 import org.clapper.util.misc.ObjectExistsException;
@@ -18,32 +15,32 @@ import org.clapper.util.misc.VersionMismatchException;
 
 import com.opencsv.CSVWriter;
 
-import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.semgraph.SemanticGraph;
-import lombok.Cleanup;
 import ude.master.thesis.stance_detection.processor.FeatureExtractor;
-import ude.master.thesis.stance_detection.processor.FeatureExtractorWithModifiedBL;
 import ude.master.thesis.stance_detection.processor.Lemmatizer;
 import ude.master.thesis.stance_detection.processor.Porter;
-import weka.core.pmml.jaxbbindings.TrainingInstances;
 
 public class PPDBProcessor {
 
 	public static final double MIN_PPDB_SCORE = -10.0;
 	public static final double MAX_PPDB_SCORE = 10.0;
-
+	
+	public static final String PPDB_2_S_Lexical = "C:/Master UDE/thesis/software/ppdb-2.0-s-lexical";
+	public static final String MAP_PPDB_2_S_Lexical = "C:/Master UDE/thesis/software/mydata";
+	
+	public static final String PPDB_2_XXL_ALL = "C:/Master UDE/thesis/software/ppdb-2.0-xxl-all/ppdb-2.0-xxl-all";
+	public static final String MAP_PPDB_2_XXL_ALL = "C:/Master UDE/thesis/software/ppdb-2.0-xxl-all/map_ppdb-2.0-xxl-all";
+	
+	
 	static FileHashMap<String, ArrayList<ArrayList<String>>> ppdbData;
 	private static Lemmatizer lemm;
 
 	public static void main(String[] args) throws IOException {
-		// extractParaphrases("C:/Master
-		// UDE/thesis/software/ppdb-2.0-s-lexical", "C:/Master
-		// UDE/thesis/software/mydata");
+		//extractParaphrases(PPDB_2_XXL_ALL, MAP_PPDB_2_XXL_ALL);
 
 		// **************************************** read saved map
 
 		// loadPPDB2("C:/Master UDE/thesis/software/mydata");
-		ppdbData = loadPPDB2("C:/Master UDE/thesis/software/mydata");
+		//ppdbData = loadPPDB2("C:/Master UDE/thesis/software/mydata");
 		lemm = new Lemmatizer();
 		/*
 		 * //discuss -6 String headline =
@@ -125,7 +122,7 @@ public class PPDBProcessor {
 		 */
 
 		// Generate tehe features from data and save them
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
+		/*StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
 				"resources/data/summ_train_bodies.csv", "resources/data/test_data/competition_test_stances.csv",
 				"resources/data/test_data/summ_competition_test_bodies.csv");
 
@@ -136,7 +133,11 @@ public class PPDBProcessor {
 		HashMap<Integer, String> testIdBodyMap = sddr.getTestIdBodyMap();
 		List<List<String>> testStances = sddr.getTestStances();
 		generateHungarianPPDBFeaturesAndSave(testIdBodyMap, testStances, "C:/thesis_stuff/features/test_hung_ppdb.csv");
-
+*/
+	}
+	
+	public static void saveHungarianScoreInFileMap(String txtFilename, String fileMapName){
+		
 	}
 
 	private static void generateHungarianPPDBFeaturesAndSave(Map<Integer, String> idBodyMap, List<List<String>> stances,
@@ -327,6 +328,10 @@ public class PPDBProcessor {
 				// System.out.println(str);
 
 				String[] data = str.split(" \\|\\|\\| ");
+				
+				if((data[1].split(" ").length > 1) || (data[2].split(" ").length > 1))
+					continue;
+				
 				String textLhs = data[1];
 				String textRhs = data[2];
 
