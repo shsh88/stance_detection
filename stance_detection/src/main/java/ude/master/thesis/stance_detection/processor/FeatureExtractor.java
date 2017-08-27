@@ -201,7 +201,7 @@ public class FeatureExtractor {
 		return wordsNoStop;
 	}
 
-	private static boolean isStopword(String word) throws Exception {
+	public static boolean isStopword(String word) throws Exception {
 		if(stopSet == null)
 			initializeStopwords(STOPWORDS_FILE);
 		if (word.length() < 2)
