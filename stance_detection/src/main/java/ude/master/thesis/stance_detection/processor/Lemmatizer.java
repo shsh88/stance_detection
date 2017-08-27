@@ -8,7 +8,9 @@ import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -52,6 +54,48 @@ public class Lemmatizer {
 				// list of lemmas
 				lemmas.add(token.get(LemmaAnnotation.class));
 			}
+		}
+		return lemmas;
+	}
+	
+	/**
+	 * Get the lemmas with indexes after removing stop words
+	 * @param documentText
+	 * @return
+	 */
+	public Map<String, Integer> lemmatizeWithIdx(String documentText) {
+		//String cleanTxt = FeatureExtractor.clean(documentText);
+		
+		Map<String, Integer> lemmas = new HashMap<>();
+		// Create an empty Annotation just with the given text
+		Annotation document = new Annotation(documentText);
+		// run all Annotators on this text
+		this.pipeline.annotate(document);
+		// Iterate over all of the sentences found
+		List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+		int i = 0; //for sentences
+		int j = 0; //for tokens
+		System.out.println("ssize " + sentences.size());
+		for (CoreMap sentence : sentences) {
+			// Iterate over all tokens in a sentence
+			for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
+				// Retrieve and add the lemma for each word into the
+				// list of lemmas
+				String lemma = token.get(LemmaAnnotation.class);
+				lemma = FeatureExtractor.clean(lemma).trim();
+				
+				try {
+					if(FeatureExtractor.isStopword(lemma) || lemma.isEmpty())
+						continue;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				lemmas.put(""+ lemma + ","+ i + ","+ token.index(), j);
+				j++;
+			}
+			i++;
 		}
 		return lemmas;
 	}
