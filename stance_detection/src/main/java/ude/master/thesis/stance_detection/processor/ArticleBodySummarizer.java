@@ -22,14 +22,14 @@ public class ArticleBodySummarizer {
 
 			if (periodPos == -1) {
 				periodPos = body.indexOf(' ', 256);
-				summBody = body.substring(0, periodPos);
+				summBody = body.substring(0, periodPos + 1);
 				// summBody += body.substring(body.indexOf(' ',
 				// body.length()-300));
 			} else {
 				while (periodPos < 256) {
 					periodPos = body.indexOf('.', periodPos + 1);
 				}
-				summBody = body.substring(0, periodPos);
+				summBody = body.substring(0, periodPos + 1);
 			}
 
 			periodPos = body.indexOf('.', body.length() - 400);
@@ -41,7 +41,7 @@ public class ArticleBodySummarizer {
 				while (periodPos > (body.length() - 200)) {
 					periodPos = body.lastIndexOf('.', periodPos - shift);
 				}
-				summBody += body.substring(periodPos);
+				summBody += body.substring(periodPos + 1);
 			}
 			body = summBody;
 		}
