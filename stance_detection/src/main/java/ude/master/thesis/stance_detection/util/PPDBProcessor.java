@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +14,7 @@ import org.clapper.util.misc.FileHashMap;
 import org.clapper.util.misc.ObjectExistsException;
 import org.clapper.util.misc.VersionMismatchException;
 
+import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
 import ude.master.thesis.stance_detection.processor.FeatureExtractor;
@@ -122,22 +124,100 @@ public class PPDBProcessor {
 		 */
 
 		// Generate tehe features from data and save them
-		/*StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
 				"resources/data/summ_train_bodies.csv", "resources/data/test_data/competition_test_stances.csv",
 				"resources/data/test_data/summ_competition_test_bodies.csv");
 
 		Map<Integer, String> trainIdBodyMap = sddr.getTrainIdBodyMap();
 		List<List<String>> trainingStances = sddr.getTrainStances();
-		generateHungarianPPDBFeaturesAndSave(trainIdBodyMap, trainingStances,
-				"C:/thesis_stuff/features/train_hung_ppdb.csv");
+		//generateHungarianPPDBFeaturesAndSave(trainIdBodyMap, trainingStances,
+				//"C:/thesis_stuff/features/train_hung_ppdb.csv");
 		HashMap<Integer, String> testIdBodyMap = sddr.getTestIdBodyMap();
 		List<List<String>> testStances = sddr.getTestStances();
-		generateHungarianPPDBFeaturesAndSave(testIdBodyMap, testStances, "C:/thesis_stuff/features/test_hung_ppdb.csv");
-*/
+		//generateHungarianPPDBFeaturesAndSave(testIdBodyMap, testStances, "C:/thesis_stuff/features/test_hung_ppdb.csv");
+		saveHungarianScoreInFileMap("C:/thesis_stuff/features/test_features/test_hung_ppdb.csv", "C:/thesis_stuff/features/test_features/map_test_hung_ppdb");
+
+		//Test saved Hungarian_Score Data
+		//saveHungarianScoreInFileMap("C:/thesis_stuff/features/train_features/train_hung_ppdb.csv", "C:/thesis_stuff/features/train_features/map_train_hung_ppdb");
+		//FileHashMap<String, ArrayList<Integer>> hung_scores = loadHungarianScoreFromFileMap("C:/thesis_stuff/features/train_features/map_train_hung_ppdb");
+		//System.out.println(hung_scores.get("Banksy 'Arrested & Real Identity Revealed' Is The Same Hoax From Last Year1739"));
 	}
 	
 	public static void saveHungarianScoreInFileMap(String txtFilename, String fileMapName){
 		
+		CSVReader reader = null;
+		try {
+			
+			FileHashMap<String, ArrayList<Integer>> stanceData = new FileHashMap<String, ArrayList<Integer>>(
+					fileMapName, FileHashMap.FORCE_OVERWRITE);
+			
+			reader = new CSVReader(new FileReader(txtFilename));
+			String[] line;
+			line = reader.readNext();
+			
+			while ((line = reader.readNext()) != null) {
+				
+				String idxStr = line[4];
+				System.out.println(idxStr);
+				ArrayList<Integer> idxs = getIntList(idxStr);
+				
+				stanceData.put(line[0]+line[1], idxs);
+			}
+			reader.close();
+			
+			//saving the map file
+			stanceData.save();
+			stanceData.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ObjectExistsException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (VersionMismatchException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
+
+	public static ArrayList<Integer> getIntList(String idxStr) {
+		idxStr = idxStr.substring(idxStr.indexOf('[')+1, idxStr.indexOf(']')).trim();
+		String[] idxStrs = idxStr.split(", ");
+		//create int Arraylist
+		ArrayList<Integer> idxs = new ArrayList<>();
+		for(String idx : idxStrs){
+			idxs.add(Integer.valueOf(idx.trim()));
+		}
+		return idxs;
+	}
+	
+	public static FileHashMap<String, ArrayList<Integer>> loadHungarianScoreFromFileMap(String filemapPath){
+		FileHashMap<String, ArrayList<Integer>> stanceData = null;
+		try {
+			stanceData = new FileHashMap<String, ArrayList<Integer>>(filemapPath,
+					FileHashMap.RECLAIM_FILE_GAPS);
+		} catch (ObjectExistsException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (VersionMismatchException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return stanceData;
 	}
 
 	private static void generateHungarianPPDBFeaturesAndSave(Map<Integer, String> idBodyMap, List<List<String>> stances,
@@ -394,7 +474,7 @@ public class PPDBProcessor {
 		}
 	}
 
-	private static FileHashMap<String, ArrayList<ArrayList<String>>> loadPPDB2(String path)
+	public static FileHashMap<String, ArrayList<ArrayList<String>>> loadPPDB2(String path)
 			throws FileNotFoundException, IOException {
 		FileHashMap<String, ArrayList<ArrayList<String>>> ppdbScoreReader = null;
 		try {
