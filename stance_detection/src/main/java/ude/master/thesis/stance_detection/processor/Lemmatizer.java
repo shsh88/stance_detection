@@ -20,7 +20,8 @@ import java.util.Properties;
  */
 public class Lemmatizer {
 
-	protected StanfordCoreNLP pipeline;
+	private StanfordCoreNLP pipeline;
+	private Porter porter;
 
 	public Lemmatizer() {
 		// Create StanfordCoreNLP object properties, with POS tagging
@@ -64,6 +65,8 @@ public class Lemmatizer {
 	 * @return
 	 */
 	public Map<String, Integer> lemmatizeWithIdx(String documentText) {
+		if(porter==null)
+			porter = new Porter();
 		//String cleanTxt = FeatureExtractor.clean(documentText);
 		
 		Map<String, Integer> lemmas = new HashMap<>();
@@ -75,7 +78,7 @@ public class Lemmatizer {
 		List<CoreMap> sentences = document.get(SentencesAnnotation.class);
 		int i = 0; //for sentences
 		int j = 0; //for tokens
-		System.out.println("ssize " + sentences.size());
+		//System.out.println("ssize " + sentences.size());
 		for (CoreMap sentence : sentences) {
 			// Iterate over all tokens in a sentence
 			for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
@@ -92,7 +95,7 @@ public class Lemmatizer {
 					e.printStackTrace();
 				}
 				
-				lemmas.put(""+ lemma + ","+ i + ","+ token.index(), j);
+				lemmas.put(""+ porter.stripAffixes(lemma) + ","+ i + ","+ token.index(), j);
 				j++;
 			}
 			i++;
