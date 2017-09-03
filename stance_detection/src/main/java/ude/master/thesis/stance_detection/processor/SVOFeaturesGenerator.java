@@ -46,8 +46,10 @@ public class SVOFeaturesGenerator {
 	private static List<List<String>> testStances;
 	private static FileHashMap<String, List<Map<String, String>>> titlesSVOsMap;
 	private static FileHashMap<String, List<Map<String, String>>> bodiesSVOsMap;
+	private static FileHashMap<String, ArrayList<ArrayList<String>>> ppdbData;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException, ObjectExistsException, ClassNotFoundException,
+			VersionMismatchException, IOException {
 		/*
 		 * StanceDetectionDataReader sddr = new StanceDetectionDataReader(true,
 		 * true, "resources/data/train_stances.csv",
@@ -79,14 +81,6 @@ public class SVOFeaturesGenerator {
 		 * "BrFidel Castro is dead, according to viral Twitter rumors"; String
 		 * testTxt = "We have no information on whether users are at risk";
 		 */
-
-		entailmentsMap = new HashMap<>();
-		entailmentsMap.put("ReverseEntailment", 0);
-		entailmentsMap.put("ForwardEntailment", 1);
-		entailmentsMap.put("Equivalence", 2);
-		entailmentsMap.put("OtherRelated", 2);
-		entailmentsMap.put("Independence", 3);
-
 		StanceDetectionDataReader sddr = null;
 		try {
 			sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
@@ -102,7 +96,16 @@ public class SVOFeaturesGenerator {
 		testIdBodyMap = sddr.getTestIdBodyMap();
 		testStances = sddr.getTestStances();
 
+		entailmentsMap = new HashMap<>();
+		entailmentsMap.put("ReverseEntailment", 0);
+		entailmentsMap.put("ForwardEntailment", 1);
+		entailmentsMap.put("Equivalence", 2);
+		entailmentsMap.put("OtherRelated", 2);
+		entailmentsMap.put("Independence", 3);
+
 		// extractTitlesAndBodiesSVOsAndSave();
+		// ppdb: paraphrase, score, entailment
+		ppdbData = PPDBProcessor.loadPPDB2(PPDBProcessor.MAP_PPDB_2_XXL_ALL);
 
 		try {
 			titlesSVOsMap = new FileHashMap<String, List<Map<String, String>>>(
@@ -110,14 +113,13 @@ public class SVOFeaturesGenerator {
 			bodiesSVOsMap = new FileHashMap<String, List<Map<String, String>>>(
 					"C:/thesis_stuff/help_files/bodies_svos_train_test", FileHashMap.RECLAIM_FILE_GAPS);
 
-			generateDataSVOFeatureVector(trainingStances, "C:/thesis_stuff/features/train_svo_features.csv");
-			generateDataSVOFeatureVector(testStances, "C:/thesis_stuff/features/test_neg_features.csv");
+			generateDataSVOFeatureVector(trainingStances,
+					"C:/thesis_stuff/features/train_features/train_svo_nosvo_features.csv");
+			generateDataSVOFeatureVector(testStances, "C:/thesis_stuff/features/test_features/test_svo_nosvo_features.csv");
 		} catch (ObjectExistsException | ClassNotFoundException | VersionMismatchException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		
 
 	}
 
@@ -136,21 +138,19 @@ public class SVOFeaturesGenerator {
 			entry.add(s.get(1));
 			entry.add(s.get(2));
 
-			int vec[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-			List<Map<String, String>> t_svos = null;
-			if(titlesSVOsMap.containsKey(s.get(0)))
-				 t_svos = titlesSVOsMap.get(s.get(0));
-			else
-				System.out.println("not there 1");
-			List<Map<String, String>> b_svos = null;
+			//int vec[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			int vec[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 			
-			if(bodiesSVOsMap.containsKey(s.get(1)))
-			 b_svos = bodiesSVOsMap.get(s.get(1));
-			else
-				System.out.println("not there 2");
+			List<Map<String, String>> t_svos = null;
+
+			t_svos = titlesSVOsMap.get(s.get(0));
+			List<Map<String, String>> b_svos = null;
+
+			b_svos = bodiesSVOsMap.get(s.get(1));
 
 			if (!t_svos.isEmpty() && !b_svos.isEmpty()) {
-				Map<int[], Double> vecMap = new HashMap<>();
+				//Map<int[], Double> vecMap = new HashMap<>();
+				List<int[]> vecs = new ArrayList<>();
 				for (Map<String, String> t_svo : t_svos) {
 					for (Map<String, String> b_svo : b_svos) {
 						int[] nsubjEntailment = calcEntailmentFeatureVector(t_svo.get("nsubj"), b_svo.get("nsubj"));
@@ -169,20 +169,38 @@ public class SVOFeaturesGenerator {
 						for (int i = 8; i < 12; i++) {
 							v[i] = dobjEntailment[i - 8];
 						}
-						vecMap.put(v, avg(v));
+						//vecMap.put(v, avg(v));
+						vecs.add(v);
 
 					}
 				}
 				// get the vector with max values
-				int[] vv = vecMap.entrySet().stream()
-						.max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
+				// int[] vv = vecMap.entrySet().stream()
+						//.max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
+				
+				//add up the svo vectors
+				int[] identity = new int[12];
+				Arrays.setAll(identity, (index) -> 0);
+				int[] vv = vecs.stream().reduce(identity, SVOFeaturesGenerator::add);
+				
+				
 				vec = Arrays.copyOf(vv, vec.length);
+				
+				/*if(vecs.size() > 0){
+					System.out.println(s);
+					for(int[] vs : vecs)
+						System.out.println(Arrays.toString(vs));
+					System.out.println(Arrays.toString(vec));
+				}*/
+				
+				
+				entry.add(Arrays.toString(vec));
+				entries.add(entry.toArray(new String[0]));
+			} else {
+
 				entry.add(Arrays.toString(vec));
 				entries.add(entry.toArray(new String[0]));
 			}
-
-			entry.add(Arrays.toString(vec));
-			entries.add(entry.toArray(new String[0]));
 
 			if (k % 10000 == 0)
 				System.out.println("processed: " + k);
@@ -196,6 +214,18 @@ public class SVOFeaturesGenerator {
 		System.out.println("saved saved saved");
 	}
 
+	public static int[] add(int[] first, int[] second) {
+        int length = first.length < second.length ? first.length
+                : second.length;
+        int[] result = new int[length];
+
+        for (int i = 0; i < length; i++) {
+            result[i] = first[i] + second[i];
+        }
+
+        return result;
+    }
+
 	private static Double avg(int[] v) {
 		double sum = 0.0;
 		for (int i = 0; i < v.length; i++)
@@ -206,9 +236,6 @@ public class SVOFeaturesGenerator {
 	@CheckForNull
 	public static int[] calcEntailmentFeatureVector(String w1, String w2) throws FileNotFoundException, IOException {
 		int vec[] = { 0, 0, 0, 0 };
-		// ppdb: paraphrase, score, entailment
-		FileHashMap<String, ArrayList<ArrayList<String>>> ppdbData = PPDBProcessor
-				.loadPPDB2(PPDBProcessor.MAP_PPDB_2_XXL_ALL);
 
 		if (w1.equals(w2)) {
 			vec[entailmentsMap.get("Equivalence")] = 1;
@@ -236,9 +263,7 @@ public class SVOFeaturesGenerator {
 	public static void extractTitlesAndBodiesSVOsAndSave()
 			throws IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
 
-		Properties props = new Properties();
-		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,depparse,natlog,openie");
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		StanfordCoreNLP pipeline = getStanfordPipeline();
 
 		// get titles SVOs
 		String titlesSVOsPath = "C:/thesis_stuff/help_files/titles_svos_train_test";
@@ -323,10 +348,11 @@ public class SVOFeaturesGenerator {
 					for (String d : deps) {
 						String depType = d.substring(0, d.indexOf('('));
 						if (depType.equals("nsubj")) {
-							String betweenBrack = d.substring(d.indexOf('(') + 1, d.indexOf(')'));
+							String betweenBrack = d.substring(d.lastIndexOf('(') + 1, d.indexOf(')'));
 							String[] depWords = betweenBrack.split(",");
-							if (depWords[1].substring(0, depWords[1].indexOf('-')).trim().equals(vec.get("nsubj"))) {
-								vec.put("verb", depWords[0].substring(0, depWords[0].indexOf('-')).trim());
+							if (depWords[1].substring(0, depWords[1].lastIndexOf('-')).trim()
+									.equals(vec.get("nsubj"))) {
+								vec.put("verb", depWords[0].substring(0, depWords[0].lastIndexOf('-')).trim());
 							}
 						}
 					}
@@ -337,5 +363,66 @@ public class SVOFeaturesGenerator {
 			i++;
 		}
 		return svos;
+	}
+
+	/**
+	 * 
+	 * @param hashFileName
+	 * @throws IOException
+	 * @throws VersionMismatchException
+	 * @throws ClassNotFoundException
+	 * @throws ObjectExistsException
+	 * @throws FileNotFoundException
+	 */
+	public static void saveTitlesDependencyGraphs(String hashFileName) throws FileNotFoundException,
+			ObjectExistsException, ClassNotFoundException, VersionMismatchException, IOException {
+		// saving titles graphs
+		FileHashMap<String, List<Map<String, String>>> titlesDepTreeMap = new FileHashMap<String, List<Map<String, String>>>(
+				hashFileName + "_titles", FileHashMap.FORCE_OVERWRITE);
+
+		Set<String> titles = new HashSet<String>();
+
+		for (List<String> s : trainingStances) {
+			titles.add(s.get(0));
+		}
+
+		for (List<String> s : testStances) {
+			titles.add(s.get(0));
+		}
+
+		StanfordCoreNLP pipeline = getStanfordPipeline();
+
+		for (String t : titles) {
+			List<Map<String, String>> svos = getSVOsFromText(pipeline, t);
+			titlesDepTreeMap.put(t, svos);
+		}
+
+		titlesDepTreeMap.save();
+		titlesDepTreeMap.close();
+
+		// saving bodies graphs
+		FileHashMap<String, List<Map<String, String>>> bodiesDepTreeMap = new FileHashMap<String, List<Map<String, String>>>(
+				hashFileName + "_bodies", FileHashMap.FORCE_OVERWRITE);
+		for (Map.Entry<Integer, String> b : trainIdBodyMap.entrySet()) {
+			List<Map<String, String>> svos = getSVOsFromText(pipeline, b.getValue());
+			bodiesDepTreeMap.put(String.valueOf(b.getKey()), svos);
+		}
+
+		for (Map.Entry<Integer, String> b : testIdBodyMap.entrySet()) {
+			List<Map<String, String>> svos = getSVOsFromText(pipeline, b.getValue());
+			bodiesDepTreeMap.put(String.valueOf(b.getKey()), svos);
+
+		}
+
+		bodiesDepTreeMap.save();
+		bodiesDepTreeMap.close();
+
+	}
+
+	private static StanfordCoreNLP getStanfordPipeline() {
+		Properties props = new Properties();
+		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,depparse,natlog,openie");
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		return pipeline;
 	}
 }
