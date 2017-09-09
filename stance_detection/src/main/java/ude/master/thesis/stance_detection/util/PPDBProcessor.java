@@ -1,5 +1,6 @@
 package ude.master.thesis.stance_detection.util;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -17,32 +18,38 @@ import org.clapper.util.misc.VersionMismatchException;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
+import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.util.CoreMap;
 import ude.master.thesis.stance_detection.processor.FeatureExtractor;
 import ude.master.thesis.stance_detection.processor.Lemmatizer;
 import ude.master.thesis.stance_detection.processor.Porter;
+import ude.master.thesis.stance_detection.processor.StanfordDependencyParser;
 
 public class PPDBProcessor {
 
 	public static final double MIN_PPDB_SCORE = -10.0;
 	public static final double MAX_PPDB_SCORE = 10.0;
-	
+
 	public static final String PPDB_2_S_Lexical = "C:/Master UDE/thesis/software/ppdb-2.0-s-lexical";
 	public static final String MAP_PPDB_2_S_Lexical = "C:/Master UDE/thesis/software/mydata";
-	
+
 	public static final String PPDB_2_XXL_ALL = "C:/Master UDE/thesis/software/ppdb-2.0-xxl-all/ppdb-2.0-xxl-all";
 	public static final String MAP_PPDB_2_XXL_ALL = "C:/Master UDE/thesis/software/ppdb-2.0-xxl-all/map_ppdb-2.0-xxl-all";
-	
-	
+
 	static FileHashMap<String, ArrayList<ArrayList<String>>> ppdbData;
 	private static Lemmatizer lemm;
+	private static StanfordCoreNLP pipeline;
 
 	public static void main(String[] args) throws IOException {
-		//extractParaphrases(PPDB_2_XXL_ALL, MAP_PPDB_2_XXL_ALL);
+		pipeline = TitleAndBodyTextPreprocess.getStanfordPipeline();
+		// extractParaphrases(PPDB_2_XXL_ALL, MAP_PPDB_2_XXL_ALL);
 
 		// **************************************** read saved map
 
 		// loadPPDB2("C:/Master UDE/thesis/software/mydata");
-		//ppdbData = loadPPDB2("C:/Master UDE/thesis/software/mydata");
+		ppdbData = loadPPDB2("C:/Master UDE/thesis/software/mydata");
 		lemm = new Lemmatizer();
 		/*
 		 * //discuss -6 String headline =
@@ -123,52 +130,76 @@ public class PPDBProcessor {
 		 * System.out.println(score + "   " + indexes);
 		 */
 
-		// Generate tehe features from data and save them
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
-				"resources/data/summ_train_bodies.csv", "resources/data/test_data/competition_test_stances.csv",
+		// Generate the features from data and save them
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+				"resources/data/train_stances_preprocessed.csv", "resources/data/summ_train_bodies.csv",
+				"resources/data/test_data/test_stances_preprocessed.csv",
 				"resources/data/test_data/summ_competition_test_bodies.csv");
 
-		Map<Integer, String> trainIdBodyMap = sddr.getTrainIdBodyMap();
 		List<List<String>> trainingStances = sddr.getTrainStances();
-		//generateHungarianPPDBFeaturesAndSave(trainIdBodyMap, trainingStances,
-				//"C:/thesis_stuff/features/train_hung_ppdb.csv");
-		HashMap<Integer, String> testIdBodyMap = sddr.getTestIdBodyMap();
-		List<List<String>> testStances = sddr.getTestStances();
-		//generateHungarianPPDBFeaturesAndSave(testIdBodyMap, testStances, "C:/thesis_stuff/features/test_hung_ppdb.csv");
-		saveHungarianScoreInFileMap("C:/thesis_stuff/features/test_features/test_hung_ppdb.csv", "C:/thesis_stuff/features/test_features/map_test_hung_ppdb");
+		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File("resources/data/train_bodies_preprocessed_summ.csv"));
+		generateHungarianPPDBFeaturesAndSave(trainingSummIdBoyMap, trainingStances,
+				"C:/thesis_stuff/features/train_features/train_hung_ppdb_with_stopwords.csv");
 
-		//Test saved Hungarian_Score Data
-		//saveHungarianScoreInFileMap("C:/thesis_stuff/features/train_features/train_hung_ppdb.csv", "C:/thesis_stuff/features/train_features/map_train_hung_ppdb");
-		//FileHashMap<String, ArrayList<Integer>> hung_scores = loadHungarianScoreFromFileMap("C:/thesis_stuff/features/train_features/map_train_hung_ppdb");
-		//System.out.println(hung_scores.get("Banksy 'Arrested & Real Identity Revealed' Is The Same Hoax From Last Year1739"));
+		List<List<String>> testStances = sddr.getTestStances();
+
+		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File("resources/data/test_data/test_bodies_preprocessed_summ.csv"));
+		generateHungarianPPDBFeaturesAndSave(testSummIdBoyMap, testStances,
+				"C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords.csv");
+
+		// saveHungarianScoreInFileMap("C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords.csv",
+		// "C:/thesis_stuff/features/test_features/map_test_hung_ppdb_with_stopwords");
+
+		// Test saved Hungarian_Score Data
+		// saveHungarianScoreInFileMap("C:/thesis_stuff/features/train_features/train_hung_ppdb_with_stopwords.csv",
+		// "C:/thesis_stuff/features/train_features/map_train_hung_ppdb_with_stopwords");
+		// FileHashMap<String, ArrayList<Integer>> hung_scores =
+		// loadHungarianScoreFromFileMap("C:/thesis_stuff/features/train_features/map_train_hung_ppdb");
+		// System.out.println(hung_scores.get("Banksy 'Arrested & Real Identity
+		// Revealed' Is The Same Hoax From Last Year1739"));
 	}
-	
-	public static void saveHungarianScoreInFileMap(String txtFilename, String fileMapName){
-		
+
+	public static void saveHungarianScoreInFileMap(String txtFilename, String fileMapName) {
+
 		CSVReader reader = null;
 		try {
-			
-			FileHashMap<String, ArrayList<Integer>> stanceData = new FileHashMap<String, ArrayList<Integer>>(
+
+			FileHashMap<String, Map<Integer, ArrayList<ArrayList<Integer>>>> hungarianScoreData = new FileHashMap<String, Map<Integer, ArrayList<ArrayList<Integer>>>>(
 					fileMapName, FileHashMap.FORCE_OVERWRITE);
-			
+
 			reader = new CSVReader(new FileReader(txtFilename));
 			String[] line;
 			line = reader.readNext();
-			
+			Map<Integer, ArrayList<ArrayList<Integer>>> idxsMap = new HashMap<>();
+
 			while ((line = reader.readNext()) != null) {
+				ArrayList<ArrayList<Integer>> idxListP1 = new ArrayList<>();
+				for (int i = 4; i < 9; i++) {
+					String idxStr = line[i].split("\\|")[1];
+					System.out.println(idxStr);
+					ArrayList<Integer> idxs = getIntList(idxStr);
+					idxListP1.add(idxs);
+				}
+				idxsMap.put(1, idxListP1);
 				
-				String idxStr = line[4];
-				System.out.println(idxStr);
-				ArrayList<Integer> idxs = getIntList(idxStr);
-				
-				stanceData.put(line[0]+line[1], idxs);
+				ArrayList<ArrayList<Integer>> idxListP3 = new ArrayList<>();
+				for (int i = 9; i < 13; i++) {
+					String idxStr = line[i].split("\\|")[1];
+					System.out.println(idxStr);
+					ArrayList<Integer> idxs = getIntList(idxStr);
+					idxListP3.add(idxs);
+				}
+				idxsMap.put(3, idxListP3);
+				hungarianScoreData.put(line[0] + line[1], idxsMap);
 			}
 			reader.close();
-			
-			//saving the map file
-			stanceData.save();
-			stanceData.close();
-			
+
+			// saving the map file
+			hungarianScoreData.save();
+			hungarianScoreData.close();
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ObjectExistsException e) {
@@ -181,26 +212,26 @@ public class PPDBProcessor {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
+
 	}
 
 	public static ArrayList<Integer> getIntList(String idxStr) {
-		idxStr = idxStr.substring(idxStr.indexOf('[')+1, idxStr.indexOf(']')).trim();
+		if (idxStr.equals("[]"))
+			return new ArrayList<>();
+		idxStr = idxStr.substring(idxStr.indexOf('[') + 1, idxStr.indexOf(']')).trim();
 		String[] idxStrs = idxStr.split(", ");
-		//create int Arraylist
+		// create int Arraylist
 		ArrayList<Integer> idxs = new ArrayList<>();
-		for(String idx : idxStrs){
+		for (String idx : idxStrs) {
 			idxs.add(Integer.valueOf(idx.trim()));
 		}
 		return idxs;
 	}
-	
-	public static FileHashMap<String, ArrayList<Integer>> loadHungarianScoreFromFileMap(String filemapPath){
-		FileHashMap<String, ArrayList<Integer>> stanceData = null;
+
+	public static FileHashMap<String, Map<Integer, ArrayList<ArrayList<Integer>>>> loadHungarianScoreFromFileMap(String filemapPath) {
+		FileHashMap<String, Map<Integer, ArrayList<ArrayList<Integer>>>> stanceData = null;
 		try {
-			stanceData = new FileHashMap<String, ArrayList<Integer>>(filemapPath,
-					FileHashMap.RECLAIM_FILE_GAPS);
+			stanceData = new FileHashMap<String, Map<Integer, ArrayList<ArrayList<Integer>>>>(filemapPath, FileHashMap.RECLAIM_FILE_GAPS);
 		} catch (ObjectExistsException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -220,35 +251,52 @@ public class PPDBProcessor {
 		return stanceData;
 	}
 
-	private static void generateHungarianPPDBFeaturesAndSave(Map<Integer, String> idBodyMap, List<List<String>> stances,
-			String filename) throws NumberFormatException, FileNotFoundException, IOException {
+	private static void generateHungarianPPDBFeaturesAndSave(HashMap<Integer, Map<Integer, String>> summIdBoyMap,
+			List<List<String>> stances, String filename)
+			throws NumberFormatException, FileNotFoundException, IOException {
 		List<String[]> entries = new ArrayList<>();
-		entries.add(new String[] { "title", "Body ID", "Stance", "ppdb_hung_score", "indexes" });
+
+		String[] header = new String[21];
+		header[0] = "title";
+		header[1] = "Body ID";
+		header[2] = "Stance";
+
+		for (int j = 1; j <= 10; j++) {
+			if (j >= 1 && j <= 6) {
+				header[j + 2] = "begin_ppdb_hung_score_with_idexes" + j;
+
+			} else {
+				header[j + 2] = "end_ppdb_hung_score_with_idexes" + j;
+			}
+		}
+
+		entries.add(header);
+
 		int i = 0;
 
 		for (List<String> s : stances) {
-			//System.out.println("stance = " + s);
+			// System.out.println("stance = " + s);
 			List<String> entry = new ArrayList<>();
 			entry.add(s.get(0));
 			entry.add(s.get(1));
 			entry.add(s.get(2));
 
-			ArrayList<Integer> indexes = new ArrayList<>();
-			double score = calculateHungarianAlignmentScore(s.get(0), idBodyMap.get(Integer.valueOf(s.get(1))),
-					indexes);
+			Map<Integer, String> bodyParts = summIdBoyMap.get(Integer.valueOf(s.get(1)));
+			for (int k = 1; k <= 3; k++) {// ***
+				if (k != 2) {
+					String part = bodyParts.get(k);
 
-			entry.add(Double.toString(score));
-			entry.add(indexes.toString());
-
+					processPart(s.get(0), entry, part, k);
+				}
+			}
 			entries.add(entry.toArray(new String[0]));
-			
+
 			i++;
-			//if (i == 10)
-			//break;
-			if (i % 10000 == 0)
+			// if (i == 10)
+			// break;
+			if (i % 1000 == 0)
 				System.out.println("processed: " + i);
 		}
-		
 
 		try (CSVWriter writer = new CSVWriter(new FileWriter(filename))) {
 			writer.writeAll(entries);
@@ -256,78 +304,106 @@ public class PPDBProcessor {
 
 	}
 
+	private static void processPart(String title, List<String> entry, String part, int partNo)
+			throws FileNotFoundException, IOException {
+		List<String> scoreList = new ArrayList<>();
+
+		// get each sentence alone from the part
+		Annotation doc = new Annotation(part);
+		pipeline.annotate(doc);
+		List<CoreMap> sentences = doc.get(SentencesAnnotation.class);
+
+		for (CoreMap sent : sentences) {
+			ArrayList<Integer> indexes = new ArrayList<>();
+			double score = calculateHungarianAlignmentScore(title, sent.toString(), indexes);
+			// entry.add(Double.toString(score) + "|" + indexes.toString());
+			scoreList.add(Double.toString(score) + "|" + indexes.toString());
+		}
+
+		if (partNo == 1) {
+			while (scoreList.size() < TitleAndBodyTextPreprocess.NUM_SENT_BEG)
+				scoreList.add(Double.toString(-20.0) + "|" + "[]");
+		} else {
+			if (partNo == 3) {
+				while (scoreList.size() < TitleAndBodyTextPreprocess.NUM_SENT_END)
+					scoreList.add(Double.toString(-20.0) + "|" + "[]");
+			}
+		}
+		entry.addAll(scoreList);
+	}
+
 	/**
 	 * 
 	 * @param header
-	 * @param body
+	 * @param bodySentence
 	 * @param indexes
 	 *            the resulted indeceis
 	 * @return
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public static double calculateHungarianAlignmentScore(String header, String body, ArrayList<Integer> indexes)
-			throws FileNotFoundException, IOException {
-		String cleanH = FeatureExtractor.clean(header);
-		String cleanB = FeatureExtractor.clean(body);
+	public static double calculateHungarianAlignmentScore(String header, String bodySentence,
+			ArrayList<Integer> indexes) throws FileNotFoundException, IOException {
 
-		List<String> hLemmas = lemm.lemmatize(cleanH);
-		List<String> bLemmas = lemm.lemmatize(cleanB);
+		// No need to clean
+		// String cleanH = FeatureExtractor.clean(header);
+		// String cleanB = FeatureExtractor.clean(bodySentence);
 
-		hLemmas = FeatureExtractor.removeStopWords(hLemmas);
-		bLemmas = FeatureExtractor.removeStopWords(bLemmas);
-		
-		//without it we get -1 in the resulting indexes
-		while(bLemmas.size()< hLemmas.size())
-			bLemmas.addAll(bLemmas);
-		
-		//System.out.println(hLemmas);
-		//System.out.println(bLemmas);
+		List<String> hLemmas = lemm.lemmatize(header);
+		List<String> bSentLemmas = lemm.lemmatize(bodySentence);
+
+		// hLemmas = FeatureExtractor.removeStopWords(hLemmas);
+		// bSentLemmas = FeatureExtractor.removeStopWords(bSentLemmas);
+
+		// System.out.println(hLemmas);
+		// System.out.println(bLemmas);
 		int i = 0;
 		int j = 0;
 
-		double[][] matrix = new double[hLemmas.size()][bLemmas.size()];
+		double[][] matrix = new double[hLemmas.size()][bSentLemmas.size()];
 
 		for (String h : hLemmas) {
 			j = 0;
-			for (String b : bLemmas) {
-				//System.out.print(h + " " + b);
+			for (String b : bSentLemmas) {
+				// System.out.print(h + " " + b);
 				matrix[i][j] = computeParaphraseScore(h, b);
-				//System.out.println(" " + matrix[i][j]);
+				// System.out.println(" " + matrix[i][j]);
 				j++;
 			}
 			i++;
 		}
 
-		//printMat(matrix, hLemmas.size(), bLemmas.size());
+		// printMat(matrix, hLemmas.size(), bLemmas.size());
 
-		double[][] costMatrix = HungarianAlgorithm.makeCostMatrix(matrix, hLemmas.size(), bLemmas.size(),
+		double[][] costMatrix = HungarianAlgorithm.makeCostMatrix(matrix, hLemmas.size(), bSentLemmas.size(),
 				MAX_PPDB_SCORE);
-		//printMat(costMatrix, hLemmas.size(), bLemmas.size());
+		// printMat(costMatrix, hLemmas.size(), bLemmas.size());
 		HungarianAlgorithm ha = new HungarianAlgorithm(costMatrix);
-		//System.out.println("***");
+		// System.out.println("***");
 		int[] idxs = ha.execute();
-		//System.out.println("###");
+		// System.out.println("###");
 
 		double total = 0.0;
 
 		for (int k = 0; k < idxs.length; k++) {
 			// for (int l = 0; l < idxs.length; l++) {
-			//System.out.println("idxs[k] =  " + idxs[k]);
-			//System.out.println(matrix[k][idxs[k]]);
-			total += matrix[k][idxs[k]];
+			// System.out.println("idxs[k] = " + idxs[k]);
+			// System.out.println(matrix[k][idxs[k]]);
+			if (idxs[k] != -1)
+				total += matrix[k][idxs[k]];
 			// }
 
 		}
 		for (int g = 0; g < idxs.length; g++)
-			indexes.add(idxs[g]);
+			if (idxs[g] != -1)
+				indexes.add(idxs[g]);
 
 		// DoubleStream stream =
 		// Arrays.stream(matrix).flatMapToDouble(Arrays::stream);
 		// double min = stream.min().getAsDouble();
 		// System.out.println("min = "+min);
 
-		return total / (double) (Math.min(hLemmas.size(), bLemmas.size()));
+		return total / (double) (Math.min(hLemmas.size(), bSentLemmas.size()));
 	}
 
 	public static void printMat(double mat[][], int n, int m) {
@@ -357,8 +433,8 @@ public class PPDBProcessor {
 		if (ppdbData.get(sStem) != null)
 			sParaphrases.addAll(ppdbData.get(sStem));
 
-		//System.out.println("paraphrases1 = " + ppdbData.get(s));
-		//System.out.println("paraphrases2 = " + ppdbData.get(sStem));
+		// System.out.println("paraphrases1 = " + ppdbData.get(s));
+		// System.out.println("paraphrases2 = " + ppdbData.get(sStem));
 		boolean matchFound = false;
 		double maxScore = -10.0;
 
@@ -381,6 +457,13 @@ public class PPDBProcessor {
 		return porter.stripAffixes(str);
 	}
 
+	/**
+	 * Saves PPDB data into a readable FileHashMap
+	 * 
+	 * @param ppdbOriginalFilename
+	 * @param extractedPPDBFilename
+	 * @throws IOException
+	 */
 	private static void extractParaphrases(String ppdbOriginalFilename, String extractedPPDBFilename)
 			throws IOException {
 		FileReader fr = null;
@@ -408,10 +491,10 @@ public class PPDBProcessor {
 				// System.out.println(str);
 
 				String[] data = str.split(" \\|\\|\\| ");
-				
-				if((data[1].split(" ").length > 1) || (data[2].split(" ").length > 1))
+
+				if ((data[1].split(" ").length > 1) || (data[2].split(" ").length > 1))
 					continue;
-				
+
 				String textLhs = data[1];
 				String textRhs = data[2];
 
@@ -429,10 +512,11 @@ public class PPDBProcessor {
 				value.add(Double.toString(ppdb2Score));
 				value.add(entailment);
 
-				/*if (textLhs.equals("neighbouring")) {
-					System.out.println(textRhs + " " + ppdb2Score + " " + entailment);
-					// System.out.println(str);
-				}*/
+				/*
+				 * if (textLhs.equals("neighbouring")) {
+				 * System.out.println(textRhs + " " + ppdb2Score + " " +
+				 * entailment); // System.out.println(str); }
+				 */
 
 				// if (entailment.contains("ReverseEntailment"))
 				// System.out.println(textLhs + " " + textRhs);
@@ -455,8 +539,8 @@ public class PPDBProcessor {
 				}
 
 			}
-			//System.out.println(ppdbScore.get("neighbouring"));
-			//System.out.println(j);
+			// System.out.println(ppdbScore.get("neighbouring"));
+			// System.out.println(j);
 			// System.out.println(entailments);
 			ppdbScore.save();
 			ppdbScore.close();
