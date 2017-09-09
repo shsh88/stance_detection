@@ -136,6 +136,30 @@ public class StanceDetectionDataReader {
 
 		return bodyMap;
 	}
+	
+	public HashMap<Integer, Map<Integer, String>> readSummIdBodiesMap(File summBodiesFile) {
+		HashMap<Integer, Map<Integer, String>> bodyMap = new HashMap<>(100, 100);
+		CSVReader reader = null;
+		try {
+			reader = new CSVReader(new FileReader(summBodiesFile));
+			String[] line;
+			line = reader.readNext();
+			while ((line = reader.readNext()) != null) {
+				//adding the 3 body parts
+				Map<Integer, String> bodyParts = new HashMap<>();
+				for(int i = 1; i <= 3; i++){
+					bodyParts.put(i, line[i]);
+				}
+				bodyMap.put(Integer.valueOf(line[0]), bodyParts);
+			}
+			reader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return bodyMap;
+	}
+
 
 	private List<List<String>> readStances(File stancesFile) throws FileNotFoundException, IOException {
 		CSVReader stancesReader = new CSVReader(new FileReader(stancesFile));
@@ -154,6 +178,8 @@ public class StanceDetectionDataReader {
 		stancesReader.close();
 		return stances;
 	}
+	
+	
 
 	public Map<String, String> getTrainTitleIdMap() {
 		return trainTitleIdMap;
