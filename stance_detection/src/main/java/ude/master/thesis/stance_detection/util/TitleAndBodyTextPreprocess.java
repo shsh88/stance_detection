@@ -63,18 +63,18 @@ public class TitleAndBodyTextPreprocess {
 
 		String testTxt = "Newly released audio allegedly records the moment that Officer Darren Wilson "
 				+ "opened fire on unarmed Michael Brown At least ten shots can be heard - in two separate "
-				+ "volleys of gunfire Experts have said this indicated a 'moment of contemplation' for Wilson "
+				+ "volleys of gunfire Experts have ? said this indicated a 'moment of contemplation' for Wilson "
 				+ "FBI has confirmed it has interviewed the man who recorded audio "
 				+ "Is another tantalizing piece of evidence collected in the ongoing case Officer Wilson "
-				+ "claims he felt his life was threatened on August 9 Witnesses and a "
-				+ "friend of Brown, 18, claim he had surrendered Brown was buried on Monday in a ceremony "
-				+ "attended by thousands The FBI has been handed a potentially crucial recording that allegedly "
+				+ "claims he felt his life was threatened on August 9 Witnesses . . . and a "
+				+ "friend of Brown, 1.8 , claim he had surrendered Brown was buried on Monday in a ceremony "
+				+ "attended by thousands.  The FBI has been handed a potentially crucial recording that allegedly "
 				+ "contains audio of the moment that Officer Darren Wilson opened fire and killed unarmed "
-				+ "18-year-old Michael Brown in Ferguson, Missouri, earlier this month. Since the guard's "
+				+ "18-year-old Michael Brown in Ferguson   , Missouri  , earlier this month. Since the guard's "
 				+ "arrival Monday, flare-ups in the small section of town that had been the center of nightly "
-				+ "unrest have begun to subside. About 100 people gathered Thursday evening, walking in laps "
-				+ "near the spot where Michael Brown was shot. Some were in organized groups, such as clergy "
-				+ "members. More signs reflected calls by protesters to remove the prosecutor from the case.";
+				+ "unrest have begun to subside  . About 100    ;   people gathered Thursday evening, walking in laps "
+				+ "near the spot where Michael Brown was shot    .     Some were in organized groups, such as clergy "
+				+ "members.More signs reflected calls by protesters to remove the prosecutor from the case.";
 		// System.out.println(keepLimitedPunctuation(testTxt));
 
 		String t1 = "Report: ISIS kidnaps Canadian-Israeli, former IDF soldier who went to fight with the Kurds";
@@ -82,6 +82,7 @@ public class TitleAndBodyTextPreprocess {
 		String t3 = "James Foley executioner said identified as British rapper  Read more: James Foley executioner said identified as British rapper";
 		String t4 = "Dog abandoned!! at Scottish rail... station with suitcase full?! of belongings  Read more: http://www.ctvnews.ca/world/dog-abandoned-at-scottish-rail-station-with-suitcase-full-of-belongings-1.2175026#ixzz3O9Shc1IO";
 
+		System.out.println(fixQuotationMarks("Isis tells mother on rescue mission :’You’ve just eaten your son’"));
 		// System.out.println(removeReadMoreWithFollowTxt(t3));
 		// System.out.println(removeReadMoreWithFollowTxt(t4));
 		/*
@@ -121,33 +122,47 @@ public class TitleAndBodyTextPreprocess {
 		 * "DR. TWEET, PhD (@Callisto1947) August 24, 2014"));
 		 */
 
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
-				"resources/data/train_bodies.csv", "resources/data/test_data/competition_test_stances.csv",
-				"resources/data/test_data/competition_test_bodies.csv");
+		// System.out.println(fixPunctuationWithNoSpace(testTxt));
+		/*
+		 * StanceDetectionDataReader sddr = new StanceDetectionDataReader(true,
+		 * true, "resources/data/train_stances.csv",
+		 * "resources/data/train_bodies.csv",
+		 * "resources/data/test_data/competition_test_stances.csv",
+		 * "resources/data/test_data/competition_test_bodies.csv");
+		 * 
+		 * trainIdBodyMap = sddr.getTrainIdBodyMap(); trainingStances =
+		 * sddr.getTrainStances();
+		 * 
+		 * testIdBodyMap = sddr.getTestIdBodyMap(); testStances =
+		 * sddr.getTestStances();
+		 */
 
-		trainIdBodyMap = sddr.getTrainIdBodyMap();
-		trainingStances = sddr.getTrainStances();
-
-		testIdBodyMap = sddr.getTestIdBodyMap();
-		testStances = sddr.getTestStances();
-
-		
-		  //cleanTitles("resources/data/train_stances_preprocessed.csv", trainingStances);
-		  //cleanTitles("resources/data/test_data/test_stances_preprocessed.csv", testStances);
-		  
-		  //cleanBodies("resources/data/train_bodies_preprocessed.csv", trainIdBodyMap);
-		  //cleanBodies("resources/data/test_data/test_bodies_preprocessed.csv", testIdBodyMap);
-		 
-
-		StanceDetectionDataReader sddr1 = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
-				"resources/data/train_bodies_preprocessed.csv", "resources/data/test_data/competition_test_stances.csv",
-				"resources/data/test_data/test_bodies_preprocessed.csv");
-		trainIdBodyMapPreprocessed = sddr1.getTrainIdBodyMap();
-		testIdBodyMapPreprocessed = sddr1.getTestIdBodyMap();
-
-		pipeline = getStanfordPipeline();
-		summariseBody("resources/data/train_bodies_preprocessed_summ.csv", trainIdBodyMapPreprocessed);
-		summariseBody("resources/data/test_data/test_bodies_preprocessed_summ.csv", testIdBodyMapPreprocessed);
+		/*
+		 * cleanTitles("resources/data/train_stances_preprocessed.csv",
+		 * trainingStances);
+		 * cleanTitles("resources/data/test_data/test_stances_preprocessed.csv",
+		 * testStances);
+		 * 
+		 * cleanBodies("resources/data/train_bodies_preprocessed.csv",
+		 * trainIdBodyMap);
+		 * cleanBodies("resources/data/test_data/test_bodies_preprocessed.csv",
+		 * testIdBodyMap);
+		 */
+		/*
+		 * StanceDetectionDataReader sddr1 = new StanceDetectionDataReader(true,
+		 * true, "resources/data/train_stances.csv",
+		 * "resources/data/train_bodies_preprocessed.csv",
+		 * "resources/data/test_data/competition_test_stances.csv",
+		 * "resources/data/test_data/test_bodies_preprocessed.csv");
+		 * trainIdBodyMapPreprocessed = sddr1.getTrainIdBodyMap();
+		 * testIdBodyMapPreprocessed = sddr1.getTestIdBodyMap();
+		 * 
+		 * pipeline = getStanfordPipeline();
+		 * summariseBody("resources/data/train_bodies_preprocessed_summ.csv",
+		 * trainIdBodyMapPreprocessed); summariseBody(
+		 * "resources/data/test_data/test_bodies_preprocessed_summ.csv",
+		 * testIdBodyMapPreprocessed);
+		 */
 	}
 
 	/**
@@ -200,7 +215,7 @@ public class TitleAndBodyTextPreprocess {
 					while (((sIdx - k) > 0) && usefulSentFromEnd.size() < NUM_SENT_END) {
 						if ((sentences.size() - sIdx - k) > 0) {
 							int size = sentences.size();
-							//System.out.println("k= "+k);
+							// System.out.println("k= "+k);
 							String sTxt = sentences.get(size - k).toString().toLowerCase();
 							if (!(sTxt.contains("twitter") && sTxt.contains("follow "))
 									&& !(sTxt.contains("facebook") && sTxt.contains("like "))
@@ -215,9 +230,9 @@ public class TitleAndBodyTextPreprocess {
 						}
 						k++;
 					}
-					//fill middle body if there are still text
-					if(lIdx > sIdx){
-						for(int d = sIdx + 1; d < lIdx; d++ ){
+					// fill middle body if there are still text
+					if (lIdx > sIdx) {
+						for (int d = sIdx + 1; d < lIdx; d++) {
 							String sTxt = sentences.get(d).toString().toLowerCase();
 							if (!(sTxt.contains("twitter") && sTxt.contains("follow "))
 									&& !(sTxt.contains("facebook") && sTxt.contains("like "))
@@ -226,7 +241,7 @@ public class TitleAndBodyTextPreprocess {
 									&& !(sTxt.contains("click photo")) && !(sTxt.contains("updated at"))) {
 								middleBody.add(sentences.get(d));
 							}
-							
+
 						}
 					}
 				}
@@ -245,13 +260,14 @@ public class TitleAndBodyTextPreprocess {
 				entry.add(str.trim());
 			} else
 				entry.add("");
-			
-			if(middleBody.size() > 0){
+
+			if (middleBody.size() > 0) {
 				String str = "";
 				for (CoreMap u : middleBody)
 					str += u.toString() + " ";
 				entry.add(str.trim());
-			}
+			} else
+				entry.add("");
 
 			if (usefulSentFromEnd.size() > 0) {
 				String str = "";
@@ -274,7 +290,7 @@ public class TitleAndBodyTextPreprocess {
 
 	}
 
-	private static StanfordCoreNLP getStanfordPipeline() {
+	public static StanfordCoreNLP getStanfordPipeline() {
 		Properties props = new Properties();
 		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,depparse,natlog,openie");
 		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
@@ -301,6 +317,8 @@ public class TitleAndBodyTextPreprocess {
 			title = removeRepeatePunctuation(title);
 			title = removeNestedQuots(title);
 			title = removeUrl(title);
+			title = replaceNewlineWithPeriod(title);
+			title = fixPunctuationSpacing(title);
 
 			List<String> entry = new ArrayList<>();
 			entry.add(title);
@@ -340,6 +358,11 @@ public class TitleAndBodyTextPreprocess {
 			body = removeUrl(body);
 			body = removeTwitterPicLinks(body);
 			body = removeHTMLTags(body);
+			body = replaceNewlineWithPeriod(body);
+			body = fixPunctuationWithNoSpace(body);
+			body = fixPunctuationSpacing(body);
+			body = removeRepeatePunctuation(body);
+			body = fixPunctuationSpacing(body);
 
 			entry.add(Integer.toString(e.getKey()));
 			entry.add(body);
@@ -422,10 +445,10 @@ public class TitleAndBodyTextPreprocess {
 
 	// 6. Remove repeated punctuation
 	public static String removeRepeatePunctuation(String txt) {
-		txt = txt.replaceAll("(\\.\\.+)", ".");
-		txt = txt.replaceAll("(\\!\\!+)", "!");
-		txt = txt.replaceAll("(\\?\\?+)", "?");
-		txt = txt.replaceAll("(\\?\\!+)", "?");
+		txt = txt.replaceAll("(\\.\\.+)", ". ");
+		txt = txt.replaceAll("(\\!\\!+)", "! ");
+		txt = txt.replaceAll("(\\?\\?+)", "? ");
+		txt = txt.replaceAll("(\\?\\!+)", "? ");
 		return txt;
 	}
 
@@ -465,9 +488,66 @@ public class TitleAndBodyTextPreprocess {
 		txt = txt.replaceAll(regex, "");
 		return txt;
 	}
-	
-	public static String removeHTMLTags(String txt){
+
+	public static String removeHTMLTags(String txt) {
 		txt = txt.replaceAll("<[^>]*>", "");
 		return txt;
+	}
+
+	public static String fixPunctuationSpacing(String txt) {
+		txt = txt.replaceAll("\\s+\\.\\s+", ". ");
+		txt = txt.replaceAll("\\s+\\.", ". ");
+		txt = txt.replaceAll("\\.\\s+", ". ");
+
+		txt = txt.replaceAll("\\s+\\,\\s+", ", ");
+		txt = txt.replaceAll("\\s+\\,", ", ");
+		txt = txt.replaceAll("\\,\\s+", ", ");
+
+		txt = txt.replaceAll("\\s+;\\s+", "; ");
+		txt = txt.replaceAll("\\s+;", "; ");
+		txt = txt.replaceAll(";\\s+", "; ");
+
+		txt = txt.replaceAll("\\s+\\?\\s+", "; ");
+		txt = txt.replaceAll("\\s+\\?", "; ");
+		txt = txt.replaceAll("\\?\\s+", "; ");
+
+		txt = txt.replaceAll("\\s+\\!\\s+", "! ");
+		txt = txt.replaceAll("\\s+\\!", "! ");
+		txt = txt.replaceAll("\\!\\s+", "! ");
+
+		txt = txt.replaceAll("\\s+\\:\\s+", ": ");
+		txt = txt.replaceAll("\\s+\\:", ": ");
+		txt = txt.replaceAll("\\:\\s+", ": ");
+
+		txt = txt.replaceAll("\\s+\\;\\s+", "; ");
+		txt = txt.replaceAll("\\s+\\;", "; ");
+		txt = txt.replaceAll("\\;\\s+", "; ");
+
+		return txt;
+	}
+
+	private static String fixPunctuationWithNoSpace(String txt) {
+		txt = txt.replaceAll("(\\D)(\\.)(\\D)", "$1" + ". " + "$3");
+		txt = txt.replaceAll(",", ", ");
+		txt = txt.replaceAll("\\?", "? ");
+		txt = txt.replaceAll("\\!", "! ");
+		txt = txt.replaceAll(";", "; ");
+		txt = txt.replaceAll("(\\D)(:)(\\D)", ": ");
+		return txt;
+	}
+
+	private static String fixPeriodsWithNumbers(String txt) {
+		txt = txt.replaceAll("\\d\\.\\s+\\d", "$1" + ". " + "$3");
+		return txt;
+	}
+
+	public static String replaceNewlineWithPeriod(String txt) {
+		txt = txt.replaceAll("\\s+\\R", ". ");
+		txt = txt.replaceAll("\\R\\s+", ". ");
+		txt = txt.replaceAll("\\s+\\R\\s+", ". ");
+		txt = txt.replaceAll("\\R", ". ");
+
+		return txt;
+
 	}
 }
