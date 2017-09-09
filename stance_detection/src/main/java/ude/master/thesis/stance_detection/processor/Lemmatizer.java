@@ -128,6 +128,6 @@ public class Lemmatizer {
 				+ "McJordan sauce for $10,000. Here's why Mickey D's food seemingly " + "never decays.)";
 		String resultString = str.replaceAll("\\W", " ").toLowerCase();
 		// String resultString = cleanText(str);
-		System.out.println(lemm.lemmatize(resultString));
+		System.out.println(lemm.lemmatize("Next-generation Apple iPhones features leaked: it's not good"));
 	}
 }
