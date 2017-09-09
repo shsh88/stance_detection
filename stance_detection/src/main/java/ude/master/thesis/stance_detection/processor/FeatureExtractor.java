@@ -25,7 +25,7 @@ public class FeatureExtractor {
 			"claims", "purportedly", "investigating", "told", "tells", "allegedly", "validate", "verify" };*/
 	
 	//_hedging words by Ferreira
-	public static String[] discussWords = {"alleged", "allegedly",
+	/*public static String[] discussWords = {"alleged", "allegedly",
 	        "apparently",
 	        "appear", "appears",
 	        "claim", "claims",
@@ -46,10 +46,44 @@ public class FeatureExtractor {
 	        "seem",
 	        "somewhat",
 	        // "supposedly",
-	"unconfirmed"};
+	"unconfirmed"};*/
+	
+	//by fnc-1
+	public static String[] discussWords = { "according", "maybe", "reporting", "reports", "say", "says", "claim",
+			"claims", "purportedly", "investigating", "told", "tells", "allegedly", "validate", "verify" };
 
+	public static String[] discussWordsJoined = {"according",
+			"alleged", "allegedly",
+	        "apparently",
+	        "appear", "appears",
+	        "claim", "claims",
+	        "could",
+	        "evidently",
+	        "investigating",
+	        "largely",
+	        "likely",
+	        "mainly",
+	        "may", "maybe", "might",
+	        "mostly",
+	        "perhaps",
+	        "presumably",
+	        "probably",
+	        "purported", "purportedly",
+	        "reported", "reportedly",
+	        "rumor", "rumour", "rumors", "rumours", "rumored", "rumoured",
+	        "says", "say",
+	        "seem",
+	        "somewhat",
+	        "told",
+	        "tells",
+	        // "supposedly",
+	"unconfirmed",
+	"validate", "verify"};
 	private static TreeSet<String> stopSet;
 	private static final String STOPWORDS_FILE = "resources/stopwords.txt";
+	
+	public static final int NO_SENTENCES_BEG = 6;
+	public static final int NO_SENTENCES_END = 4;
 
 	public static String clean(String txt) {
 		return txt.replaceAll("\\W+", " ").toLowerCase();
