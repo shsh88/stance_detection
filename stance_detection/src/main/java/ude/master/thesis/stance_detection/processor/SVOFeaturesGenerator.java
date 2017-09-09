@@ -123,7 +123,6 @@ public class SVOFeaturesGenerator {
 
 	}
 
-	@CheckForNull
 	public static void generateDataSVOFeatureVector(List<List<String>> stances, String csvFilepath)
 			throws FileNotFoundException, IOException {
 		List<String[]> entries = new ArrayList<>();
@@ -233,7 +232,6 @@ public class SVOFeaturesGenerator {
 		return sum / v.length;
 	}
 
-	@CheckForNull
 	public static int[] calcEntailmentFeatureVector(String w1, String w2) throws FileNotFoundException, IOException {
 		int vec[] = { 0, 0, 0, 0 };
 
@@ -259,7 +257,6 @@ public class SVOFeaturesGenerator {
 
 	}
 
-	@CheckForNull
 	public static void extractTitlesAndBodiesSVOsAndSave()
 			throws IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
 
@@ -305,7 +302,6 @@ public class SVOFeaturesGenerator {
 
 	}
 
-	@CheckForNull
 	private static List<Map<String, String>> getSVOsFromText(StanfordCoreNLP pipeline, String t) {
 		Annotation doc = new Annotation(t);
 		pipeline.annotate(doc);
