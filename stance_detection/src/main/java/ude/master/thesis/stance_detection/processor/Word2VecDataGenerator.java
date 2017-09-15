@@ -1,16 +1,15 @@
 package ude.master.thesis.stance_detection.processor;
 
-import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.security.Identity;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.clapper.util.misc.FileHashMap;
@@ -18,15 +17,12 @@ import org.clapper.util.misc.ObjectExistsException;
 import org.clapper.util.misc.VersionMismatchException;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;
-import org.nd4j.linalg.api.iter.NdIndexIterator;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-
 import org.nd4j.linalg.ops.transforms.Transforms;
 
 import com.opencsv.CSVWriter;
 
-import edu.stanford.nlp.tagger.maxent.TestSentence;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
 
 public class Word2VecDataGenerator {
@@ -36,7 +32,7 @@ public class Word2VecDataGenerator {
 
 	public static void main(String[] args)
 			throws IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
-		vec = loadGoogleNewsVec();
+		//vec = loadGoogleNewsVec();
 		lemm = new Lemmatizer();
 		String txt = "Kim Jong-un has broken both of his ankles and is now in the hospital after undergoing "
 				+ "surgery, a report in a South Korean newspaper claims. The North Korean leader has "
@@ -115,28 +111,31 @@ public class Word2VecDataGenerator {
 
 	private static void generateWord2VecData()
 			throws IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
-				"resources/data/summ_train_bodies.csv", "resources/data/test_data/competition_test_stances.csv",
-				"resources/data/test_data/summ_competition_test_bodies.csv");
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+				"resources/data/train_stances_preprocessed.csv", "resources/data/train_bodies_preprocessed_summ.csv",
+				"resources/data/test_data/test_stances_preprocessed.csv",
+				"resources/data/test_data/test_bodies_preprocessed_summ.csv");
 
-		Map<Integer, String> trainIdBodyMap = sddr.getTrainIdBodyMap();
+		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File("resources/data/train_bodies_preprocessed_summ.csv"));
 		List<List<String>> trainingStances = sddr.getTrainStances();
 
-		HashMap<Integer, String> testIdBodyMap = sddr.getTestIdBodyMap();
+		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File("resources/data/test_data/test_bodies_preprocessed_summ.csv"));
 		List<List<String>> testStances = sddr.getTestStances();
 
-		generateAddWord2VecAndSave(trainIdBodyMap, trainingStances, testIdBodyMap, testStances,
-				"C:/thesis_stuff/help_files/bodies_mean_word2vec", "C:/thesis_stuff/help_files/titles_mean_word2vec");
+		//generateAddWord2VecAndSave(trainingSummIdBoyMap, trainingStances, testSummIdBoyMap, testStances,
+			//	"C:/thesis_stuff/help_files/bodies_sum_word2vec", "C:/thesis_stuff/help_files/titles_sum_word2vec");
 
-		generateWord2VecAddSimFeaturesAndSave(trainIdBodyMap, trainingStances,
-				"C:/thesis_stuff/features/train_w2v_mean_sim_formula_features.csv");
-		generateWord2VecAddSimFeaturesAndSave(testIdBodyMap, testStances,
-				"C:/thesis_stuff/features/test_w2v_mean_sim_formula_features.csv");
+		generateWord2VecAddSimFeaturesAndSave(trainingStances,
+				"C:/thesis_stuff/features/train_w2v_sim_features.csv");
+		generateWord2VecAddSimFeaturesAndSave(testStances,
+				"C:/thesis_stuff/features/test_w2v_sim_features.csv");
 
 	}
 
-	private static void generateAddWord2VecAndSave(Map<Integer, String> trainIdBodyMap,
-			List<List<String>> trainingStances, HashMap<Integer, String> testIdBodyMap, List<List<String>> testStances,
+	private static void generateAddWord2VecAndSave(HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap,
+			List<List<String>> trainingStances, HashMap<Integer, Map<Integer, String>> testSummIdBoyMap, List<List<String>> testStances,
 			String bodiesVecPath, String titlesVecPath) throws FileNotFoundException, ObjectExistsException,
 			ClassNotFoundException, VersionMismatchException, IOException {
 		// getting titles vectors
@@ -162,27 +161,38 @@ public class Word2VecDataGenerator {
 		// getting bodies vectors
 		FileHashMap<Integer, double[]> trainBVecsMap = new FileHashMap<Integer, double[]>(bodiesVecPath,
 				FileHashMap.FORCE_OVERWRITE);
-		for (Map.Entry<Integer, String> b : trainIdBodyMap.entrySet()) {
-			double[] bVec = getGoogleVec(b.getValue());
-			trainBVecsMap.put(b.getKey(), bVec);
+		for(Entry<Integer, Map<Integer, String>> e : trainingSummIdBoyMap.entrySet()){
+			String bTxt = "";
+			for(int i = 1; i <= 3; i++)
+				if(i != 2)
+					bTxt += e.getValue().get(i);
+			double[] bVec = getGoogleVec(bTxt);
+			trainBVecsMap.put(e.getKey(), bVec);
+			
 		}
-		for (Map.Entry<Integer, String> b : testIdBodyMap.entrySet()) {
-			double[] bVec = getGoogleVec(b.getValue());
-			trainBVecsMap.put(b.getKey(), bVec);
+		
+		for(Entry<Integer, Map<Integer, String>> e : testSummIdBoyMap.entrySet()){
+			String bTxt = "";
+			for(int i = 1; i <= 3; i++)
+				if(i != 2)
+					bTxt += e.getValue().get(i);
+			double[] bVec = getGoogleVec(bTxt);
+			trainBVecsMap.put(e.getKey(), bVec);
+			
 		}
+	
 		trainBVecsMap.save();
 		trainBVecsMap.close();
 
 	}
 
-	private static void generateWord2VecAddSimFeaturesAndSave(Map<Integer, String> trainIdBodyMap,
-			List<List<String>> trainingStances, String filename) throws IOException {
+	private static void generateWord2VecAddSimFeaturesAndSave(List<List<String>> stances, String filename) throws IOException {
 
 		FileHashMap<String, double[]> titlesVec = loadTitlesVecs();
 		FileHashMap<Integer, double[]> bodiesVecs = loadBodiesVecs();
 
 		//
-		generateWord2VecSim(trainingStances, filename, titlesVec, bodiesVecs);
+		generateWord2VecSim(stances, filename, titlesVec, bodiesVecs);
 
 	}
 
@@ -201,6 +211,17 @@ public class Word2VecDataGenerator {
 
 			double[] tVec = titlesVec.get(stance.get(0));
 			double[] bVec = bodiesVecs.get(Integer.valueOf(stance.get(1)));
+			
+			/*if ((tVec == null) || (bVec == null)){
+				double sim = 0.0;
+				entry.add(String.valueOf(sim));
+
+				entries.add(entry.toArray(new String[0]));
+				
+				continue;
+			}*/
+				
+			//System.out.println("tvec = " + Arrays.toString(tVec));
 
 			INDArray tVec_ = Nd4j.create(tVec);
 			INDArray bVec_ = Nd4j.create(bVec);
@@ -237,7 +258,7 @@ public class Word2VecDataGenerator {
 	private static FileHashMap<Integer, double[]> loadBodiesVecs() {
 		FileHashMap<Integer, double[]> bodiesVecs = null;
 		try {
-			bodiesVecs = new FileHashMap<Integer, double[]>("C:/thesis_stuff/help_files/bodies_mean_word2vec",
+			bodiesVecs = new FileHashMap<Integer, double[]>("C:/thesis_stuff/help_files/bodies_sum_word2vec",
 					FileHashMap.RECLAIM_FILE_GAPS);
 		} catch (ObjectExistsException e) {
 			// TODO Auto-generated catch block
@@ -261,7 +282,7 @@ public class Word2VecDataGenerator {
 	private static FileHashMap<String, double[]> loadTitlesVecs() {
 		FileHashMap<String, double[]> titlesVecs = null;
 		try {
-			titlesVecs = new FileHashMap<String, double[]>("C:/thesis_stuff/help_files/titles_mean_word2vec",
+			titlesVecs = new FileHashMap<String, double[]>("C:/thesis_stuff/help_files/titles_sum_word2vec",
 					FileHashMap.RECLAIM_FILE_GAPS);
 		} catch (ObjectExistsException e) {
 			// TODO Auto-generated catch block
@@ -290,33 +311,38 @@ public class Word2VecDataGenerator {
 
 		ArrayList<INDArray> m = new ArrayList<>();
 		List<String> gTok = new ArrayList<>();
-		/*for (String tok : lemmas) {
+		for (String tok : lemmas) {
 			INDArray tokVec; //
-			if (vec.hasWord(FeatureExtractor.clean(tok).trim())) {
+			if (vec.hasWord(tok)) {
 				//getting vector for each word method
-				tokVec = Nd4j.create(vec.getWordVector(tok.trim()));
+				//System.out.println("hehe " + Nd4j.create(vec.getWordVector(tok.trim())));
+				if(Nd4j.create(vec.getWordVector(tok.trim())) != null)
+					tokVec = Nd4j.create(vec.getWordVector(tok.trim()));
+				else 
+					continue;
 				//System.out.println(tok);
 			} else
 				tokVec = identity;
 			m.add(tokVec);
-		}*/
-		for (String tok : lemmas) {
+		}
+		/*for (String tok : lemmas) {
 			//if (vec.hasWord(FeatureExtractor.clean(tok).trim())) { //Crabzilla problem
 			if(!FeatureExtractor.clean(tok).trim().isEmpty() && vec.hasWord(FeatureExtractor.clean(tok).trim())){
 				gTok.add(tok);
 			}
-		}
-		INDArray result;
+		}*/
+		/*INDArray result;
 		
 		if(gTok.size() != 0){
 			result = vec.getWordVectorsMean(gTok);
 		}else
-			result = Nd4j.zeros(1, 300);
+			result = Nd4j.zeros(1, 300);*/
 		
 		
-		//INDArray result = m.stream().reduce(identity, INDArray::mul);
+		INDArray result = m.stream().reduce(identity, INDArray::add);
 		double[] arrResult = getArrayVec(result);
-		
+		if(arrResult == null)
+			System.out.println(lemmas);
 		return arrResult;
 	}
 
