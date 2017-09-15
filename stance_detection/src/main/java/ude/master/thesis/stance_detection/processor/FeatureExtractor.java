@@ -80,6 +80,8 @@ public class FeatureExtractor {
 	"unconfirmed",
 	"validate", "verify"};
 	private static TreeSet<String> stopSet;
+
+	private static Lemmatizer lemmatizer;
 	private static final String STOPWORDS_FILE = "resources/stopwords.txt";
 	
 	public static final int NO_SENTENCES_BEG = 6;
@@ -417,7 +419,10 @@ public class FeatureExtractor {
 	}
 
 	public static String getLemmatizedCleanStr(String str) {
-		List<String> strLem = new Lemmatizer().lemmatize(clean(str));
+		if(lemmatizer == null)
+			lemmatizer = new Lemmatizer();
+		
+		List<String> strLem = lemmatizer.lemmatize(clean(str));
 
 		String lem = "";
 		for (String w : strLem)
