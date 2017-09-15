@@ -35,6 +35,14 @@
 			<version>1.0.10</version>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/LibLINEAR -->
+		<dependency>
+			<groupId>nz.ac.waikato.cms.weka</groupId>
+			<artifactId>LibLINEAR</artifactId>
+			<version>1.9.7</version>
+		</dependency>
+
+
 		<!-- https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/chiSquaredAttributeEval -->
 		<dependency>
 			<groupId>nz.ac.waikato.cms.weka</groupId>
