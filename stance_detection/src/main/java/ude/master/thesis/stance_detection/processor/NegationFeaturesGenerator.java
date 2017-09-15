@@ -18,6 +18,7 @@ import com.opencsv.CSVWriter;
 
 import ude.master.thesis.stance_detection.util.PPDBProcessor;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
+import ude.master.thesis.stance_detection.util.TitleAndBodyTextPreprocess;
 
 public class NegationFeaturesGenerator {
 
@@ -97,15 +98,16 @@ public class NegationFeaturesGenerator {
 		 * 
 		 * System.out.println(lemmaMap.size() + "  " + hLemmas.size());
 		 */
-		out = new BufferedWriter(new FileWriter("resources/words_not_processed.txt"));
-		out.write("==========================");
-		out.newLine();
+		// out = new BufferedWriter(new
+		// FileWriter("resources/words_not_processed.txt"));
+		// out.write("==========================");
+		// out.newLine();
 
-		lemm = new Lemmatizer();
-		porter = new Porter();
+		// lemm = new Lemmatizer();
+		// porter = new Porter();
 		getNegFeaturesForData();
-		out.flush();
-		out.close();
+		// out.flush();
+		// out.close();
 		/*
 		 * lemm = new Lemmatizer(); String txt =
 		 * "Kim Jong-un has broken both of his ankles and is now in the hospital after undergoing "
@@ -142,19 +144,21 @@ public class NegationFeaturesGenerator {
 	}
 
 	private static void getNegFeaturesForData() throws IOException {
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
-				"resources/data/summ_train_bodies.csv", "resources/data/test_data/competition_test_stances.csv",
-				"resources/data/test_data/summ_competition_test_bodies.csv");
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+				"resources/data/train_stances_preprocessed.csv", "resources/data/train_bodies_preprocessed_summ.csv",
+				"resources/data/test_data/test_stances_preprocessed.csv",
+				"resources/data/test_data/test_bodies_preprocessed_summ.csv");
 
 		trainBMap = getBodiesDepMap("C:/thesis_stuff/help_files/train_bodies_deps");
 		trainTMap = getTitlesDepMap("C:/thesis_stuff/help_files/train_titles_deps");
 
 		testBMap = getBodiesDepMap("C:/thesis_stuff/help_files/test_bodies_deps");
 		testTMap = getTitlesDepMap("C:/thesis_stuff/help_files/test_titles_deps");
-
+		System.out.println("trainTMap.size" + trainTMap.size());
 		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
 				.readSummIdBodiesMap(new File("resources/data/train_bodies_preprocessed_summ.csv"));
 		List<List<String>> trainingStances = sddr.getTrainStances();
+
 		generateNegFeaturesAndSave(trainingSummIdBoyMap, trainingStances, trainTMap, trainBMap,
 				"C:/thesis_stuff/features/train_neg_features.csv",
 				"C:/thesis_stuff/features/train_features/map_train_hung_ppdb_with_stopwords");
@@ -238,7 +242,6 @@ public class NegationFeaturesGenerator {
 
 		FileHashMap<String, Map<Integer, ArrayList<ArrayList<Integer>>>> hungScores = loadHungarianScores(
 				hungarianScorePath);
-		System.out.println(stances.size());
 		int i = 0;
 		for (List<String> stance : stances) {
 
@@ -251,13 +254,10 @@ public class NegationFeaturesGenerator {
 			List<Integer> titleNegIdxs = getTitleNegationIdxs(stance.get(0), titleDepMap);
 
 			ArrayList<ArrayList<Integer>> bodyNegIdxs = getBodyNegationIdxs(stance.get(1), bodyDepMap);
-
+			int negFeature = 0;
 			for (int j = 0; j < 10; j++) {
 
 				if ((titleNegIdxs.size() == 0) && (bodyNegIdxs.get(j).size() == 0)) {
-					int negFeature = 0;
-
-					entry.add(String.valueOf(negFeature));
 
 					if (i % 10000 == 0)
 						System.out.println("processed: " + i);
@@ -266,26 +266,26 @@ public class NegationFeaturesGenerator {
 				}
 
 				Map<Integer, ArrayList<ArrayList<Integer>>> idxsMap = hungScores.get(stance.get(0) + stance.get(1));
-
-				ArrayList<Integer> idxs;
+				// System.out.println("idxsMap = " + idxsMap);
+				ArrayList<Integer> hScoreidxs;
 				if ((j >= 0) && (j <= 5))
-					idxs = idxsMap.get(1).get(j);
+					hScoreidxs = idxsMap.get(1).get(j);
 				else
-					idxs = idxsMap.get(3).get(j - 6);
+					hScoreidxs = idxsMap.get(3).get(j - 6);
 
 				// System.out.println("idxs = " + idxs);
 				// System.out.println("titleNegIdxs = " + titleNegIdxs);
 				// System.out.println("bodyNegIdxs" + bodyNegIdxs);
 
 				int tIdx = 0;
-				int negFeature = 0;
-				for (tIdx = 0; tIdx < idxs.size(); tIdx++)
-					if ((titleNegIdxs.contains(tIdx) && !bodyNegIdxs.contains(idxs.get(tIdx)))
-							|| (!titleNegIdxs.contains(tIdx) && bodyNegIdxs.contains(idxs.get(tIdx))))
+
+				for (tIdx = 0; tIdx < hScoreidxs.size(); tIdx++)
+					if ((titleNegIdxs.contains(tIdx+1) && !bodyNegIdxs.get(j).contains(hScoreidxs.get(tIdx) + 1))
+							|| (!titleNegIdxs.contains(tIdx+1) && bodyNegIdxs.get(j).contains(hScoreidxs.get(tIdx) + 1)))
 						negFeature++;
 
-				entry.add(String.valueOf(negFeature));
 			}
+			entry.add(String.valueOf(negFeature));
 			entries.add(entry.toArray(new String[0]));
 
 			if (i % 10000 == 0)
@@ -415,10 +415,10 @@ public class NegationFeaturesGenerator {
 		return negIdxs;
 	}
 
-	private static ArrayList<ArrayList<Integer>> getBodyNegationIdxs(String txt,
+	private static ArrayList<ArrayList<Integer>> getBodyNegationIdxs(String bodyId,
 			FileHashMap<Integer, Map<Integer, List<String>>> bodyDepMap) throws IOException {
 
-		int bIdx = Integer.valueOf(txt);
+		int bIdx = Integer.valueOf(bodyId);
 		Map<Integer, List<String>> partsDepMap = bodyDepMap.get(bIdx);
 
 		ArrayList<ArrayList<Integer>> negIdxs = new ArrayList<>();
@@ -426,6 +426,7 @@ public class NegationFeaturesGenerator {
 		for (int k = 1; k <= 3; k++) {
 			if (k != 2) {
 				List<String> sentDeps = partsDepMap.get(k);
+				// System.out.println("sentDeps.size = " + sentDeps.size());
 				for (String ss : sentDeps) {
 					String[] deps = ss.split("\n");
 
@@ -448,10 +449,21 @@ public class NegationFeaturesGenerator {
 					}
 					negIdxs.add(sentNegIdxs);
 				}
+
+				if (k == 1)
+					while (negIdxs.size() < TitleAndBodyTextPreprocess.NUM_SENT_BEG) {
+						negIdxs.add(new ArrayList<>());
+					}
+				else if (k == 3)
+					while (negIdxs.size() < TitleAndBodyTextPreprocess.NUM_SENT_END
+							+ TitleAndBodyTextPreprocess.NUM_SENT_BEG) {
+						negIdxs.add(new ArrayList<>());
+					}
 			}
+
 		}
 
-		System.out.println("negIdxs.size = " + negIdxs.size() + negIdxs);
+		// System.out.println("negIdxs.size = " + negIdxs.size() + negIdxs);
 		return negIdxs;
 	}
 

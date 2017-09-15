@@ -1,5 +1,6 @@
 package ude.master.thesis.stance_detection.wordembeddings;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,9 +28,25 @@ public class DocToVec {
 
 	final static Logger logger = Logger.getLogger(DocToVec.class);
 
+	private static ParagraphVectors paragraphVectors;
+
+	private static List<String> paragraphsList;
+
+	private static List<String> labelsList;
+
+	private static Map<String, String> titleIdMap;
 
 	private TokenizerFactory tokenizerFactory;
 	private ParagraphVectors vec;
+	
+	public DocToVec() throws IOException{
+		paragraphsList = new ArrayList<>();
+		labelsList = new ArrayList<>();
+		titleIdMap = new HashMap<>();
+
+		extractParagraphLabels(paragraphsList, labelsList, titleIdMap);
+		paragraphVectors = loadParagraphVectors();
+	}
 
 	public ParagraphVectors buildParagraphVectors(List<String> tweetMessagesList, List<String> labelSourceList) {
 		SentenceIterator iter = new CollectionSentenceIterator(tweetMessagesList);
@@ -47,7 +64,7 @@ public class DocToVec {
 				// .stopWords(Files.readAllLines(new
 				// File("../stopwords.txt").toPath(), Charset.defaultCharset()
 				// ))
-				.windowSize(10).iterate(iter).trainWordVectors(true).vocabCache(cache)
+				.windowSize(5).iterate(iter).trainWordVectors(true).vocabCache(cache)
 				// Wahlweise Distributional-BOW(default) oder Distributional
 				// Memory new DM<VocabWord>()
 				.sequenceLearningAlgorithm(new DM<VocabWord>()).tokenizerFactory(tokenizerFactory)
@@ -62,32 +79,31 @@ public class DocToVec {
 	public static void main(String[] args) throws IOException {
 
 		// ================================================================
-		List<String> paragraphsList = new ArrayList<>();
-		List<String> labelsList = new ArrayList<>();
-		Map<String, String> titleIdMap = new HashMap<>();
+		paragraphsList = new ArrayList<>();
+		labelsList = new ArrayList<>();
+		titleIdMap = new HashMap<>();
 
 		extractParagraphLabels(paragraphsList, labelsList, titleIdMap);
 		// ===============================================================================
 
 		/** ==== Test the word embeddings ==== **/
-		//bulding the paragraph vectors (only once and then saving them)
-		/*DocToVec paraVec = new DocToVec();
+		// bulding the paragraph vectors (only once and then saving them)
+		DocToVec paraVec = new DocToVec();
 
-		ParagraphVectors docVec =
-		paraVec.buildParagraphVectors(paragraphsList, labelsList);*/
+		ParagraphVectors docVec = paraVec.buildParagraphVectors(paragraphsList, labelsList);
 
-		//WordVectorSerializer.writeParagraphVectors(docVec, "resources/docvec_150817");
+		WordVectorSerializer.writeParagraphVectors(docVec, "resources/docvec_140917");
 
 		// Loading the saved paragraph vectors
-		ParagraphVectors pvecs = loadParagraphVectors();
+		paragraphVectors = loadParagraphVectors();
 
-		System.out.println(pvecs.similarWordsInVocabTo("isis", 0.9));
-		System.out.println(pvecs.similarWordsInVocabTo("Steve", 0.9));
-		System.out.println(pvecs.similarWordsInVocabTo("money", 0.8));
+		System.out.println(paragraphVectors.similarWordsInVocabTo("merekel", 0.9));
+		System.out.println(paragraphVectors.similarWordsInVocabTo("syria", 0.9));
+		System.out.println(paragraphVectors.similarWordsInVocabTo("iphone", 0.8));
 	}
 
 	public static ParagraphVectors loadParagraphVectors() throws IOException {
-		return WordVectorSerializer.readParagraphVectors("resources/docvec_150817");
+		return WordVectorSerializer.readParagraphVectors("resources/docvec_140917");
 	}
 
 	/**
@@ -98,24 +114,31 @@ public class DocToVec {
 	 */
 	public static void extractParagraphLabels(List<String> paragraphsList, List<String> labelsList,
 			Map<String, String> titleIdMap) throws IOException {
-		
-		//paragraphsList = new ArrayList<>();
-		//labelsList = new ArrayList<>();
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true);
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+				"resources/data/train_stances_preprocessed.csv", "resources/data/train_bodies_preprocessed_summ.csv",
+				"resources/data/test_data/test_stances_preprocessed.csv",
+				"resources/data/test_data/test_bodies_preprocessed_summ.csv");
 
 		// paragraphsList hold all the bodies and all the titles as complete
 		// strings
 		// labelList holds all the labels for title and bodies
 		// Training Data
-		Map<Integer, String> bodiesIdsMapTraining = sddr.getTrainIdBodyMap();
+		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File("resources/data/train_bodies_preprocessed_summ.csv"));
 		List<List<String>> stancesTraining = sddr.getTrainStances();
 
 		// Test data
-		HashMap<Integer, String> bodiesIdsMapTest = sddr.getTestIdBodyMap();
+		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File("resources/data/test_data/test_bodies_preprocessed_summ.csv"));
 		List<List<String>> stanceTest = sddr.getTestStances();
 
-		Map<Integer, String> allBodies = bodiesIdsMapTraining;
-		allBodies.putAll(bodiesIdsMapTest);
+		Map<Integer, String> allBodies = new HashMap<>();
+		for (Map.Entry<Integer, Map<Integer, String>> e : trainingSummIdBoyMap.entrySet()) {
+			allBodies.put(e.getKey(), e.getValue().get(1) + " " + e.getValue().get(3));
+		}
+		for (Map.Entry<Integer, Map<Integer, String>> e : testSummIdBoyMap.entrySet()) {
+			allBodies.put(e.getKey(), e.getValue().get(1) + " " + e.getValue().get(3));
+		}
 
 		List<List<String>> allStances = stancesTraining;
 		allStances.addAll(stanceTest);
@@ -130,7 +153,7 @@ public class DocToVec {
 		int i = 0;
 		int j = 0; // stances
 
-		//titleIdMap = new HashMap<>();
+		// titleIdMap = new HashMap<>();
 		List<List<String>> titleBodyPairs = new ArrayList<>();
 
 		// adding the title and their labels
@@ -166,6 +189,16 @@ public class DocToVec {
 				System.out.println(i);
 		}
 
+	}
+
+	public double[] getTitleParagraphVecByLabel(String titleTxt) {
+		INDArray titleVec = paragraphVectors.getLookupTable().vector(titleIdMap.get(titleTxt));
+		return titleVec.data().asDouble();
+	}
+
+	public double[] getBodyParagraphVecByLabel(String bodyId) {
+		INDArray bodyVec = paragraphVectors.getLookupTable().vector(bodyId);
+		return bodyVec.data().asDouble();
 	}
 
 }

@@ -1,5 +1,6 @@
 package ude.master.thesis.stance_detection.processor;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,11 +12,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
 
 import org.clapper.util.misc.FileHashMap;
 import org.clapper.util.misc.ObjectExistsException;
@@ -26,12 +25,12 @@ import com.opencsv.CSVWriter;
 import edu.stanford.nlp.ie.util.RelationTriple;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.naturalli.NaturalLogicAnnotations;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.semgraph.SemanticGraph;
-import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.trees.GrammaticalRelation;
-import edu.stanford.nlp.naturalli.NaturalLogicAnnotations;
+import edu.stanford.nlp.util.CoreMap;
 import ude.master.thesis.stance_detection.util.PPDBProcessor;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
 
@@ -47,6 +46,8 @@ public class SVOFeaturesGenerator {
 	private static FileHashMap<String, List<Map<String, String>>> titlesSVOsMap;
 	private static FileHashMap<String, List<Map<String, String>>> bodiesSVOsMap;
 	private static FileHashMap<String, ArrayList<ArrayList<String>>> ppdbData;
+	private static HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap;
+	private static HashMap<Integer, Map<Integer, String>> testSummIdBoyMap;
 
 	public static void main(String[] args) throws FileNotFoundException, ObjectExistsException, ClassNotFoundException,
 			VersionMismatchException, IOException {
@@ -83,17 +84,22 @@ public class SVOFeaturesGenerator {
 		 */
 		StanceDetectionDataReader sddr = null;
 		try {
-			sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances.csv",
-					"resources/data/summ_train_bodies.csv", "resources/data/test_data/competition_test_stances.csv",
-					"resources/data/test_data/summ_competition_test_bodies.csv");
+			sddr = new StanceDetectionDataReader(true, true, "resources/data/train_stances_preprocessed.csv",
+					"resources/data/train_bodies_preprocessed_summ.csv",
+					"resources/data/test_data/test_stances_preprocessed.csv",
+					"resources/data/test_data/test_bodies_preprocessed_summ.csv");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		trainIdBodyMap = sddr.getTrainIdBodyMap();
+		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File("resources/data/train_bodies_preprocessed_summ.csv"));
+		testSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File("resources/data/test_data/test_bodies_preprocessed_summ.csv"));
+
+		// trainIdBodyMap = sddr.getTrainIdBodyMap();
 		trainingStances = sddr.getTrainStances();
-		testIdBodyMap = sddr.getTestIdBodyMap();
+		// testIdBodyMap = sddr.getTestIdBodyMap();
 		testStances = sddr.getTestStances();
 
 		entailmentsMap = new HashMap<>();
@@ -103,7 +109,7 @@ public class SVOFeaturesGenerator {
 		entailmentsMap.put("OtherRelated", 2);
 		entailmentsMap.put("Independence", 3);
 
-		// extractTitlesAndBodiesSVOsAndSave();
+		extractTitlesAndBodiesSVOsAndSave();
 		// ppdb: paraphrase, score, entailment
 		ppdbData = PPDBProcessor.loadPPDB2(PPDBProcessor.MAP_PPDB_2_XXL_ALL);
 
@@ -115,7 +121,8 @@ public class SVOFeaturesGenerator {
 
 			generateDataSVOFeatureVector(trainingStances,
 					"C:/thesis_stuff/features/train_features/train_svo_nosvo_features.csv");
-			generateDataSVOFeatureVector(testStances, "C:/thesis_stuff/features/test_features/test_svo_nosvo_features.csv");
+			generateDataSVOFeatureVector(testStances,
+					"C:/thesis_stuff/features/test_features/test_svo_nosvo_features.csv");
 		} catch (ObjectExistsException | ClassNotFoundException | VersionMismatchException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -137,9 +144,9 @@ public class SVOFeaturesGenerator {
 			entry.add(s.get(1));
 			entry.add(s.get(2));
 
-			//int vec[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-			int vec[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-			
+			// int vec[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			int vec[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+
 			List<Map<String, String>> t_svos = null;
 
 			t_svos = titlesSVOsMap.get(s.get(0));
@@ -148,7 +155,7 @@ public class SVOFeaturesGenerator {
 			b_svos = bodiesSVOsMap.get(s.get(1));
 
 			if (!t_svos.isEmpty() && !b_svos.isEmpty()) {
-				//Map<int[], Double> vecMap = new HashMap<>();
+				// Map<int[], Double> vecMap = new HashMap<>();
 				List<int[]> vecs = new ArrayList<>();
 				for (Map<String, String> t_svo : t_svos) {
 					for (Map<String, String> b_svo : b_svos) {
@@ -168,31 +175,29 @@ public class SVOFeaturesGenerator {
 						for (int i = 8; i < 12; i++) {
 							v[i] = dobjEntailment[i - 8];
 						}
-						//vecMap.put(v, avg(v));
+						// vecMap.put(v, avg(v));
 						vecs.add(v);
 
 					}
 				}
 				// get the vector with max values
 				// int[] vv = vecMap.entrySet().stream()
-						//.max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
-				
-				//add up the svo vectors
+				// .max((entry1, entry2) -> entry1.getValue() >
+				// entry2.getValue() ? 1 : -1).get().getKey();
+
+				// add up the svo vectors
 				int[] identity = new int[12];
 				Arrays.setAll(identity, (index) -> 0);
 				int[] vv = vecs.stream().reduce(identity, SVOFeaturesGenerator::add);
-				
-				
+
 				vec = Arrays.copyOf(vv, vec.length);
-				
-				/*if(vecs.size() > 0){
-					System.out.println(s);
-					for(int[] vs : vecs)
-						System.out.println(Arrays.toString(vs));
-					System.out.println(Arrays.toString(vec));
-				}*/
-				
-				
+
+				/*
+				 * if(vecs.size() > 0){ System.out.println(s); for(int[] vs :
+				 * vecs) System.out.println(Arrays.toString(vs));
+				 * System.out.println(Arrays.toString(vec)); }
+				 */
+
 				entry.add(Arrays.toString(vec));
 				entries.add(entry.toArray(new String[0]));
 			} else {
@@ -214,16 +219,15 @@ public class SVOFeaturesGenerator {
 	}
 
 	public static int[] add(int[] first, int[] second) {
-        int length = first.length < second.length ? first.length
-                : second.length;
-        int[] result = new int[length];
+		int length = first.length < second.length ? first.length : second.length;
+		int[] result = new int[length];
 
-        for (int i = 0; i < length; i++) {
-            result[i] = first[i] + second[i];
-        }
+		for (int i = 0; i < length; i++) {
+			result[i] = first[i] + second[i];
+		}
 
-        return result;
-    }
+		return result;
+	}
 
 	private static Double avg(int[] v) {
 		double sum = 0.0;
@@ -288,13 +292,29 @@ public class SVOFeaturesGenerator {
 		FileHashMap<String, List<Map<String, String>>> bodiesSVOs = new FileHashMap<String, List<Map<String, String>>>(
 				bodiesSVOsPath, FileHashMap.FORCE_OVERWRITE);
 
-		for (Map.Entry<Integer, String> e : trainIdBodyMap.entrySet()) {
-			List<Map<String, String>> svos = getSVOsFromText(pipeline, e.getValue());
-			bodiesSVOs.put(String.valueOf(e.getKey()), svos);
+		for (Entry<Integer, Map<Integer, String>> e : trainingSummIdBoyMap.entrySet()) {
+			for (int i = 1; i <= 3; i++) {
+				String part;
+				if (i != 2) {
+					part = e.getValue().get(i);
+					if (!part.isEmpty()) {
+						List<Map<String, String>> svos = getSVOsFromText(pipeline, part);
+						bodiesSVOs.put(String.valueOf(e.getKey()), svos);
+					}
+				}
+			}
 		}
-		for (Map.Entry<Integer, String> e : testIdBodyMap.entrySet()) {
-			List<Map<String, String>> svos = getSVOsFromText(pipeline, e.getValue());
-			bodiesSVOs.put(String.valueOf(e.getKey()), svos);
+		for (Entry<Integer, Map<Integer, String>> e : testSummIdBoyMap.entrySet()) {
+			String parts = "";
+			for (int i = 1; i <= 3; i++) {
+				if (i != 2) {
+					parts += e.getValue().get(i);
+				}
+			}
+			if (!parts.isEmpty()) {
+				List<Map<String, String>> svos = getSVOsFromText(pipeline, parts);
+				bodiesSVOs.put(String.valueOf(e.getKey()), svos);
+			}
 		}
 
 		bodiesSVOs.save();
@@ -303,6 +323,7 @@ public class SVOFeaturesGenerator {
 	}
 
 	private static List<Map<String, String>> getSVOsFromText(StanfordCoreNLP pipeline, String t) {
+		//System.out.println("text = " + t);
 		Annotation doc = new Annotation(t);
 		pipeline.annotate(doc);
 		List<CoreMap> sentences = doc.get(SentencesAnnotation.class);
@@ -315,26 +336,28 @@ public class SVOFeaturesGenerator {
 		int i = 0;
 		for (CoreMap sentence : sentences) {
 			Collection<RelationTriple> triples = sentence.get(NaturalLogicAnnotations.RelationTriplesAnnotation.class);
-
+			
+			SemanticGraph relatedGraph = graphs.get(i);
+			//System.out.println("triples.size = "+triples.size());
+			//int j =0;
 			for (RelationTriple triple : triples) {
+				//System.out.println("triple = " + triple.toQaSrlString(sentence));
 				List<CoreLabel> tokens = triple.allTokens();
-				SemanticGraph relatedGraph = graphs.get(i);
 
 				Map<String, String> vec = new HashMap<String, String>();
 				for (CoreLabel tok : tokens) {
-					relatedGraph = graphs.get(i);
+					
 					int tIndex = tok.index();
 
 					Set<GrammaticalRelation> relns = relatedGraph.relns(relatedGraph.getNodeByIndexSafe(tIndex));
 					for (GrammaticalRelation rel : relns) {
 						if (rel.toString().equals("nsubj")) {
-							vec.put("nsubj", tok.word());
+							vec.put("nsubj", tok.lemma());
 						}
 						if (rel.toString().equals("dobj")) {
-							vec.put("dobj", tok.word());
+							vec.put("dobj", tok.lemma());
 						}
 					}
-
 				}
 
 				if (vec.size() == 2) {
@@ -343,22 +366,43 @@ public class SVOFeaturesGenerator {
 					String[] deps = depList.split("\n");
 					for (String d : deps) {
 						String depType = d.substring(0, d.indexOf('('));
+						//System.out.println(d + "  "+sentence.toString());
 						if (depType.equals("nsubj")) {
 							String betweenBrack = d.substring(d.lastIndexOf('(') + 1, d.indexOf(')'));
 							String[] depWords = betweenBrack.split(",");
-							if (depWords[1].substring(0, depWords[1].lastIndexOf('-')).trim()
-									.equals(vec.get("nsubj"))) {
-								vec.put("verb", depWords[0].substring(0, depWords[0].lastIndexOf('-')).trim());
+							//System.out.println(depWords[0].substring(depWords[0].lastIndexOf('-') + 1));
+							if((depWords[0].substring(depWords[0].lastIndexOf('-') + 1).trim()).contains("'''")){
+								System.out.println("haha");
+								int verbIdx = Integer
+										.valueOf(depWords[0].substring(depWords[0].lastIndexOf('-')+1, depWords[0].indexOf("'")).trim());
+								vec.put("verb", relatedGraph.getNodeByIndex(verbIdx).lemma());
+								continue;
 							}
+							int verbIdx = Integer
+									.valueOf(depWords[0].substring(depWords[0].lastIndexOf('-') + 1).trim());
+							// if (depWords[1].substring(0,
+							// depWords[1].lastIndexOf('-')).trim()
+							// .equals(vec.get("nsubj"))) {
+							// vec.put("verb", depWords[0].substring(0,
+							// depWords[0].lastIndexOf('-')).trim());
+							vec.put("verb", relatedGraph.getNodeByIndex(verbIdx).lemma());
+
 						}
 					}
-					svos.add(vec);
-
 				}
+				
+				if(vec.size() == 3){
+					//System.out.println(vec);
+					if(!svos.toString().contains(vec.toString()))
+						svos.add(vec);
+				}
+				
 			}
 			i++;
 		}
+		//System.out.println("svos = " + svos);
 		return svos;
+
 	}
 
 	/**

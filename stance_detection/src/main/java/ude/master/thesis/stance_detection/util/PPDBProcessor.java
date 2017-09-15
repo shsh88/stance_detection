@@ -131,10 +131,10 @@ public class PPDBProcessor {
 		 */
 
 		// Generate the features from data and save them
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
-				"resources/data/train_stances_preprocessed.csv", "resources/data/summ_train_bodies.csv",
+		/*StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+				"resources/data/train_stances_preprocessed.csv", "resources/data/train_bodies_preprocessed_summ.csv",
 				"resources/data/test_data/test_stances_preprocessed.csv",
-				"resources/data/test_data/summ_competition_test_bodies.csv");
+				"resources/data/test_data/test_bodies_preprocessed_summ.csv");
 
 		List<List<String>> trainingStances = sddr.getTrainStances();
 		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
@@ -147,14 +147,14 @@ public class PPDBProcessor {
 		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
 				.readSummIdBodiesMap(new File("resources/data/test_data/test_bodies_preprocessed_summ.csv"));
 		generateHungarianPPDBFeaturesAndSave(testSummIdBoyMap, testStances,
-				"C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords.csv");
+				"C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords.csv");*/
 
-		// saveHungarianScoreInFileMap("C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords.csv",
-		// "C:/thesis_stuff/features/test_features/map_test_hung_ppdb_with_stopwords");
+		saveHungarianScoreInFileMap("C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords.csv",
+		 "C:/thesis_stuff/features/test_features/map_test_hung_ppdb_with_stopwords");
 
 		// Test saved Hungarian_Score Data
-		// saveHungarianScoreInFileMap("C:/thesis_stuff/features/train_features/train_hung_ppdb_with_stopwords.csv",
-		// "C:/thesis_stuff/features/train_features/map_train_hung_ppdb_with_stopwords");
+		saveHungarianScoreInFileMap("C:/thesis_stuff/features/train_features/train_hung_ppdb_with_stopwords.csv",
+		 "C:/thesis_stuff/features/train_features/map_train_hung_ppdb_with_stopwords");
 		// FileHashMap<String, ArrayList<Integer>> hung_scores =
 		// loadHungarianScoreFromFileMap("C:/thesis_stuff/features/train_features/map_train_hung_ppdb");
 		// System.out.println(hung_scores.get("Banksy 'Arrested & Real Identity
@@ -176,9 +176,9 @@ public class PPDBProcessor {
 
 			while ((line = reader.readNext()) != null) {
 				ArrayList<ArrayList<Integer>> idxListP1 = new ArrayList<>();
-				for (int i = 4; i < 9; i++) {
+				for (int i = 3; i < 9; i++) {
 					String idxStr = line[i].split("\\|")[1];
-					System.out.println(idxStr);
+					//System.out.println(idxStr);
 					ArrayList<Integer> idxs = getIntList(idxStr);
 					idxListP1.add(idxs);
 				}
@@ -187,7 +187,7 @@ public class PPDBProcessor {
 				ArrayList<ArrayList<Integer>> idxListP3 = new ArrayList<>();
 				for (int i = 9; i < 13; i++) {
 					String idxStr = line[i].split("\\|")[1];
-					System.out.println(idxStr);
+					//System.out.println(idxStr);
 					ArrayList<Integer> idxs = getIntList(idxStr);
 					idxListP3.add(idxs);
 				}
@@ -251,6 +251,16 @@ public class PPDBProcessor {
 		return stanceData;
 	}
 
+	/**
+	 * The resulting features are represented in a vector of length 10 (the alignment score 
+	 * between the tile and each sentence in the body; 6 sentences from the beginning and 4 from the end)
+	 * @param summIdBoyMap
+	 * @param stances
+	 * @param filename
+	 * @throws NumberFormatException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	private static void generateHungarianPPDBFeaturesAndSave(HashMap<Integer, Map<Integer, String>> summIdBoyMap,
 			List<List<String>> stances, String filename)
 			throws NumberFormatException, FileNotFoundException, IOException {
