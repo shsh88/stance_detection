@@ -11,8 +11,14 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 
+import ude.master.thesis.stance_detection.util.FNCConstants;
+import ude.master.thesis.stance_detection.util.ProjectPaths;
+import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
+import weka.attributeSelection.ASEvaluation;
+import weka.attributeSelection.ASSearch;
 import weka.attributeSelection.BestFirst;
 import weka.attributeSelection.ChiSquaredAttributeEval;
+import weka.attributeSelection.InfoGainAttributeEval;
 import weka.attributeSelection.Ranker;
 import weka.attributeSelection.WrapperSubsetEval;
 import weka.classifiers.Classifier;
@@ -45,25 +51,19 @@ public class ClassifierTools {
 		this.classifier = classifier;
 	}
 
-	public void applyAttributSelectionFilter() {
+	public AttributeSelection applyAttributSelectionFilter() {
 		AttributeSelection attributeFilter = new AttributeSelection();
 
-		/*
-		 * ChiSquaredAttributeEval ev2 = new ChiSquaredAttributeEval(); //
-		 * InfoGainAttributeEval ev = new InfoGainAttributeEval(); Ranker ranker
-		 * = new Ranker(); // ranker.setNumToSelect(4500);
-		 * ranker.setNumToSelect(1200); ranker.setThreshold(0);
-		 */
-		WrapperSubsetEval evaluator = new WrapperSubsetEval();
-		evaluator.setClassifier(classifier);
-		evaluator.setEvaluationMeasure(new SelectedTag(WrapperSubsetEval.EVAL_FMEASURE, WrapperSubsetEval.TAGS_EVALUATION));
-		
-		attributeFilter.setEvaluator(evaluator);
-		
-		BestFirst searcher = new BestFirst();
-		searcher.setDirection(new SelectedTag(2, BestFirst.TAGS_SELECTION));
-		attributeFilter.setSearch(searcher);
-		
+		ChiSquaredAttributeEval ev2 = new ChiSquaredAttributeEval(); //
+		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
+		Ranker ranker = new Ranker();
+		// ranker.setNumToSelect(4500);
+		ranker.setNumToSelect(1000);
+		ranker.setThreshold(0.0);
+
+		attributeFilter.setSearch(ranker);
+		attributeFilter.setEvaluator(ev2);
+
 		// System.out.println(trainingInstances.toSummaryString());
 
 		try {
@@ -89,21 +89,55 @@ public class ClassifierTools {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		return attributeFilter;
 	}
 
-	public void applyBoWFilter() {
+	public AttributeSelection applyAttributSelectionFilter(ASEvaluation evaluator, ASSearch searcher) {
+		AttributeSelection attributeFilter = new AttributeSelection();
+
+		attributeFilter.setEvaluator(evaluator);
+		attributeFilter.setSearch(searcher);
+
+		// System.out.println(trainingInstances.toSummaryString());
+
+		try {
+			attributeFilter.setInputFormat(trainingInstances);
+			System.out.println("Calculated NumToSelect from:" + trainingInstances.numAttributes());
+			System.out.println(trainingInstances.get(0).numAttributes());
+
+			trainingInstances = Filter.useFilter(trainingInstances, attributeFilter);
+			trainingInstances.setClass(trainingInstances.attribute("stance_class"));
+
+			System.out.println(trainingInstances.get(0).numAttributes());
+			System.out.println("trian size = " + trainingInstances.size());
+
+			System.out.println("Calculated NumToSelect from:  " + testInstances.numAttributes());
+			System.out.println(testInstances.get(0).numAttributes());
+
+			testInstances = Filter.useFilter(testInstances, attributeFilter);
+			testInstances.setClass(trainingInstances.attribute("stance_class"));
+
+			System.out.println(testInstances.get(0).numAttributes());
+			System.out.println("test size = " + testInstances.size());
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return attributeFilter;
+	}
+
+	public StringToWordVector applyBoWFilter(int wordsToKeep, int minNgram, int maxNgram) {
 		System.out.println("started BoW filter");
 		NGramTokenizer tokenizer = new NGramTokenizer();
 		// By using NGram tokenizer
-		tokenizer.setNGramMinSize(1);
-		tokenizer.setNGramMaxSize(2);
+		tokenizer.setNGramMinSize(minNgram);
+		tokenizer.setNGramMaxSize(maxNgram);
 		tokenizer.setDelimiters("[^0-9a-zA-Z]");
 
 		str2WordFilter = new StringToWordVector();
 
 		str2WordFilter.setTokenizer(tokenizer);
-		str2WordFilter.setWordsToKeep(1000);
+		str2WordFilter.setWordsToKeep(wordsToKeep);
 		// str2WordFilter.setDoNotOperateOnPerClassBasis(true);
 		str2WordFilter.setLowerCaseTokens(true);
 		str2WordFilter.setMinTermFreq(1);
@@ -144,6 +178,8 @@ public class ClassifierTools {
 			e.printStackTrace();
 		}
 		System.out.println("finished BoW filter");
+		
+		return str2WordFilter;
 	}
 
 	public void evaluateWithCrossValidation(String filename) {
@@ -189,7 +225,7 @@ public class ClassifierTools {
 
 	private void saveEvaluation(Classifier cls, Evaluation eval, StringBuffer predsBuffer, String filename,
 			Instances data) throws Exception {
-		PrintWriter out = new PrintWriter(filename + getCurrentTimeStamp() + ".txt");
+		PrintWriter out = new PrintWriter(filename + ".txt");
 		out.println(cls.toString()); // TODO see if it prints what it meant to
 		out.println(eval.toSummaryString());
 		out.println(eval.toClassDetailsString());
@@ -215,7 +251,7 @@ public class ClassifierTools {
 			if (saveModel) {
 				// serialize model
 				ObjectOutputStream oos = new ObjectOutputStream(
-						new FileOutputStream(modelFilename + getCurrentTimeStamp() + ".model"));
+						new FileOutputStream(modelFilename + ".model"));
 				oos.writeObject(classifier);
 				oos.flush();
 				oos.close();
@@ -245,32 +281,24 @@ public class ClassifierTools {
 	}
 
 	public void saveInstancesToArff(String fileName) {
-		// if (useTainingSet) {
 		ArffSaver saver = new ArffSaver();
 		saver.setInstances(trainingInstances);
+		
 		try {
-
-			// System.out.println(trainingInstances.size());
-			saver.setFile(new File("C:/arff_data/" + fileName + "_train.arff"));
+			saver.setFile(new File(ProjectPaths.ARFF_DATA_PATH + fileName + FNCConstants.TRAIN + ".arff"));
 			saver.writeBatch();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		// }
-		// if (useTestset) {
 		saver = new ArffSaver();
-		// System.out.println(saver);
-		// System.out.println(testInstances);
 		saver.setInstances(testInstances);
+		
 		try {
-
-			// System.out.println(testInstances.size());
-			saver.setFile(new File("C:/arff_data/" + fileName + "_test.arff"));
+			saver.setFile(new File(ProjectPaths.ARFF_DATA_PATH + fileName + FNCConstants.TEST + ".arff"));
 			saver.writeBatch();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		// }
 
 	}
 
