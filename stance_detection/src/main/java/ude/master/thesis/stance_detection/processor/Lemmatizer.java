@@ -7,11 +7,28 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
+import ude.master.thesis.stance_detection.util.FNCConstants;
+import ude.master.thesis.stance_detection.util.ProjectPaths;
+import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
+
+import org.clapper.util.misc.FileHashMap;
+import org.clapper.util.misc.ObjectExistsException;
+import org.clapper.util.misc.VersionMismatchException;
+
+import com.opencsv.CSVReader;
 
 /**
  * 
@@ -58,17 +75,18 @@ public class Lemmatizer {
 		}
 		return lemmas;
 	}
-	
+
 	/**
 	 * Get the lemmas with indexes after removing stop words
+	 * 
 	 * @param documentText
 	 * @return
 	 */
 	public Map<String, Integer> lemmatizeWithIdx(String documentText) {
-		if(porter==null)
+		if (porter == null)
 			porter = new Porter();
-		//String cleanTxt = FeatureExtractor.clean(documentText);
-		
+		// String cleanTxt = FeatureExtractor.clean(documentText);
+
 		Map<String, Integer> lemmas = new HashMap<>();
 		// Create an empty Annotation just with the given text
 		Annotation document = new Annotation(documentText);
@@ -76,9 +94,9 @@ public class Lemmatizer {
 		this.pipeline.annotate(document);
 		// Iterate over all of the sentences found
 		List<CoreMap> sentences = document.get(SentencesAnnotation.class);
-		int i = 0; //for sentences
-		int j = 0; //for tokens
-		//System.out.println("ssize " + sentences.size());
+		int i = 0; // for sentences
+		int j = 0; // for tokens
+		// System.out.println("ssize " + sentences.size());
 		for (CoreMap sentence : sentences) {
 			// Iterate over all tokens in a sentence
 			for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
@@ -86,16 +104,16 @@ public class Lemmatizer {
 				// list of lemmas
 				String lemma = token.get(LemmaAnnotation.class);
 				lemma = FeatureExtractor.clean(lemma).trim();
-				
+
 				try {
-					if(FeatureExtractor.isStopword(lemma) || lemma.isEmpty())
+					if (FeatureExtractor.isStopword(lemma) || lemma.isEmpty())
 						continue;
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
-				lemmas.put(""+ porter.stripAffixes(lemma) + ","+ i + ","+ token.index(), j);
+
+				lemmas.put("" + porter.stripAffixes(lemma) + "," + i + "," + token.index(), j);
 				j++;
 			}
 			i++;
@@ -103,7 +121,106 @@ public class Lemmatizer {
 		return lemmas;
 	}
 
-	public static void main(String[] args) {
+	public static void lemmatizeDataAndSavInHashFile()
+			throws IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES,
+				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES);
+
+		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES));
+		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES));
+
+		List<List<String>> trainingStances = sddr.getTrainStances();
+
+		List<List<String>> testStances = sddr.getTestStances();
+
+		// lemmatize and save titles (test & train)
+		Set<String> titles = new HashSet<>();
+		for (List<String> s : trainingStances) {
+			titles.add(s.get(0));
+		}
+		for (List<String> s : testStances) {
+			titles.add(s.get(0));
+		}
+		saveTitiesLemmasAsHashFiles(titles, ProjectPaths.TITLES_LEMMAS);
+		saveBodiesLemmasAsHashFile(trainingSummIdBoyMap, testSummIdBoyMap, ProjectPaths.BODIES_LEMMAS);
+	}
+
+	private static void saveBodiesLemmasAsHashFile(HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap,
+			HashMap<Integer, Map<Integer, String>> testSummIdBoyMap, String bodiesLemmasPath) throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException, IOException {
+
+		FileHashMap<Integer, Map<Integer, String>> bodiesLemmas = new FileHashMap<>(bodiesLemmasPath,
+				FileHashMap.FORCE_OVERWRITE);
+		Lemmatizer lemm = new Lemmatizer();
+		
+		for(Entry<Integer, Map<Integer, String>> e: trainingSummIdBoyMap.entrySet()){
+			Map<Integer, String> partsMap = new HashMap<>();
+			for(int i = 1; i <= 3; i++){
+				String partLemma = concatToText(lemm.lemmatize(e.getValue().get(i)));
+				partsMap.put(i, partLemma);
+			}
+			bodiesLemmas.put(e.getKey(), partsMap);
+		}
+		
+		for(Entry<Integer, Map<Integer, String>> e: testSummIdBoyMap.entrySet()){
+			Map<Integer, String> partsMap = new HashMap<>();
+			for(int i = 1; i <= 3; i++){
+				String partLemma = concatToText(lemm.lemmatize(e.getValue().get(i)));
+				partsMap.put(i, partLemma);
+			}
+			bodiesLemmas.put(e.getKey(), partsMap);
+		}
+		bodiesLemmas.save();
+		bodiesLemmas.close();
+
+	}
+
+	private static String concatToText(List<String> titleLemma) {
+		String lem = "";
+		for (String w : titleLemma)
+			lem += w + " ";
+		return lem.trim();
+	}
+
+	public static void saveTitiesLemmasAsHashFiles(Set<String> titles, String hashFileName)
+			throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException,
+			IOException {
+		FileHashMap<String, String> titlesLemmas = new FileHashMap<String, String>(hashFileName,
+				FileHashMap.FORCE_OVERWRITE);
+
+		Lemmatizer lemm = new Lemmatizer();
+
+		for (String t : titles) {
+			String titleLemma = concatToText(lemm.lemmatize(t));
+			titlesLemmas.put(t, titleLemma);
+		}
+
+		// saving the map file
+		titlesLemmas.save();
+		titlesLemmas.close();
+
+	}
+	
+	public static FileHashMap<String, String> loadTitlesLemmasAsHashFiles(String hashFileName)
+			throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException,
+			IOException {
+		FileHashMap<String, String> titlesLemmas = new FileHashMap<String, String>(hashFileName,
+				FileHashMap.RECLAIM_FILE_GAPS);
+		return titlesLemmas;
+	}
+	
+	public static FileHashMap<Integer, Map<Integer, String>> loadBodiesLemmasAsHashFiles(String hashFileName)
+			throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException,
+			IOException {
+		FileHashMap<Integer, Map<Integer, String>> bodiesLemmas = new FileHashMap<Integer, Map<Integer, String>>(hashFileName,
+				FileHashMap.RECLAIM_FILE_GAPS);
+		return bodiesLemmas;
+	}
+
+	public static void main(String[] args)
+			throws ObjectExistsException, ClassNotFoundException, VersionMismatchException, IOException {
 		Lemmatizer lemm = new Lemmatizer();
 
 		String str = "(NEWSER) – Wonder how long a Quarter Pounder with cheese can "
@@ -129,5 +246,7 @@ public class Lemmatizer {
 		String resultString = str.replaceAll("\\W", " ").toLowerCase();
 		// String resultString = cleanText(str);
 		System.out.println(lemm.lemmatize("Next-generation Apple iPhones features leaked: it's not good"));
+	
+	lemmatizeDataAndSavInHashFile();
 	}
 }
