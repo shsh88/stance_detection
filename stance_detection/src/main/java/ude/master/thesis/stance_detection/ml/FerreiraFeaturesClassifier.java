@@ -166,7 +166,7 @@ public class FerreiraFeaturesClassifier {
 	
 		classifier.setOptions(weka.core.Utils.splitOptions("-S 6 -C 1.0 -E 0.001 -B 1.0 -L 0.1 -I 1000"));
 		ClassifierTools ct = new ClassifierTools(trainingInstances, testInstances, classifier);
-		ct.applyBoWFilter();
+		//ct.applyBoWFilter(1000, 1, 2);
 		ct.applyAttributSelectionFilter();
 		ct.saveInstancesToArff("ferr_doc2vec100_BoW1000_1200f_attSV");
 		
@@ -203,7 +203,7 @@ public class FerreiraFeaturesClassifier {
 		String stances[] = new String[] { "agree", "disagree", "discuss" };
 		List<String> stanceValues = Arrays.asList(stances);
 
-		attributes.add(new Attribute("boby_Summ", (List<String>) null));
+		//attributes.add(new Attribute("boby_Summ", (List<String>) null));
 
 		for (int i = 0; i < 10; i++)
 			attributes.add(new Attribute("root_dis_ref_" + i));
@@ -222,12 +222,12 @@ public class FerreiraFeaturesClassifier {
 			attributes.add(new Attribute("svo_" + i));
 		}
 
-		for (int i = 0; i < 100; i++){
+		/*for (int i = 0; i < 100; i++){
 			attributes.add(new Attribute("t_d2vec_" + i));
 		}
 		for (int i = 0; i < 100; i++){
 			attributes.add(new Attribute("b_d2vec_" + i));
-		}
+		}*/
 		attributes.add(new Attribute("stance_class", stanceValues));
 
 		Instances instances = new Instances("fnc-1-Ferreira", attributes, 1000);
@@ -253,8 +253,8 @@ public class FerreiraFeaturesClassifier {
 				String part1 = FeatureExtractor.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(s.get(1))).get(1));
 				String part2 = FeatureExtractor.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(s.get(1))).get(3));
 				
-				instance.setValue(instances.attribute("boby_Summ"), part1
-						+ " " + part2);
+				//instance.setValue(instances.attribute("boby_Summ"), part1
+					//	+ " " + part2);
 				
 				for (int i = 0; i < 10; i++)
 					instance.setValue(instances.attribute("root_dis_ref_" + i), rootdist.get(i));
@@ -273,10 +273,10 @@ public class FerreiraFeaturesClassifier {
 					instance.setValue(instances.attribute("svo_" + i), svos.get(i));
 				}
 				
-				if(doc2vec == null)
-					doc2vec = new DocToVec();
+				//if(doc2vec == null)
+					//doc2vec = new DocToVec();
 				
-				double[] tVec = doc2vec.getTitleParagraphVecByLabel(s.get(0));
+				/*double[] tVec = doc2vec.getTitleParagraphVecByLabel(s.get(0));
 				for (int i = 0; i < 100; i++){
 					instance.setValue(instances.attribute("t_d2vec_" + i), tVec[i]);
 				}
@@ -284,7 +284,7 @@ public class FerreiraFeaturesClassifier {
 				double[] bVec = doc2vec.getBodyParagraphVecByLabel(s.get(1));
 				for (int i = 0; i < 100; i++){
 					instance.setValue(instances.attribute("b_d2vec_" + i), bVec[i]);
-				}
+				}*/
 				
 				instance.setClassValue(stance);
 
