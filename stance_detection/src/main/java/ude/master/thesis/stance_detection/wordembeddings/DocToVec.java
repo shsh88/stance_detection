@@ -48,8 +48,9 @@ public class DocToVec {
 		paragraphVectors = loadParagraphVectors();
 	}
 
-	public ParagraphVectors buildParagraphVectors(List<String> tweetMessagesList, List<String> labelSourceList) {
-		SentenceIterator iter = new CollectionSentenceIterator(tweetMessagesList);
+	public ParagraphVectors buildParagraphVectors(List<String> paragraphsList, List<String> labelSourceList) {
+		System.out.println("Here");
+		SentenceIterator iter = new CollectionSentenceIterator(paragraphsList);
 		AbstractCache<VocabWord> cache = new AbstractCache<VocabWord>();
 
 		tokenizerFactory = new DefaultTokenizerFactory();
@@ -57,14 +58,14 @@ public class DocToVec {
 
 		LabelsSource source = new LabelsSource(labelSourceList);
 
-		vec = new ParagraphVectors.Builder().minWordFrequency(2).iterations(10).epochs(10).layerSize(100)
+		vec = new ParagraphVectors.Builder().minWordFrequency(2).iterations(10).epochs(10).layerSize(200)
 				.learningRate(0.025)
 				// .minLearningRate(0.001)
 				.labelsSource(source)
 				// .stopWords(Files.readAllLines(new
 				// File("../stopwords.txt").toPath(), Charset.defaultCharset()
 				// ))
-				.windowSize(5).iterate(iter).trainWordVectors(true).vocabCache(cache)
+				.windowSize(10).iterate(iter).trainWordVectors(true).vocabCache(cache)
 				// Wahlweise Distributional-BOW(default) oder Distributional
 				// Memory new DM<VocabWord>()
 				.sequenceLearningAlgorithm(new DM<VocabWord>()).tokenizerFactory(tokenizerFactory)
@@ -72,7 +73,7 @@ public class DocToVec {
 				.build();
 
 		vec.fit();
-
+		System.out.println(vec);
 		return vec;
 	}
 
@@ -92,7 +93,7 @@ public class DocToVec {
 
 		ParagraphVectors docVec = paraVec.buildParagraphVectors(paragraphsList, labelsList);
 
-		WordVectorSerializer.writeParagraphVectors(docVec, "resources/docvec_140917");
+		WordVectorSerializer.writeParagraphVectors(docVec, "resources/docvec200_160917");
 
 		// Loading the saved paragraph vectors
 		paragraphVectors = loadParagraphVectors();
@@ -103,7 +104,7 @@ public class DocToVec {
 	}
 
 	public static ParagraphVectors loadParagraphVectors() throws IOException {
-		return WordVectorSerializer.readParagraphVectors("resources/docvec_140917");
+		return WordVectorSerializer.readParagraphVectors("resources/docvec200_160917");
 	}
 
 	/**
