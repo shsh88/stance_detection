@@ -11,6 +11,10 @@ import java.util.Map;
 
 import com.opencsv.CSVReader;
 
+import weka.core.Instances;
+import weka.core.converters.ArffSaver;
+import weka.core.converters.ConverterUtils.DataSource;
+
 /**
  * This utility class is responsible for reading the data provided by FNC-1 and
  * save it in the corresponding data structures.
@@ -136,7 +140,7 @@ public class StanceDetectionDataReader {
 
 		return bodyMap;
 	}
-	
+
 	public HashMap<Integer, Map<Integer, String>> readSummIdBodiesMap(File summBodiesFile) {
 		HashMap<Integer, Map<Integer, String>> bodyMap = new HashMap<>(100, 100);
 		CSVReader reader = null;
@@ -145,9 +149,9 @@ public class StanceDetectionDataReader {
 			String[] line;
 			line = reader.readNext();
 			while ((line = reader.readNext()) != null) {
-				//adding the 3 body parts
+				// adding the 3 body parts
 				Map<Integer, String> bodyParts = new HashMap<>();
-				for(int i = 1; i <= 3; i++){
+				for (int i = 1; i <= 3; i++) {
 					bodyParts.put(i, line[i]);
 				}
 				bodyMap.put(Integer.valueOf(line[0]), bodyParts);
@@ -159,7 +163,6 @@ public class StanceDetectionDataReader {
 
 		return bodyMap;
 	}
-
 
 	private List<List<String>> readStances(File stancesFile) throws FileNotFoundException, IOException {
 		CSVReader stancesReader = new CSVReader(new FileReader(stancesFile));
@@ -178,8 +181,6 @@ public class StanceDetectionDataReader {
 		stancesReader.close();
 		return stances;
 	}
-	
-	
 
 	public Map<String, String> getTrainTitleIdMap() {
 		return trainTitleIdMap;
@@ -227,6 +228,27 @@ public class StanceDetectionDataReader {
 
 	public void setDefaultLocation(boolean defaultLocation) {
 		this.defaultLocation = defaultLocation;
+	}
+
+	public static Instances readInstancesFromArff(String trainArffFile) throws Exception {
+		DataSource dataSource = new DataSource(trainArffFile);
+		Instances instances = dataSource.getDataSet();
+		instances.setClassIndex(instances.numAttributes() - 1);
+		return instances;
+	}
+
+	public static void saveInstancesToArff(String fileName, Instances instances) {
+		ArffSaver saver = new ArffSaver();
+		saver.setInstances(instances);
+		try {
+
+			saver.setFile(new File(ProjectPaths.ARFF_DATA_PATH + fileName + FNCConstants.getCurrentTimeStamp()
+					+ ProjectPaths.ARFF_EXTENSION));
+			saver.writeBatch();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 }
