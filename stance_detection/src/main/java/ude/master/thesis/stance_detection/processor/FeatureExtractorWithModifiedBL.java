@@ -22,7 +22,17 @@ public class FeatureExtractorWithModifiedBL {
 	public static String[] discussWords = { "according", "maybe", "reporting", "reports", "say", "says", "claim",
 			"claims", "purportedly", "investigating", "told", "tells", "allegedly", "validate", "verify" };
 
+	public static String[] discussWordsJoined = { "according", "alleged", "allegedly", "apparently", "appear",
+			"appears", "claim", "claims", "could", "evidently", "investigating", "largely", "likely", "mainly", "may",
+			"maybe", "might", "mostly", "perhaps", "presumably", "probably", "purported", "purportedly", "reported",
+			"reportedly", "rumor", "rumour", "rumors", "rumours", "rumored", "rumoured", "says", "say", "seem",
+			"somewhat", "told", "tells",
+			// "supposedly",
+			"unconfirmed", "validate", "verify" };
+
 	private static TreeSet<String> stopSet;
+
+	private static Lemmatizer lemmatizer;
 	private static final String STOPWORDS_FILE = "resources/stopwords.txt";
 
 	public static String clean(String txt) {
@@ -33,10 +43,9 @@ public class FeatureExtractorWithModifiedBL {
 	// This method calculate the feature for one record
 	public static double getWordOverlapFeature(String headline, String body) {
 
-		// TODO: What about numbers ? (e.g. 1.96$ --> 1, 96)
-		List<String> headlineLem = new Lemmatizer().lemmatize(clean(headline));
-		List<String> bodyLem = new Lemmatizer().lemmatize(clean(body));
-
+		List<String> headlineLem = Arrays.asList(headline.split(" "));
+		List<String> bodyLem = Arrays.asList(body.split(" "));
+		
 		Set<String> intersectinSet = new HashSet<>(headlineLem);
 		Set<String> bodySet = new HashSet<>(bodyLem);
 
@@ -52,7 +61,7 @@ public class FeatureExtractorWithModifiedBL {
 	// TODO Do we do this feature just for the headline ?
 	public static int getRefutingFeature(String headline, String refutingWord) {
 
-		List<String> headlineLem = new Lemmatizer().lemmatize(clean(headline));
+		String headlineLem = getLemmatizedCleanStr(headline);
 
 		int f;
 		if (headlineLem.contains(refutingWord))
@@ -64,11 +73,9 @@ public class FeatureExtractorWithModifiedBL {
 
 	public static int calculatePolarity(String text) {
 
-		List<String> textLem = new Lemmatizer().lemmatize(clean(text));
-
 		int sum = 0;
 		for (String polarityWord : refutingWords)
-			if (textLem.contains(polarityWord))
+			if (text.contains(polarityWord))
 				sum++;
 
 		return sum % 2;
@@ -78,22 +85,20 @@ public class FeatureExtractorWithModifiedBL {
 	public static List<Integer> getBinaryCoOccurenceFeatures(String headline, String body) {
 		int binCount = 0;
 		int binCountEarly = 0;
-
-		List<String> cleanHeadline = Arrays.asList(clean(headline).split(" "));
-
-		String cleanBody = clean(body);
-
-		for (String token : cleanHeadline) {
-			if (cleanBody.contains(token)) // TODO traverse, won't we find this?
-											// --> verse
+		
+		List<String> headlineLem = Arrays.asList(getLemmatizedCleanStr(headline).split(" "));
+		for (String token : headlineLem) {
+			if (body.contains(token)) 
+											
 				binCount++;
 
-			if (cleanBody.length() >= 255) {
-				if (cleanBody.substring(0, 255).contains(token))
+			if (body.length() >= 255) {
+				if (body.substring(0, 255).contains(token))
 					binCountEarly++;
-				// TODO Do we really need to add this if the text length < 255 (the next else) ?
+				// TODO Do we really need to add this if the text length < 255
+				// (the next else) ?
 			} else {
-				if (cleanBody.contains(token))
+				if (body.contains(token))
 					binCountEarly++;
 			}
 		}
@@ -110,21 +115,13 @@ public class FeatureExtractorWithModifiedBL {
 		int binCount = 0;
 		int binCountEarly = 0;
 
-		try {
-			initializeStopwords(STOPWORDS_FILE);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 		// String[] cleanHeadLine = cleanText(headline).split(" ");
-		List<String> cleanHead = removeStopWords(Arrays.asList(clean(headline).split(" ")));
+		List<String> cleanHead = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split(" ")));
 
-		String cleanBody = clean(body);
+		String cleanBody = body;
 
 		for (String token : cleanHead) {
-			if (cleanBody.contains(token)) // TODO traverse, won't we find this?
-											// --> verse
+			if (cleanBody.contains(token)) 
 				binCount++;
 			if (cleanBody.length() >= 255) {
 				if (cleanBody.substring(0, 255).contains(token))
@@ -155,16 +152,16 @@ public class FeatureExtractorWithModifiedBL {
 	}
 
 	private static boolean isStopword(String word) {
-		if(stopSet == null)
+		if (stopSet == null)
 			try {
 				initializeStopwords(STOPWORDS_FILE);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		
+
 		if (word.length() < 2)
-		    return true;
+			return true;
 		if (word.charAt(0) >= '0' && word.charAt(0) <= '9')
 			return true; // remove numbers, "23rd", etc
 		if (stopSet.contains(word))
@@ -191,10 +188,11 @@ public class FeatureExtractorWithModifiedBL {
 	 * @param size
 	 * @return
 	 */
-	// TODO in baseline they didnot fo lemmatization. Add some way to do text
+	// TODO in baseline they did not do lemmatization. Add some way to do text
 	// cleaning like the baseline
+	//new: Added lemmatization to the headline	
 	public static List<Integer> getCharGramsFeatures(String headline, String body, int size) {
-		List<String> h = removeStopWords(Arrays.asList(headline.split(" ")));
+		List<String> h = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split(" ")));
 
 		// get the string back
 		StringBuilder sb = new StringBuilder();
@@ -282,7 +280,7 @@ public class FeatureExtractorWithModifiedBL {
 
 	public static List<Integer> getNGramsFeatures(String headline, String body, int size) {
 
-		List<String> grams = getNGrams(headline, size);
+		List<String> grams = getNGrams(getLemmatizedCleanStr(headline), size);
 
 		int gramHits = 0;
 		int gramEarlyHits = 0;
@@ -335,7 +333,10 @@ public class FeatureExtractorWithModifiedBL {
 	}
 
 	public static String getLemmatizedCleanStr(String str) {
-		List<String> strLem = new Lemmatizer().lemmatize(clean(str));
+		if(lemmatizer == null)
+			lemmatizer = new Lemmatizer();
+		
+		List<String> strLem = lemmatizer.lemmatize(clean(str));
 
 		String lem = "";
 		for (String w : strLem)
