@@ -180,11 +180,6 @@ public class SVOFeaturesGenerator {
 
 					}
 				}
-				// get the vector with max values
-				// int[] vv = vecMap.entrySet().stream()
-				// .max((entry1, entry2) -> entry1.getValue() >
-				// entry2.getValue() ? 1 : -1).get().getKey();
-
 				// add up the svo vectors
 				int[] identity = new int[12];
 				Arrays.setAll(identity, (index) -> 0);
@@ -380,11 +375,6 @@ public class SVOFeaturesGenerator {
 							}
 							int verbIdx = Integer
 									.valueOf(depWords[0].substring(depWords[0].lastIndexOf('-') + 1).trim());
-							// if (depWords[1].substring(0,
-							// depWords[1].lastIndexOf('-')).trim()
-							// .equals(vec.get("nsubj"))) {
-							// vec.put("verb", depWords[0].substring(0,
-							// depWords[0].lastIndexOf('-')).trim());
 							vec.put("verb", relatedGraph.getNodeByIndex(verbIdx).lemma());
 
 						}
