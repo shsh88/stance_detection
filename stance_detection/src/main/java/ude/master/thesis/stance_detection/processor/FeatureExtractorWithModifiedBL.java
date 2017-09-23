@@ -42,12 +42,22 @@ public class FeatureExtractorWithModifiedBL {
 
 	// This method calculate the feature for one record
 	public static double getWordOverlapFeature(String headline, String body) {
+		
+		if(lemmatizer == null){
+			lemmatizer = new Lemmatizer();
+		}
+		
+		List<String> hLemmas = Arrays.asList(getLemmatizedCleanStr(headline).split("\\s+"));
+		List<String> bLemmas = Arrays.asList(getLemmatizedCleanStr(body).split("\\s+"));
+		
+		
 
-		List<String> headlineLem = Arrays.asList(headline.split(" "));
-		List<String> bodyLem = Arrays.asList(body.split(" "));
+		List<String> headlineLem = removeStopWords(hLemmas);
+		//there is no need to remove stop words from the body because there will be no match in the title
+		//because we removed stop words from the title
 		
 		Set<String> intersectinSet = new HashSet<>(headlineLem);
-		Set<String> bodySet = new HashSet<>(bodyLem);
+		Set<String> bodySet = new HashSet<>(bLemmas);
 
 		Set<String> UnionSet = new HashSet<>(headlineLem);
 
@@ -110,15 +120,18 @@ public class FeatureExtractorWithModifiedBL {
 
 	}
 
-	// TODO what about that it is done without lemmatization in baseline
+	// TODO I may remove binCountEarly 
 	public static List<Integer> getBinaryCoOccurenceStopFeatures(String headline, String body) {
+		
+		if(lemmatizer == null)
+			lemmatizer = new Lemmatizer();
+		
 		int binCount = 0;
 		int binCountEarly = 0;
 
-		// String[] cleanHeadLine = cleanText(headline).split(" ");
-		List<String> cleanHead = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split(" ")));
-
-		String cleanBody = body;
+		List<String> cleanHead = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split("\\s+")));
+		
+		String cleanBody = getLemmatizedCleanStr(body);
 
 		for (String token : cleanHead) {
 			if (cleanBody.contains(token)) 
@@ -137,8 +150,33 @@ public class FeatureExtractorWithModifiedBL {
 		f.add(binCountEarly);
 		return f;
 	}
+	
+	public static int getSentenceBinaryCoOccurenceStopFeatures(String headline, String sentence) {
+		if(lemmatizer == null)
+			lemmatizer = new Lemmatizer();
+		
+		int binCount = 0;
 
-	private static List<String> removeStopWords(List<String> tokens) {
+		// String[] cleanHeadLine = cleanText(headline).split(" ");
+		List<String> cleanHead = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split("\\s+")));
+
+		String lemmBody = getLemmatizedCleanStr(sentence);
+
+		for (String token : cleanHead) {
+			if (lemmBody.contains(token)) 
+				binCount++;			
+		}
+		return binCount;
+	}
+
+	private static List<String> getLowerCase(List<String> cleanHead) {
+		List<String> lowerHead = new ArrayList<>();
+		for(String c : cleanHead)
+			lowerHead.add(c.toLowerCase());
+		return lowerHead;
+	}
+
+	public static List<String> removeStopWords(List<String> tokens) {
 		List<String> wordsNoStop = new ArrayList<>();
 
 		for (String word : tokens) {
@@ -151,6 +189,7 @@ public class FeatureExtractorWithModifiedBL {
 		return wordsNoStop;
 	}
 
+
 	private static boolean isStopword(String word) {
 		if (stopSet == null)
 			try {
@@ -160,10 +199,10 @@ public class FeatureExtractorWithModifiedBL {
 				e.printStackTrace();
 			}
 
-		if (word.length() < 2)
-			return true;
-		if (word.charAt(0) >= '0' && word.charAt(0) <= '9')
-			return true; // remove numbers, "23rd", etc
+		//if (word.length() < 2)
+		//	return true;
+		//if (word.charAt(0) >= '0' && word.charAt(0) <= '9')
+			//return true; // remove numbers, "23rd", etc
 		if (stopSet.contains(word))
 			return true;
 		else
@@ -192,7 +231,7 @@ public class FeatureExtractorWithModifiedBL {
 	// cleaning like the baseline
 	//new: Added lemmatization to the headline	
 	public static List<Integer> getCharGramsFeatures(String headline, String body, int size) {
-		List<String> h = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split(" ")));
+		List<String> h = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split("\\s+")));
 
 		// get the string back
 		StringBuilder sb = new StringBuilder();
@@ -202,6 +241,16 @@ public class FeatureExtractorWithModifiedBL {
 		}
 		headline = sb.toString().trim();
 		List<String> grams = getCharGrams(headline, size);
+		
+		List<String> b = removeStopWords(Arrays.asList(getLemmatizedCleanStr(body).split("\\s+")));
+
+		// get the string back
+		StringBuilder sb2 = new StringBuilder();
+		for (String s : b) {
+			sb2.append(s);
+			sb2.append(" ");
+		}
+		body = sb2.toString().trim();
 
 		int gramHits = 0;
 		int gramEarlyHits = 0;
@@ -258,6 +307,38 @@ public class FeatureExtractorWithModifiedBL {
 
 		return f;
 	}
+	public static int getSentenceCharGramsFeatures(String headline, String body, int size) {
+		List<String> h = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split("\\s+")));
+
+		// get the string back
+		StringBuilder sb = new StringBuilder();
+		for (String s : h) {
+			sb.append(s);
+			sb.append(" ");
+		}
+		headline = sb.toString().trim();
+		List<String> grams = getCharGrams(headline, size);
+		
+		List<String> b = removeStopWords(Arrays.asList(getLemmatizedCleanStr(body).split("\\s+")));
+
+		// get the string back
+		StringBuilder sb2 = new StringBuilder();
+		for (String s : b) {
+			sb2.append(s);
+			sb2.append(" ");
+		}
+		body = sb2.toString().trim();
+
+		int gramHits = 0;
+		
+		for (String gram : grams) {
+			if (body.contains(gram)) 
+				gramHits++;
+			
+		}
+
+		return gramHits;
+	}
 
 	/**
 	 * get the char gram sequences from a given text by the given size
@@ -278,10 +359,35 @@ public class FeatureExtractorWithModifiedBL {
 		return ret;
 	}
 
+	/**
+	 * Returns a vector of 2 features
+	 * 
+	 * @param headline
+	 * @param body
+	 * @param size
+	 * @return
+	 */
 	public static List<Integer> getNGramsFeatures(String headline, String body, int size) {
 
+		List<String> h = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split("\\s+")));
+		StringBuilder sb = new StringBuilder();
+		for (String s : h) {
+			sb.append(s);
+			sb.append(" ");
+		}
+		headline = sb.toString().trim();
 		List<String> grams = getNGrams(getLemmatizedCleanStr(headline), size);
+		
+		List<String> b = removeStopWords(Arrays.asList(getLemmatizedCleanStr(body).split("\\s+")));
 
+		// get the string back
+		StringBuilder sb2 = new StringBuilder();
+		for (String s : b) {
+			sb2.append(s);
+			sb2.append(" ");
+		}
+		body = sb2.toString().trim();
+		
 		int gramHits = 0;
 		int gramEarlyHits = 0;
 
@@ -318,6 +424,37 @@ public class FeatureExtractorWithModifiedBL {
 		return f;
 
 	}
+	
+	public static int getSentenceNGramsFeatures(String headline, String body, int size) {
+
+		List<String> h = removeStopWords(Arrays.asList(getLemmatizedCleanStr(headline).split("\\s+")));
+		StringBuilder sb = new StringBuilder();
+		for (String s : h) {
+			sb.append(s);
+			sb.append(" ");
+		}
+		headline = sb.toString().trim();
+		List<String> grams = getNGrams(getLemmatizedCleanStr(headline), size);
+		
+		List<String> b = removeStopWords(Arrays.asList(getLemmatizedCleanStr(body).split("\\s+")));
+
+		// get the string back
+		StringBuilder sb2 = new StringBuilder();
+		for (String s : b) {
+			sb2.append(s);
+			sb2.append(" ");
+		}
+		body = sb2.toString().trim();
+		
+		int gramHits = 0;
+
+		for (String gram : grams) {
+			if (body.contains(gram)) 
+				gramHits++;
+		}
+		return gramHits;
+
+	}
 
 	private static List<String> getNGrams(String text, int n) {
 		List<String> ret = new ArrayList<String>();
@@ -336,12 +473,21 @@ public class FeatureExtractorWithModifiedBL {
 		if(lemmatizer == null)
 			lemmatizer = new Lemmatizer();
 		
-		List<String> strLem = lemmatizer.lemmatize(clean(str));
+		List<String> strLem = lemmatizer.lemmatize(str);
 
 		String lem = "";
 		for (String w : strLem)
 			lem += w + " ";
-		return lem.trim();
+		return clean(lem.trim());
+	}
+	
+	public static List<String> getLemmatizedCleanStrList(String str) {
+		if(lemmatizer == null)
+			lemmatizer = new Lemmatizer();
+		
+		List<String> strLem = lemmatizer.lemmatize(clean(str));
+
+		return strLem;
 	}
 
 }
