@@ -322,14 +322,12 @@ public class FeaturesOrganiser {
 			if (useBinaryRelatedUnrelatedClasses) {
 
 				String headline = stance.get(0);
-				 String bodyPart1 = FeatureExtractor
-				 .getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(1));
-				 String bodyPart2 = FeatureExtractor
-				.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(3));
-				//String bodyPart1 = FeatureExtractorWithModifiedBL
-					//	.clean(bodiesLemmas.get(Integer.valueOf(stance.get(1))).get(1));
-				//String bodyPart2 = FeatureExtractorWithModifiedBL
-					//	.clean(bodiesLemmas.get(Integer.valueOf(stance.get(1))).get(3));
+				// String bodyPart1 = FeatureExtractor
+				// .getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(1));
+				// String bodyPart2 = FeatureExtractor
+				//.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(3));
+				String bodyPart1 = (bodiesLemmas.get(Integer.valueOf(stance.get(1))).get(1));
+				String bodyPart2 = (bodiesLemmas.get(Integer.valueOf(stance.get(1))).get(3));
 
 				ArrayList<String> bodyParts = new ArrayList<>();
 				bodyParts.add(bodyPart1);
@@ -530,7 +528,8 @@ public class FeaturesOrganiser {
 		}
 
 		if (useCharGramsFeatures) {
-			int[] cgramSizes = { 2, 8, 4, 16 };
+			int[] cgramSizes = { 2, 4, 8, 16 };
+			//int[] cgramSizes = {8, 16};
 			for (int size : cgramSizes) {
 				List<Integer> f = FeatureExtractorWithModifiedBL.getCharGramsFeatures(headline,
 						bodyParts.get(0) + " " + bodyParts.get(1), size);
