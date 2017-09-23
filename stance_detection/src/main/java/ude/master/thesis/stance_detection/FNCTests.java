@@ -41,9 +41,9 @@ public class FNCTests {
 	private static List<List<String>> testStances;
 
 	public static void main(String[] args) throws Exception {
-		//testFerreiraFeatures();
+		testFerreiraFeatures();
 		//testRelatedUnrelatedClassifying();
-		testFullClassifier();
+		//testFullClassifier();
 	}
 
 	public static void testFullClassifier() throws Exception {
@@ -132,20 +132,20 @@ public class FNCTests {
 		fo.loadData();
 
 		fo.useOverlapFeature(true);
-		fo.useRefutingFeatures(false);
-		fo.usePolarityFeatures(false);
-		fo.useBinaryCooccurraneFeatures(true);
+		fo.useBinaryCooccurraneFeatures(false);
 		fo.useBinaryCooccurraneStopFeatures(true);
 		fo.useCharGramsFeatures(true);
 		fo.useWordGramsFeatures(true);
-		fo.useMetricCosineSimilarity(false);
+		fo.useMetricCosineSimilarity(true);
+		
 		fo.usePPDBFeature(false);
-		fo.useWord2VecAddSimilarity(true);
+		fo.useWord2VecAddSimilarity(false);
 		fo.useLeskOverlap(false);
+		fo.useTitleAndBodyParagraphVecs(false);
 
 		fo.useBinaryRelatedUnrelatedClasses(true);
 
-		String filename = "baseline_bin_ppdb";
+		String filename = "baseline_bin_nocooc_";
 		fo.setArffFilename(filename);
 		fo.initializeFeatures(true);
 
@@ -157,12 +157,12 @@ public class FNCTests {
 		ct.applyAttributSelectionFilter();
 
 		String time = FNCConstants.getCurrentTimeStamp();
-		ct.saveInstancesToArff("baseline_bin_ppdb" + time);
+		ct.saveInstancesToArff("baseline_bin_nocooc_" + time);
 
 		// ct.evaluateWithCrossValidation("C:/thesis_stuff/results/"+
 		// "modi_ferr");
-		ct.train(true, ProjectPaths.RESULTS_PATH + "baseline_bin_ppdb" + time);
-		ct.evaluateOnTestset(ProjectPaths.RESULTS_PATH + "baseline_bin_ppdb" + time);
+		ct.train(true, ProjectPaths.RESULTS_PATH + "baseline_bin_nocooc_" + time);
+		ct.evaluateOnTestset(ProjectPaths.RESULTS_PATH + "baseline_bin_nocooc_" + time);
 	}
 
 	public static void testFerreiraFeatures() throws Exception {
@@ -173,7 +173,7 @@ public class FNCTests {
 		fo.usePolarityFeatures(false);
 		
 		fo.useTitleQuestionMark(true);
-		fo.useBodyBoWCounterFeature(true);
+		fo.useBodyBoWCounterFeature(false);
 		fo.useRootDistFeature(true);
 		fo.usePPDBFeature(true);
 		fo.useSVOFeature(true);
