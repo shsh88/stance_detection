@@ -35,6 +35,21 @@ public class ProjectPaths {
 	public static final String TITLES_LEMMAS = "C:/thesis_stuff/help_files/titles_lemmas";
 	public static final String BODIES_LEMMAS = "C:/thesis_stuff/help_files/bodies_lemmas";
 	public static final String MODEL_PATH = "C:/thesis_stuff/models/";
+	public static final String TRAIN_WORD_OVERLAPS_PATH = "C:/thesis_stuff/features/train_features/train_words_overlaps";
+	public static final String TEST_WORD_OVERLAPS_PATH = "C:/thesis_stuff/features/test_features/test_words_overlaps";
+	public static final String TEST_COOCC_PATH = "C:/thesis_stuff/features/test_features/test_cooc_stop";
+	public static final String TRAIN_COOCC_PATH = "C:/thesis_stuff/features/train_features/train_cooc_stop";
+	public static final String TRAIN_CGRAMS_PATH = "C:/thesis_stuff/features/train_features/train_cgrams";
+	public static final String TEST_CGRAMS_PATH = "C:/thesis_stuff/features/test_features/test_cgrams";
+	public static final String TRAIN_NGRAMS_PATH = "C:/thesis_stuff/features/train_features/train_ngrams";
+	public static final String TEST_NGRAMS_PATH = "C:/thesis_stuff/features/test_features/test_ngrams";
+	public static final String TRAIN_COS_SIM_PATH = "C:/thesis_stuff/features/train_features/train_cossim";
+	public static final String TEST_COS_SIM_PATH = "C:/thesis_stuff/features/test_features/test_cossim";
+	public static final String TRAIN_COS_SIM_WS_PATH = "C:/thesis_stuff/features/train_features/train_ws_cos_sim";
+	public static final String TEST_COS_SIM_WS_PATH = "C:/thesis_stuff/features/test_features/test_ws_cos_sim";
+	public static final String TRAIN_LESK_PATH = "C:/thesis_stuff/features/train_features/train_lesk";
+	public static final String TEST_LESK_PATH = "C:/thesis_stuff/features/test_features/test_lesk";;
+	
 	
 	
 	
