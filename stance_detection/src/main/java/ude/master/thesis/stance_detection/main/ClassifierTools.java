@@ -7,6 +7,9 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.apache.log4j.Logger;
@@ -58,7 +61,7 @@ public class ClassifierTools {
 		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
 		Ranker ranker = new Ranker();
 		// ranker.setNumToSelect(4500);
-		ranker.setNumToSelect(1000);
+		//ranker.setNumToSelect(250);
 		ranker.setThreshold(0.0);
 
 		attributeFilter.setSearch(ranker);
@@ -300,6 +303,21 @@ public class ClassifierTools {
 			e.printStackTrace();
 		}
 
+	}
+	
+	public static void loadData(List<List<String>> trainingStances, Map<Integer, String> trainIdBodyMap, 
+			HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap,List<List<String>> testStances,
+			HashMap<Integer, String> testIdBodyMap,HashMap<Integer, Map<Integer, String>> testSummIdBoyMap) throws IOException {
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES,
+				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES);
+
+		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES));
+		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES));
+
+		trainingStances = sddr.getTrainStances();
+
+		testStances = sddr.getTestStances();
 	}
 
 }
