@@ -437,7 +437,7 @@ public class StanfordDependencyParser {
 	 * @return a list of dependencies; a dependency for each sentence in the
 	 *         text
 	 */
-	private static List<String> getDependenciesAsTxtList(String text) {
+	public static List<String> getDependenciesAsTxtList(String text) {
 		Annotation doc = StanfordDependencyParser.buildAnnotatedDoc(text);
 
 		List<SemanticGraph> graphs = StanfordDependencyParser.buildDependencyGraph(doc);
@@ -446,6 +446,7 @@ public class StanfordDependencyParser {
 		// Sentence / Graph Index
 		for (SemanticGraph graph : graphs) {
 
+			
 			String depList = graph.toList();
 
 			int size = graph.size();
