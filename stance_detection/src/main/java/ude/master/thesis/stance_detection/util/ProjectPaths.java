@@ -48,7 +48,34 @@ public class ProjectPaths {
 	public static final String TRAIN_COS_SIM_WS_PATH = "C:/thesis_stuff/features/train_features/train_ws_cos_sim";
 	public static final String TEST_COS_SIM_WS_PATH = "C:/thesis_stuff/features/test_features/test_ws_cos_sim";
 	public static final String TRAIN_LESK_PATH = "C:/thesis_stuff/features/train_features/train_lesk";
-	public static final String TEST_LESK_PATH = "C:/thesis_stuff/features/test_features/test_lesk";;
+	public static final String TEST_LESK_PATH = "C:/thesis_stuff/features/test_features/test_lesk";
+	public static final String TRAIN_COS_SIM_qgram5_PATH = "C:/thesis_stuff/features/train_features/train_5qgram_cos_sim";
+	public static final String TEST_COS_SIM_qgram5_PATH = "C:/thesis_stuff/features/test_features/test_5qgram_cos_sim";
+	public static final String TITLES_POS_MAP_PATH = "C:/thesis_stuff/help_files/titles_pos_map";
+	public static final String BODIES_POS_MAP_PATH = "C:/thesis_stuff/help_files/bodies_pos_map";
+	public static final String TRAIN_COS_SIM_STRMET_PATH = "C:/thesis_stuff/features/train_features/train_strmet_cos_sim";
+	public static final String TEST_COS_SIM_STRMET_PATH = "C:/thesis_stuff/features/test_features/test_strmet_cos_sim";
+	public static final String WORDNET_DICT = "C:/Master UDE/thesis/software/WordNet_3.1/dict";
+	public static final String TRAIN_HYP_SIM_PATH = "C:/thesis_stuff/features/train_features/train_hyp_sim";
+	public static final String TEST_HYP_SIM_PATH = "C:/thesis_stuff/features/test_features/test_hyp_sim";
+	
+	public static final String TRAIN_LESS_10_BODY = "C:/thesis_stuff/help_files/train_less_10_body.txt";
+	public static final String TRAIN_LESS_5_BODY = "C:/thesis_stuff/help_files/train_less_5_body.txt";
+	public static final String TRAIN_LESS_2_BODY = "C:/thesis_stuff/help_files/train_less_2_body.txt";
+	public static final String TRAIN_TITLES_LENGTH_DATA = "C:/thesis_stuff/help_files/train_title_length_data.txt";
+	
+	public static final String TEST_LESS_10_BODY = "C:/thesis_stuff/help_files/test_less_10_body.txt";
+	public static final String TEST_LESS_5_BODY = "C:/thesis_stuff/help_files/test_less_5_body.txt";
+	public static final String TEST_LESS_2_BODY = "C:/thesis_stuff/help_files/test_less_2_body.txt";
+	public static final String TEST_TITLES_LENGTH_DATA = "C:/thesis_stuff/help_files/test_title_length_data.txt";
+	public static final String TRAIN_eq9_BODY = "C:/thesis_stuff/help_files/train_eq9_body.txt";
+	public static final String TRAIN_eq8_BODY = "C:/thesis_stuff/help_files/train_eq8_body.txt";
+	public static final String TRAIN_eq7_BODY = "C:/thesis_stuff/help_files/train_eq7_body.txt";
+	public static final String TRAIN_eq6_BODY = "C:/thesis_stuff/help_files/train_eq6_body.txt";
+	public static final String TEST_eq9_BODY = "C:/thesis_stuff/help_files/test_eq9_body.txt";
+	public static final String TEST_eq8_BODY = "C:/thesis_stuff/help_files/test_eq8_body.txt";
+	public static final String TEST_eq7_BODY = "C:/thesis_stuff/help_files/test_eq7_body.txt";
+	public static final String TEST_eq6_BODY = "C:/thesis_stuff/help_files/test_eq6_body.txt";
 	
 	
 	
