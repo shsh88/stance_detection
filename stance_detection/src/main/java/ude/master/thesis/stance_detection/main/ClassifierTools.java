@@ -61,8 +61,8 @@ public class ClassifierTools {
 		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
 		Ranker ranker = new Ranker();
 		// ranker.setNumToSelect(4500);
-		//ranker.setNumToSelect(250);
-		ranker.setThreshold(0.0);
+		//ranker.setNumToSelect(70);
+		//ranker.setThreshold(0.0);
 
 		attributeFilter.setSearch(ranker);
 		attributeFilter.setEvaluator(ev2);
@@ -269,6 +269,8 @@ public class ClassifierTools {
 		StringBuffer predsBuffer;
 		predsBuffer = new StringBuffer();
 		CSV csv = initCSV(predsBuffer);
+		csv.setHeader(testInstances);
+		csv.setOutputFile(new File(resultsFilename));
 
 		Evaluation eval;
 		try {
