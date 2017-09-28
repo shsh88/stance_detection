@@ -39,6 +39,7 @@ public class FNCConstants {
 	public static final String COSINE_METRIC_SIM = "cos_sim";
 	public static final String LESK_OVERLAP = "lesk";
 	public static final String TITLE_Q = "Q";
+	public static final String HYP_SIM = "hyp_sim";
 	
 	
 	public static String getCurrentTimeStamp() {
