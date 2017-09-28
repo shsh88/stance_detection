@@ -41,8 +41,8 @@ public class FNCTests {
 	private static List<List<String>> testStances;
 
 	public static void main(String[] args) throws Exception {
-		testFerreiraFeatures();
-		//testRelatedUnrelatedClassifying();
+		//testFerreiraFeatures();
+		testRelatedUnrelatedClassifying();
 		//testFullClassifier();
 	}
 
@@ -137,15 +137,16 @@ public class FNCTests {
 		fo.useCharGramsFeatures(true);
 		fo.useWordGramsFeatures(true);
 		fo.useMetricCosineSimilarity(true);
+		fo.useHypernymsSimilarity(true);
 		
 		fo.usePPDBFeature(false);
-		fo.useWord2VecAddSimilarity(false);
-		fo.useLeskOverlap(false);
+		fo.useWord2VecAddSimilarity(true);
+		fo.useLeskOverlap(true);
 		fo.useTitleAndBodyParagraphVecs(false);
 
 		fo.useBinaryRelatedUnrelatedClasses(true);
 
-		String filename = "baseline_bin_nocooc_";
+		String filename = "baseline_bin_new_";
 		fo.setArffFilename(filename);
 		fo.initializeFeatures(true);
 
@@ -157,12 +158,12 @@ public class FNCTests {
 		ct.applyAttributSelectionFilter();
 
 		String time = FNCConstants.getCurrentTimeStamp();
-		ct.saveInstancesToArff("baseline_bin_nocooc_" + time);
+		ct.saveInstancesToArff("baseline_bin_new_" + time);
 
 		// ct.evaluateWithCrossValidation("C:/thesis_stuff/results/"+
 		// "modi_ferr");
-		ct.train(true, ProjectPaths.RESULTS_PATH + "baseline_bin_nocooc_" + time);
-		ct.evaluateOnTestset(ProjectPaths.RESULTS_PATH + "baseline_bin_nocooc_" + time);
+		ct.train(true, ProjectPaths.RESULTS_PATH + "baseline_bin_new_" + time);
+		ct.evaluateOnTestset(ProjectPaths.RESULTS_PATH + "baseline_bin_new_" + time);
 	}
 
 	public static void testFerreiraFeatures() throws Exception {
