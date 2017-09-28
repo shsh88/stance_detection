@@ -17,7 +17,9 @@ import org.clapper.util.misc.FileHashMap;
 import org.clapper.util.misc.ObjectExistsException;
 import org.clapper.util.misc.VersionMismatchException;
 import org.simmetrics.StringDistance;
+import org.simmetrics.StringMetric;
 import org.simmetrics.metrics.CosineSimilarity;
+import org.simmetrics.metrics.StringMetrics;
 import org.simmetrics.simplifiers.Simplifiers;
 import org.simmetrics.tokenizers.Tokenizers;
 
@@ -26,8 +28,10 @@ import com.opencsv.CSVWriter;
 import edu.mit.jwi.IDictionary;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.POSTaggerAnnotator;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
+
 import ude.master.thesis.stance_detection.util.LeskGlossOverlaps;
 import ude.master.thesis.stance_detection.util.ProjectPaths;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
@@ -36,6 +40,7 @@ import ude.master.thesis.stance_detection.util.TitleAndBodyTextPreprocess;
 public class SimilarityFeatures {
 
 	private static StringDistance cosSimMetric;
+	private static StringMetric cosSimStringMetric;
 	private LeskGlossOverlaps lgo;
 
 	StanfordCoreNLP pipeline;
@@ -54,9 +59,15 @@ public class SimilarityFeatures {
 
 		// Set<String> commonWords = Sets.newHashSet(stopSet);
 		cosSimMetric = with(new CosineSimilarity<String>()).simplify(Simplifiers.toLowerCase())
-				.simplify(Simplifiers.removeNonWord()).tokenize(Tokenizers.whitespace()).build();
+				.simplify(Simplifiers.removeNonWord()).tokenize(Tokenizers.whitespace()).tokenize(Tokenizers.qGram(5))
+				.build();
 	}
 
+	private void initCosSimilarityStringMetric() {
+		System.out.println("init metric");
+		cosSimStringMetric = StringMetrics.cosineSimilarity();
+	}
+	
 	private void initLesk() throws IOException {
 		IDictionary dict = LeskGlossOverlaps.getDictionary();
 		lgo = new LeskGlossOverlaps(dict);
@@ -64,70 +75,70 @@ public class SimilarityFeatures {
 		lgo.useLemmatiser(true);
 	}
 
-	public void getLeskOverlapFeatureVector(List<List<String>> stances,
-			HashMap<Integer, Map<Integer, String>> summIdBoyMap, String filepath) throws Exception {
-		if (lgo == null)
-			initLesk();
-
+	public void getCosSimFeatureVector(List<List<String>> stances, HashMap<Integer, Map<Integer, String>> summIdBoyMap,
+			String filepath) throws Exception {
 		// HashMap to save values
-		FileHashMap<String, ArrayList<Double>> leskOverlap = new FileHashMap<String, ArrayList<Double>>(filepath,
+		FileHashMap<String, ArrayList<Double>> cosSims = new FileHashMap<String, ArrayList<Double>>(filepath,
 				FileHashMap.FORCE_OVERWRITE);
-
+	
+		if (cosSimStringMetric == null)
+			initCosSimilarityStringMetric();
+		
 		List<String[]> entries = new ArrayList<>();
 		List<String> csvHeader = new ArrayList<>();
 		csvHeader.add("title");
 		csvHeader.add("Body ID");
 		csvHeader.add("Stance");
-
+	
 		for (int i = 0; i < 11; i++) {
-			csvHeader.add("lesk_" + i);
+			csvHeader.add("cos_sim_" + i);
 		}
-
+	
 		entries.add(csvHeader.toArray(new String[0]));
-
+	
 		for (List<String> s : stances) {
 			List<String> entry = new ArrayList<>();
 			String title = s.get(0);
 			entry.add(title);
 			entry.add(s.get(1));
 			entry.add(s.get(2));
-
+	
 			Map<Integer, String> bodyParts = summIdBoyMap.get(Integer.valueOf(s.get(1)));
-
+	
 			ArrayList<Double> featureVec = new ArrayList<>();
 			for (int i = 1; i <= 3; i++) {
 				if ((i == 1) || (i == 3)) {
 					String part = bodyParts.get(i);
-					List<Double> subVec = getLeskfeaturePart(title, part, i);
+					List<Double> subVec = getCosSimfeaturePart(title, part, i);
 					featureVec.addAll(subVec);
-
+	
 					for (Double v : subVec)
 						entry.add(v.toString());
 				} else {
-					Double fAll = getLeskfeatureAll(title,
+					Double fAll = getCosSimfeatureAll(title,
 							bodyParts.get(1) + " " + bodyParts.get(i) + " " + bodyParts.get(3));
 					featureVec.add(fAll);
-
+	
 					entry.add(fAll.toString());
 				}
 			}
 			if (entry.size() != 14)
 				throw new Exception("not 14 features");
-
-			leskOverlap.put(title + s.get(1), featureVec);
-
+	
+			cosSims.put(title + s.get(1), featureVec);
+	
 			entries.add(entry.toArray(new String[0]));
 		}
-
-		leskOverlap.save();
-		leskOverlap.close();
-
+	
+		cosSims.save();
+		cosSims.close();
+	
 		CSVWriter writer = new CSVWriter(new FileWriter(filepath + ".csv"));
 		writer.writeAll(entries);
 		writer.flush();
 		writer.close();
 		System.out.println("saved saved saved");
-
+	
 	}
 
 	private Double getCosSimfeatureAll(String title, String body) {
@@ -155,7 +166,6 @@ public class SimilarityFeatures {
 			Annotation doc = new Annotation(part);
 			pipeline.annotate(doc);
 			List<CoreMap> sentences = doc.get(SentencesAnnotation.class);
-
 			for (CoreMap s : sentences) {
 				double f = calcDistance(title, s.toString());
 				subVec.add(f);
@@ -194,73 +204,76 @@ public class SimilarityFeatures {
 		}
 		str2 = sb1.toString().trim();
 
-		return cosSimMetric.distance(title, str2);
+		//return cosSimMetric.distance(title, str2);
+		return cosSimStringMetric.compare(title, str2);
 	}
 
-	public void getCosSimFeatureVector(List<List<String>> stances, HashMap<Integer, Map<Integer, String>> summIdBoyMap,
-			String filepath) throws Exception {
+	public void getLeskOverlapFeatureVector(List<List<String>> stances,
+			HashMap<Integer, Map<Integer, String>> summIdBoyMap, String filepath) throws Exception {
+		if (lgo == null)
+			initLesk();
+	
 		// HashMap to save values
-		FileHashMap<String, ArrayList<Double>> cosSims = new FileHashMap<String, ArrayList<Double>>(filepath,
+		FileHashMap<String, ArrayList<Double>> leskOverlap = new FileHashMap<String, ArrayList<Double>>(filepath,
 				FileHashMap.FORCE_OVERWRITE);
-
-		if (cosSimMetric == null)
-			initCosSimilarityMetric();
-
+	
 		List<String[]> entries = new ArrayList<>();
 		List<String> csvHeader = new ArrayList<>();
 		csvHeader.add("title");
 		csvHeader.add("Body ID");
 		csvHeader.add("Stance");
-
-		for (int i = 0; i < 11; i++) {
-			csvHeader.add("cos_sim_" + i);
+	
+		for (int i = 0; i < 1; i++) {
+			csvHeader.add("lesk_" + i);
 		}
-
+	
 		entries.add(csvHeader.toArray(new String[0]));
-
+	
 		for (List<String> s : stances) {
 			List<String> entry = new ArrayList<>();
 			String title = s.get(0);
 			entry.add(title);
 			entry.add(s.get(1));
 			entry.add(s.get(2));
-
+	
 			Map<Integer, String> bodyParts = summIdBoyMap.get(Integer.valueOf(s.get(1)));
-
+	
 			ArrayList<Double> featureVec = new ArrayList<>();
-			for (int i = 1; i <= 3; i++) {
-				if ((i == 1) || (i == 3)) {
+			//for (int i = 1; i <= 3; i++) {
+				/*if ((i == 1) || (i == 3)) {
 					String part = bodyParts.get(i);
-					List<Double> subVec = getCosSimfeaturePart(title, part, i);
+					List<Double> subVec = getLeskfeaturePart(title, part, i);
 					featureVec.addAll(subVec);
-
+	
 					for (Double v : subVec)
-						entry.add(v.toString());
-				} else {
-					Double fAll = getCosSimfeatureAll(title,
-							bodyParts.get(1) + " " + bodyParts.get(i) + " " + bodyParts.get(3));
-					featureVec.add(fAll);
-
+						entry.add(v.toString());*/
+			//	} else {
+					//Double fAll = getLeskfeatureAll(title,
+					//		bodyParts.get(1) + " " + bodyParts.get(i) + " " + bodyParts.get(3));
+			Double fAll = getLeskfeatureAll(title,
+					bodyParts.get(1) + " " + bodyParts.get(3));		
+			featureVec.add(fAll);
+	
 					entry.add(fAll.toString());
-				}
-			}
-			if (entry.size() != 14)
+				//}
+			//}
+			if (entry.size() != 4)
 				throw new Exception("not 14 features");
-
-			cosSims.put(title + s.get(1), featureVec);
-
+	
+			leskOverlap.put(title + s.get(1), featureVec);
+	
 			entries.add(entry.toArray(new String[0]));
 		}
-
-		cosSims.save();
-		cosSims.close();
-
+	
+		leskOverlap.save();
+		leskOverlap.close();
+	
 		CSVWriter writer = new CSVWriter(new FileWriter(filepath + ".csv"));
 		writer.writeAll(entries);
 		writer.flush();
 		writer.close();
 		System.out.println("saved saved saved");
-
+	
 	}
 
 	private Double getLeskfeatureAll(String title, String body) {
@@ -345,11 +358,11 @@ public class SimilarityFeatures {
 	public static void main(String[] args) throws Exception {
 		loadData();
 		SimilarityFeatures sf = new SimilarityFeatures();
-		sf.getCosSimFeatureVector(trainingStances, trainingSummIdBoyMap, ProjectPaths.TRAIN_COS_SIM_WS_PATH);
-		sf.getCosSimFeatureVector(testStances, testSummIdBoyMap, ProjectPaths.TEST_COS_SIM_WS_PATH);
+		sf.getCosSimFeatureVector(trainingStances, trainingSummIdBoyMap, ProjectPaths.TRAIN_COS_SIM_STRMET_PATH);
+		sf.getCosSimFeatureVector(testStances, testSummIdBoyMap, ProjectPaths.TEST_COS_SIM_STRMET_PATH);
 
-		sf.getLeskOverlapFeatureVector(trainingStances, trainingSummIdBoyMap, ProjectPaths.TRAIN_LESK_PATH);
-		sf.getLeskOverlapFeatureVector(testStances, testSummIdBoyMap, ProjectPaths.TEST_LESK_PATH);
+		//sf.getLeskOverlapFeatureVector(trainingStances, trainingSummIdBoyMap, ProjectPaths.TRAIN_LESK_PATH);
+		//sf.getLeskOverlapFeatureVector(testStances, testSummIdBoyMap, ProjectPaths.TEST_LESK_PATH);
 	}
 
 }
