@@ -188,6 +188,19 @@ public class FeatureExtractorWithModifiedBL {
 		}
 		return wordsNoStop;
 	}
+	
+	public static Set<String> removeStopwords(Set<String> words) {
+		Set<String> wordsNoStop = new HashSet<>();
+
+		for (String word : words) {
+			if (word.isEmpty())
+				continue;
+			if (isStopword(word))
+				continue; // remove stopwords
+			wordsNoStop.add(word);
+		}
+		return wordsNoStop;
+	}
 
 
 	private static boolean isStopword(String word) {
