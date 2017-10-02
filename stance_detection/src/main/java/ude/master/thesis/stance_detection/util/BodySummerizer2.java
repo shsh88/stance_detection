@@ -94,7 +94,7 @@ public class BodySummerizer2 {
 
 			String endPart = "";
 			if (allSentences.size() < NUM_SENT_END) {
-				begPart = getTextFromSetences(allSentences);
+				endPart = getTextFromSetences(allSentences);
 			} else {
 				endPart = getTextFromEnd(NUM_SENT_END, allSentences);
 			}
