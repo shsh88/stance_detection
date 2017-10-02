@@ -335,19 +335,30 @@ public class HungarianAlgorithm {
 			}
 		}
 	}
-	
-	public static double[][] makeCostMatrix(double[][] matrix, int n, int m, double maxValue){
-		
-		double[][] costMatrix = Arrays.stream(matrix)
-	             .map((double[] row) -> row.clone()).toArray((int length) -> new double[length][]);
-		
-		for(int i = 0; i < n; i++)
-			for(int j = 0; j < m; j++)
+
+	/**
+	 * If the goal is to find the assignment that yields the maximum cost, the
+	 * problem can be altered to fit the setting by replacing each cost with the
+	 * maximum cost subtracted by the cost. [wikipedia]
+	 * 
+	 * @param matrix
+	 * @param n
+	 * @param m
+	 * @param maxValue
+	 * @return
+	 */
+	public static double[][] makeCostMatrix(double[][] matrix, int n, int m, double maxValue) {
+
+		double[][] costMatrix = Arrays.stream(matrix).map((double[] row) -> row.clone())
+				.toArray((int length) -> new double[length][]);
+
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < m; j++)
 				costMatrix[i][j] = maxValue - costMatrix[i][j];
 		return costMatrix;
 	}
 
-	public static void main(String[] args){
+	public static void main(String[] args) {
 
 		Scanner sc = new Scanner(System.in);
 
@@ -360,8 +371,8 @@ public class HungarianAlgorithm {
 
 		double[][] cost = new double[r][c];
 
-		for (int i = 0; i < r; i++){
-			for (int j = 0; j < c; j++){
+		for (int i = 0; i < r; i++) {
+			for (int j = 0; j < c; j++) {
 				cost[i][j] = sc.nextDouble();
 			}
 		}
