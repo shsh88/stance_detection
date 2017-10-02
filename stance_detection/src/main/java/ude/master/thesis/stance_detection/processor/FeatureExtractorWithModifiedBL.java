@@ -306,9 +306,6 @@ public class FeatureExtractorWithModifiedBL {
 				if (body.contains(gram)) {
 					gramFirstHits++;
 				}
-				/*
-				 * if (body.contains(gram)) { gramTailHits++; }
-				 */
 			}
 		}
 
@@ -389,7 +386,7 @@ public class FeatureExtractorWithModifiedBL {
 			sb.append(" ");
 		}
 		headline = sb.toString().trim();
-		List<String> grams = getNGrams(getLemmatizedCleanStr(headline), size);
+		List<String> grams = getNGrams(headline, size);
 		
 		List<String> b = removeStopWords(Arrays.asList(getLemmatizedCleanStr(body).split("\\s+")));
 
@@ -412,20 +409,10 @@ public class FeatureExtractorWithModifiedBL {
 				if (body.substring(0, 255).contains(gram)) {
 					gramEarlyHits++;
 				}
-
-				/*
-				 * if (bodyLem.substring(bodyLem.length() - 255).contains(gram))
-				 * { gramTailHits++; }
-				 */
-
 			} else {
 				if (body.contains(gram)) {
 					gramEarlyHits++;
 				}
-				/*
-				 * if (bodyLem.contains(gram)) { // TODO do we need to look in
-				 * this // case gramTailHits++; }
-				 */
 			}
 
 		}
@@ -447,7 +434,7 @@ public class FeatureExtractorWithModifiedBL {
 			sb.append(" ");
 		}
 		headline = sb.toString().trim();
-		List<String> grams = getNGrams(getLemmatizedCleanStr(headline), size);
+		List<String> grams = getNGrams(headline, size);
 		
 		List<String> b = removeStopWords(Arrays.asList(getLemmatizedCleanStr(body).split("\\s+")));
 
