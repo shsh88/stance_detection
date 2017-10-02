@@ -13,9 +13,17 @@ public class ProjectPaths {
 	public static final String TEST_STANCESS = "resources/data/test_data/competition_test_stances.csv";
 	public static final String SUMMARIZED_TEST_BODIES = "resources/data/test_data/test_bodies_preprocessed_summ.csv";
 
+	public static final String SUMMARIZED_TRAIN_BODIES2 = "resources/data/train_bodies_preprocessed_summ2.csv";
+	public static final String SUMMARIZED_TEST_BODIES2 = "resources/data/test_data/test_bodies_preprocessed_summ2.csv";
+	
+	public static final String MAP_SUMMARIZED_TRAIN_BODIES2 = "C:/thesis_stuff/data_maps/train_bodies_preprocessed_summ2";
+	public static final String MAP_SUMMARIZED_TEST_BODIES2 = "C:/thesis_stuff/data_maps/test_bodies_preprocessed_summ2";
 	// Saved features
 	public static final String ROOT_DIST_FEATURE_TRAIN = "C:/thesis_stuff/features/train_features/train_rootdist";
 	public static final String ROOT_DIST_FEATURE_TEST = "C:/thesis_stuff/features/test_features/test_rootdist";
+	
+	public static final String CSV_ROOT_DIST_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/test_rootdist2.csv";
+	public static final String CSV_ROOT_DIST_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_rootdist2.csv";
 
 	public static final String SVO_FEATURE_TRAIN = "C:/thesis_stuff/features/train_features/train_svo_nosvo_features";
 	public static final String SVO_FEATURE_TEST = "C:/thesis_stuff/features/test_features/test_svo_nosvo_features";
@@ -77,8 +85,39 @@ public class ProjectPaths {
 	public static final String TEST_eq7_BODY = "C:/thesis_stuff/help_files/test_eq7_body.txt";
 	public static final String TEST_eq6_BODY = "C:/thesis_stuff/help_files/test_eq6_body.txt";
 	
+	public static final String TRAIN_BODIES_DEPS2 = "C:/thesis_stuff/help_files/train_bodies_deps2";
+	public static final String TRAIN_TITLES_DEPS2 = "C:/thesis_stuff/help_files/train_titles_deps2";
+	public static final String TEST_BODIES_DEPS2 = "C:/thesis_stuff/help_files/test_bodies_deps2";
+	public static final String TEST_TITLES_DEPS2 = "C:/thesis_stuff/help_files/test_titles_deps2";
+	public static final String CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2 = "C:/thesis_stuff/features/train_features/train_hung_ppdb_with_stopwords2.csv";
+	public static final String CSV_PPDB_HUNG_SCORES_IDXS_TEST2 = "C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords2.csv";
+	public static final String PPDB_HUNG_SCORES_IDXS_TRAIN2 = "C:/thesis_stuff/features/train_features/map_train_hung_ppdb_with_stopwords2";
+	public static final String PPDB_SCORES_IDXS_TEST2 = "C:/thesis_stuff/features/test_features/map_test_hung_ppdb_with_stopwords2";
+	public static final String CSV_NEG_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_neg_features2.csv";
+	public static final String CSV_NEG_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_neg_features2.csv";
+	public static final String TITLES_SVO_TRAIN_TEST = "C:/thesis_stuff/help_files/titles_svos_train_test";
+	public static final String BODIES_SVO_TRAIN_TEST2 = "C:/thesis_stuff/help_files/bodies_svos_train_test2";
+	public static final String CSV_SVO_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_svo_features2.csv";
+	public static final String CSV_SVO_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_svo_features2.csv";
+	public static final String CSV_SUMMED_SVO_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_summed_svo_features2.csv";
+	public static final String CSV_SUMMED_SVO_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_summed_svo_features2.csv";
+	public static final String BODIES_W2V_SUM2 = "C:/thesis_stuff/help_files/bodies_sum_word2vec2";
+	public static final String TITLES_W2V_SUM2 = "C:/thesis_stuff/help_files/titles_sum_word2vec2";
+	public static final String CSV_TRAIN_W2V_SUM_SIM_PARTS2 = "C:/thesis_stuff/features/train_features/train_w2v_sim_features2.csv";
+	public static final String CSV_TEST_W2V_SUM_SIM_PARTS2 = "C:/thesis_stuff/features/test_features/test_w2v_sim_features2.csv";
+	public static final String ROOT_DIST_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_rootdist2";
+	public static final String ROOT_DIST_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_rootdist2";
+	public static final String PPDB_HUNG_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_hung_ppdb_with_stopwords2";
+	public static final String PPDB_HUNG_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords2";
+	public static final String NEG_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_neg_features2";
+	public static final String NEG_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_neg_features2";
+	public static final String SVO_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_svo_features2";
+	public static final String SVO_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_svo_features2";
+	public static final String SUMMED_SVO_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_summed_svo_features2";
+	public static final String SUMMED_SVO_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_summed_svo_features2";
+	public static final String W2V_SIM_ADD_TRAIN2 = "C:/thesis_stuff/features/train_features/train_w2v_sim_features2";
+	public static final String W2V_SIM_ADD_TEST2 = "C:/thesis_stuff/features/test_features/test_w2v_sim_features2";
 	
 	
 	
-
 }
