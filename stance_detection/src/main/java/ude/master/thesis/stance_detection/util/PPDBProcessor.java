@@ -218,6 +218,7 @@ public class PPDBProcessor {
 	public static ArrayList<Integer> getIntList(String idxStr) {
 		if (idxStr.equals("[]"))
 			return new ArrayList<>();
+	
 		idxStr = idxStr.substring(idxStr.indexOf('[') + 1, idxStr.indexOf(']')).trim();
 		String[] idxStrs = idxStr.split(", ");
 		// create int Arraylist
@@ -354,10 +355,6 @@ public class PPDBProcessor {
 	 */
 	public static double calculateHungarianAlignmentScore(String header, String bodySentence,
 			ArrayList<Integer> indexes) throws FileNotFoundException, IOException {
-
-		// No need to clean
-		// String cleanH = FeatureExtractor.clean(header);
-		// String cleanB = FeatureExtractor.clean(bodySentence);
 
 		List<String> hLemmas = lemm.lemmatize(header);
 		List<String> bSentLemmas = lemm.lemmatize(bodySentence);
