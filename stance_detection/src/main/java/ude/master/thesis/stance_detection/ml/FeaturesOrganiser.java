@@ -273,7 +273,7 @@ public class FeaturesOrganiser {
 		}
 
 		if (useWord2VecAddSimilarity) {
-			features.add(new Attribute(FNCConstants.WORD2VEC_ADD_SIMM));
+			features.add(new Attribute(FNCConstants.WORD2VEC_ADD_SIM));
 		}
 
 		if (useSVOFeature) {
@@ -531,7 +531,7 @@ public class FeaturesOrganiser {
 			if (sim == null)
 				sim = testW2VSim.get(headline + bodyId);
 
-			instance.setValue(instances.attribute(FNCConstants.WORD2VEC_ADD_SIMM), sim);
+			instance.setValue(instances.attribute(FNCConstants.WORD2VEC_ADD_SIM), sim);
 		}
 
 		if (useSVOFeature) {
