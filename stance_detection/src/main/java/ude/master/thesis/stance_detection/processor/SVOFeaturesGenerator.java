@@ -288,15 +288,15 @@ public class SVOFeaturesGenerator {
 				bodiesSVOsPath, FileHashMap.FORCE_OVERWRITE);
 
 		for (Entry<Integer, Map<Integer, String>> e : trainingSummIdBoyMap.entrySet()) {
+			String parts = "";
 			for (int i = 1; i <= 3; i++) {
-				String part;
 				if (i != 2) {
-					part = e.getValue().get(i);
-					if (!part.isEmpty()) {
-						List<Map<String, String>> svos = getSVOsFromText(pipeline, part);
-						bodiesSVOs.put(String.valueOf(e.getKey()), svos);
-					}
+					parts += e.getValue().get(i);
 				}
+			}
+			if (!parts.isEmpty()) {
+				List<Map<String, String>> svos = getSVOsFromText(pipeline, parts);
+				bodiesSVOs.put(String.valueOf(e.getKey()), svos);
 			}
 		}
 		for (Entry<Integer, Map<Integer, String>> e : testSummIdBoyMap.entrySet()) {
