@@ -60,9 +60,9 @@ public class ClassifierTools {
 		ChiSquaredAttributeEval ev2 = new ChiSquaredAttributeEval(); //
 		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
 		Ranker ranker = new Ranker();
-		// ranker.setNumToSelect(4500);
+		ranker.setNumToSelect(1000);
 		//ranker.setNumToSelect(70);
-		//ranker.setThreshold(0.0);
+		ranker.setThreshold(0.0);
 
 		attributeFilter.setSearch(ranker);
 		attributeFilter.setEvaluator(ev2);
