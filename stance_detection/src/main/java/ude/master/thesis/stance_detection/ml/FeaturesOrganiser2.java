@@ -32,6 +32,7 @@ import ude.master.thesis.stance_detection.processor.SVOFeaturesGenerator2;
 import ude.master.thesis.stance_detection.processor.SimilarityFeatures;
 import ude.master.thesis.stance_detection.processor.StanfordDependencyParser2;
 import ude.master.thesis.stance_detection.processor.Word2VecDataGenerator2;
+import ude.master.thesis.stance_detection.util.BodySummerizer2;
 import ude.master.thesis.stance_detection.util.FNCConstants;
 import ude.master.thesis.stance_detection.util.LeskGlossOverlaps;
 import ude.master.thesis.stance_detection.util.PPDBProcessor2;
@@ -83,6 +84,7 @@ public class FeaturesOrganiser2 {
 	private boolean useMetricCosineSimilarity = false;
 	private boolean useleskOverlap = false;
 	private boolean useTitleQuestionMark = false;
+	private boolean useTitleLength = false;
 
 	private static StringDistance cosSimMetric;
 
@@ -189,39 +191,39 @@ public class FeaturesOrganiser2 {
 
 		if (useOverlapFeature) {
 			trainWordOverlap = RelatedUnrelatedFeatureGenerator
-					.loadWordsOverlapsFeaturesAsHashFile(ProjectPaths.TRAIN_WORD_OVERLAPS_PATH);
+					.loadWordsOverlapsFeaturesAsHashFile(ProjectPaths.TRAIN_WORD_OVERLAPS_PATH2);
 			testWordOverlap = RelatedUnrelatedFeatureGenerator
-					.loadWordsOverlapsFeaturesAsHashFile(ProjectPaths.TEST_WORD_OVERLAPS_PATH);
+					.loadWordsOverlapsFeaturesAsHashFile(ProjectPaths.TEST_WORD_OVERLAPS_PATH2);
 		}
 
 		if (useBinaryCooccurraneStopFeatures) {
 			trainCoOccuranceStop = RelatedUnrelatedFeatureGenerator
-					.loadCoOccStopFeaturesAsHashFile(ProjectPaths.TRAIN_COOCC_PATH);
+					.loadCoOccStopFeaturesAsHashFile(ProjectPaths.TRAIN_COOCC_PATH2);
 			testCoOccuranceStop = RelatedUnrelatedFeatureGenerator
-					.loadCoOccStopFeaturesAsHashFile(ProjectPaths.TEST_COOCC_PATH);
+					.loadCoOccStopFeaturesAsHashFile(ProjectPaths.TEST_COOCC_PATH2);
 		}
 
 		if (useCharGramsFeatures) {
 			trainCgram = RelatedUnrelatedFeatureGenerator
-					.loadCharGramsFeaturesAsHashFile(ProjectPaths.TRAIN_CGRAMS_PATH);
-			testCgram = RelatedUnrelatedFeatureGenerator.loadCharGramsFeaturesAsHashFile(ProjectPaths.TEST_CGRAMS_PATH);
+					.loadCharGramsFeaturesAsHashFile(ProjectPaths.TRAIN_CGRAMS_PATH2);
+			testCgram = RelatedUnrelatedFeatureGenerator.loadCharGramsFeaturesAsHashFile(ProjectPaths.TEST_CGRAMS_PATH2);
 		}
 
 		if (useWordGramsFeatures) {
-			trainNgram = RelatedUnrelatedFeatureGenerator.loadNGramsFeaturesAsHashFile(ProjectPaths.TRAIN_NGRAMS_PATH);
-			testNgram = RelatedUnrelatedFeatureGenerator.loadNGramsFeaturesAsHashFile(ProjectPaths.TEST_NGRAMS_PATH);
+			trainNgram = RelatedUnrelatedFeatureGenerator.loadNGramsFeaturesAsHashFile(ProjectPaths.TRAIN_NGRAMS_PATH2);
+			testNgram = RelatedUnrelatedFeatureGenerator.loadNGramsFeaturesAsHashFile(ProjectPaths.TEST_NGRAMS_PATH2);
 		}
 
 		if (useMetricCosineSimilarity) {
 			trainStrMetricCosSim = SimilarityFeatures
-					.loadCosSimFeaturesAsHashFile(ProjectPaths.TRAIN_COS_SIM_STRMET_PATH);
+					.loadCosSimFeaturesAsHashFile(ProjectPaths.TRAIN_COS_SIM_STRMET_PATH2);
 			testStrMetricCosSim = SimilarityFeatures
-					.loadCosSimFeaturesAsHashFile(ProjectPaths.TEST_COS_SIM_STRMET_PATH);
+					.loadCosSimFeaturesAsHashFile(ProjectPaths.TEST_COS_SIM_STRMET_PATH2);
 		}
 
 		if (useHypernymsSimilarity) {
-			trainHypSimilarity = HypernymSimilarity.loadHypSimAsHashFile(ProjectPaths.TRAIN_HYP_SIM_PATH);
-			testHypSimilarity = HypernymSimilarity.loadHypSimAsHashFile(ProjectPaths.TEST_HYP_SIM_PATH);
+			trainHypSimilarity = HypernymSimilarity.loadHypSimAsHashFile(ProjectPaths.TRAIN_HYP_SIM_PATH2);
+			testHypSimilarity = HypernymSimilarity.loadHypSimAsHashFile(ProjectPaths.TEST_HYP_SIM_PATH2);
 		}
 
 		if (useleskOverlap) {
@@ -230,8 +232,8 @@ public class FeaturesOrganiser2 {
 			 * lgo = new LeskGlossOverlaps(dict); lgo.useStopList(true);
 			 * lgo.useLemmatiser(true);
 			 */
-			trainLeskOverlap = SimilarityFeatures.loadLeskFeaturesAsHashFile(ProjectPaths.TRAIN_LESK_PATH);
-			testLeskOverlap = SimilarityFeatures.loadLeskFeaturesAsHashFile(ProjectPaths.TEST_LESK_PATH);
+			trainLeskOverlap = SimilarityFeatures.loadLeskFeaturesAsHashFile(ProjectPaths.TRAIN_LESK_PATH2);
+			testLeskOverlap = SimilarityFeatures.loadLeskFeaturesAsHashFile(ProjectPaths.TEST_LESK_PATH2);
 		}
 
 		// Load Lemmatized data
@@ -300,7 +302,7 @@ public class FeaturesOrganiser2 {
 
 		if (useOverlapFeature) {
 			// features.add(new Attribute(FNCConstants.WORD_OVERLAP));
-			for (int i = 0; i < 11; i++) {
+			for (int i = 0; i < 9; i++) {
 				features.add(new Attribute(FNCConstants.WORD_OVERLAP + i));
 			}
 		}
@@ -327,7 +329,7 @@ public class FeaturesOrganiser2 {
 			// Attribute(FNCConstants.BINARY_COOCCURANCE_STOP_COUNT));
 			// features.add(new
 			// Attribute(FNCConstants.BINARY_COOCCURANCE_STOP_COUNT_FIRST_255));
-			for (int i = 0; i < 12; i++) {
+			for (int i = 0; i < 9; i++) {
 				features.add(new Attribute(FNCConstants.BINARY_COOCCURANCE_STOP_COUNT + i));
 			}
 		}
@@ -343,7 +345,9 @@ public class FeaturesOrganiser2 {
 			 * Not in baseline // features.add(new Attribute("cgram_tail_hits_"
 			 * + size)); }
 			 */
-			for (int i = 0; i < 39; i++) {
+			int featSize = (3 * BodySummerizer2.NUM_SENT_BEG) + (3 * BodySummerizer2.NUM_SENT_END)
+					+ 3 * 3;
+			for (int i = 0; i < featSize; i++) {
 				features.add(new Attribute(FNCConstants.CHAR_GRAMS_HITS + i));
 			}
 		}
@@ -357,14 +361,17 @@ public class FeaturesOrganiser2 {
 			 * size)); // TODO: Not in baseline // features.add(new
 			 * Attribute("ngram_tail_hits" + size)); }
 			 */
-			for (int i = 0; i < 48; i++) {
+			
+			int featSize = (4 * BodySummerizer2.NUM_SENT_BEG) + (4 * BodySummerizer2.NUM_SENT_END)
+					+ 4 * 2;
+			for (int i = 0; i < featSize; i++) {
 				features.add(new Attribute(FNCConstants.NGRAM_HITS + i));
 			}
 		}
 
 		if (useMetricCosineSimilarity) {
 			// features.add(new Attribute(FNCConstants.COSINE_METRIC_SIM));
-			for (int i = 0; i < 11; i++) {
+			for (int i = 0; i < 9; i++) {
 				features.add(new Attribute(FNCConstants.COSINE_METRIC_SIM + i));
 			}
 		}
@@ -374,13 +381,17 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (useHypernymsSimilarity) {
-			for (int i = 0; i < 11; i++) {
+			for (int i = 0; i < 9; i++) {
 				features.add(new Attribute(FNCConstants.HYP_SIM + i));
 			}
 		}
 
 		if (useTitleQuestionMark) {
 			features.add(new Attribute(FNCConstants.TITLE_Q));
+		}
+		
+		if(useTitleLength){
+			features.add(new Attribute(FNCConstants.TITLE_LENGTH));
 		}
 
 		// Add the classs attribute
@@ -742,6 +753,12 @@ public class FeaturesOrganiser2 {
 			Attribute qAtt = instances.attribute(FNCConstants.TITLE_Q);
 			instance.setValue(qAtt, q);
 		}
+		
+		if(useTitleLength){
+			int len = headline.split("\\s+").length;
+			Attribute lenAtt = instances.attribute(FNCConstants.TITLE_LENGTH);
+			instance.setValue(lenAtt, len);
+		}
 
 		if (useMetricCosineSimilarity) {
 			// Old Way
@@ -1005,6 +1022,14 @@ public class FeaturesOrganiser2 {
 
 	public void useHypernymsSimilarity(boolean useHypernymsSimilarity) {
 		this.useHypernymsSimilarity = useHypernymsSimilarity;
+	}
+
+	public boolean isTitleLengthUsed() {
+		return useTitleLength;
+	}
+
+	public void useTitleLength(boolean useTitleLength) {
+		this.useTitleLength = useTitleLength;
 	}
 
 }
