@@ -40,6 +40,7 @@ public class FNCConstants {
 	public static final String LESK_OVERLAP = "lesk";
 	public static final String TITLE_Q = "Q";
 	public static final String HYP_SIM = "hyp_sim";
+	public static final String TITLE_LENGTH = "t_len";
 	
 	
 	public static String getCurrentTimeStamp() {
