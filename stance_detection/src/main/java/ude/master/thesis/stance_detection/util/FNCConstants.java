@@ -10,7 +10,7 @@ public class FNCConstants {
 	public static final String SVO = "svo_";
 	public static final String PPDB_HUNG = "ppdb_";
 	public static final String NEG_FEATURE = "neg";
-	public static final String WORD2VEC_ADD_SIMM = "w2v_sim_sum";
+	public static final String WORD2VEC_ADD_SIM = "w2v_sim_sum";
 	public static final String TITLE_DOC2VEC = "t_d2vec_";
 	public static final String BODY_DOC2VEC = "b_d2vec_";
 	public static final String RELATION_NAME = "fnc-1";
