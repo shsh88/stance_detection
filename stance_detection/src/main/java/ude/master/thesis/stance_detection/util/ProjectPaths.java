@@ -7,9 +7,13 @@ import java.util.Map.Entry;
 
 public class ProjectPaths {
 	public static final String TRAIN_STANCES_PREPROCESSED = "resources/data/train_stances_preprocessed.csv";
+	public static final String TRAIN_STANCES_LESS2_PREPROCESSED = "resources/data/train_stances_less2_preprocessed.csv";
+	
 	public static final String TRAIN_STANCES = "resources/data/train_stances.csv";
 	public static final String SUMMARIZED_TRAIN_BODIES = "resources/data/train_bodies_preprocessed_summ.csv";
 	public static final String TEST_STANCESS_PREPROCESSED = "resources/data/test_data/test_stances_preprocessed.csv";
+	public static final String TEST_STANCESS_LESS2_PREPROCESSED = "resources/data/test_data/test_stances_less2_preprocessed.csv";
+	
 	public static final String TEST_STANCESS = "resources/data/test_data/competition_test_stances.csv";
 	public static final String SUMMARIZED_TEST_BODIES = "resources/data/test_data/test_bodies_preprocessed_summ.csv";
 
@@ -22,7 +26,7 @@ public class ProjectPaths {
 	public static final String ROOT_DIST_FEATURE_TRAIN = "C:/thesis_stuff/features/train_features/train_rootdist";
 	public static final String ROOT_DIST_FEATURE_TEST = "C:/thesis_stuff/features/test_features/test_rootdist";
 	
-	public static final String CSV_ROOT_DIST_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/test_rootdist2.csv";
+	public static final String CSV_ROOT_DIST_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_rootdist2.csv";
 	public static final String CSV_ROOT_DIST_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_rootdist2.csv";
 
 	public static final String SVO_FEATURE_TRAIN = "C:/thesis_stuff/features/train_features/train_svo_nosvo_features";
@@ -118,6 +122,25 @@ public class ProjectPaths {
 	public static final String W2V_SIM_ADD_TRAIN2 = "C:/thesis_stuff/features/train_features/train_w2v_sim_features2";
 	public static final String W2V_SIM_ADD_TEST2 = "C:/thesis_stuff/features/test_features/test_w2v_sim_features2";
 	
+	public static final String TRAIN_WORD_OVERLAPS_PATH2 = "C:/thesis_stuff/features/train_features/train_words_overlaps2";
+	public static final String TEST_WORD_OVERLAPS_PATH2 = "C:/thesis_stuff/features/test_features/test_words_overlaps2";
+	public static final String TRAIN_COOCC_PATH2 = "C:/thesis_stuff/features/train_features/train_cooc_stop2";
+	public static final String TEST_COOCC_PATH2 = "C:/thesis_stuff/features/test_features/test_cooc_stop2";
+	public static final String TRAIN_CGRAMS_PATH2 = "C:/thesis_stuff/features/train_features/train_cgrams2";
+	public static final String TEST_CGRAMS_PATH2 = "C:/thesis_stuff/features/test_features/test_cgrams2";
+	public static final String TRAIN_NGRAMS_PATH2 = "C:/thesis_stuff/features/train_features/train_ngrams2";
+	public static final String TEST_NGRAMS_PATH2 = "C:/thesis_stuff/features/test_features/test_ngrams2";
 	
+	public static final String TRAIN_COS_SIM_STRMET_PATH2 = "C:/thesis_stuff/features/train_features/train_strmet_cos_sim2";
+	public static final String TEST_COS_SIM_STRMET_PATH2 = "C:/thesis_stuff/features/test_features/test_strmet_cos_sim2";
+	public static final String TRAIN_LESK_PATH2 = "C:/thesis_stuff/features/train_features/train_lesk2";
+	public static final String TEST_LESK_PATH2 = "C:/thesis_stuff/features/test_features/test_lesk2";
+	
+	
+	public static final String BODIES_POS_MAP_PATH2 = "C:/thesis_stuff/help_files/bodies_pos_map2";
+	public static final String TRAIN_HYP_SIM_PATH2 = "C:/thesis_stuff/features/train_features/train_hyp_sim2";
+	public static final String TEST_HYP_SIM_PATH2 = "C:/thesis_stuff/features/test_features/test_hyp_sim2";
+	public static final String PREPROCESSED_BODIES_TEST = "resources/data/test_data/test_bodies_preprocessed.csv";
+	public static final String PREPROCESSED_BODIES_TRAIN = "resources/data/train_bodies_preprocessed.csv";
 	
 }
