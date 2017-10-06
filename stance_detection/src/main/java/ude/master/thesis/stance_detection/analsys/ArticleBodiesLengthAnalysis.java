@@ -3,6 +3,7 @@ package ude.master.thesis.stance_detection.analsys;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -13,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import com.opencsv.CSVWriter;
 
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -31,23 +34,28 @@ public class ArticleBodiesLengthAnalysis {
 	private static List<List<String>> testStances = new ArrayList<List<String>>();
 	private static HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = new HashMap<>();
 	private static HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = new HashMap<>();
+	
+	private static List<List<String>> trainingStancesReduced = new ArrayList<>();
+	private static List<List<String>> testStancesReduced = new ArrayList<List<String>>();
 
 	StanfordCoreNLP pipeline;
 
 	public static void loadData() throws IOException {
 		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
-				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES,
-				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES);
+				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2,
+				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2);
 
-		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES));
-		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES));
+		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2));
+		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2));
 
 		trainingStances = sddr.getTrainStances();
+		trainingStancesReduced.addAll(trainingStances);
 
 		testStances = sddr.getTestStances();
+		testStancesReduced.addAll(testStances);
 	}
 
-	public void count(List<List<String>> stances, HashMap<Integer, Map<Integer, String>> summIdBoyMap,
+	public void count(List<List<String>> stances, List<List<String>> stancesReduced, HashMap<Integer, Map<Integer, String>> summIdBoyMap,
 			String dataType) {
 		int lessThan10 = 0;
 		List<String> lessThan10Data = new ArrayList<>();
@@ -85,11 +93,13 @@ public class ArticleBodiesLengthAnalysis {
 		Set<String> titles2 = new HashSet<>();
 		Set<String> titles3 = new HashSet<>();
 
+		List<List<String>> toRemove = new ArrayList<>();
+		int i =0;
 		for (List<String> s : stances) {
 			Map<Integer, String> bodyParts = summIdBoyMap.get(Integer.valueOf(s.get(1)));
 
 			// for (int i = 1; i <= 3; i++) {
-			int c = countSentences(bodyParts.get(1)) + countSentences(bodyParts.get(3));
+			int c = countSentences(bodyParts.get(2));
 			// }
 
 			if (c < 10) {
@@ -127,6 +137,7 @@ public class ArticleBodiesLengthAnalysis {
 				lessThan2++;
 				lessThan2Data.add(s.get(0) + " , " + s.get(1) + " , " + s.get(2));
 				lessThan2Ids.add(s.get(1));
+				toRemove.add(stancesReduced.get(stances.indexOf(s)));
 			}
 
 			String title = s.get(0);
@@ -146,9 +157,13 @@ public class ArticleBodiesLengthAnalysis {
 				tLengthData.get(3).add(s.get(0) + " , " + s.get(1) + " , " + s.get(2));
 				titles3.add(s.get(0));
 			}
-
+			i++;
 		}
 
+		System.out.println("before: " + stancesReduced.size());
+		stancesReduced.removeAll(toRemove);
+		System.out.println("after: " + stancesReduced.size());
+		
 		Map<Integer, Set<String>> allTitles = new HashMap<>();
 		allTitles.put(1, titles1);
 		allTitles.put(2, titles2);
@@ -245,8 +260,32 @@ public class ArticleBodiesLengthAnalysis {
 	public static void main(String[] args) throws IOException {
 		ArticleBodiesLengthAnalysis x = new ArticleBodiesLengthAnalysis();
 		x.loadData();
-		x.count(trainingStances, trainingSummIdBoyMap, "train");
-		x.count(testStances, testSummIdBoyMap, "test");
+		//x.count(trainingStances, trainingStancesReduced, trainingSummIdBoyMap, "train");
+		//x.count(testStances, testStancesReduced, testSummIdBoyMap, "test");
+		
+		//saveCSV(trainingStancesReduced, ProjectPaths.TRAIN_STANCES_LESS2_PREPROCESSED);
+		//saveCSV(testStancesReduced, ProjectPaths.TEST_STANCESS_LESS2_PREPROCESSED);
+	}
+
+	private static void saveCSV(List<List<String>> stances, String path) throws IOException {
+		List<String[]> entries = new ArrayList<>();
+		entries.add(new String[] { "Headline", "Body ID", "Stance" });
+		
+		for (List<String> stance : stances) {
+			List<String> entry = new ArrayList<>();
+			entry.add(stance.get(0));
+			entry.add(stance.get(1));
+			entry.add(stance.get(2));
+			
+			entries.add(entry.toArray(new String[0]));
+			
+		}
+		
+		CSVWriter writer = new CSVWriter(new FileWriter(path));
+		writer.writeAll(entries);
+		writer.flush();
+		writer.close();
+		System.out.println("saved saved saved");
 	}
 
 }
