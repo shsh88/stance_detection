@@ -109,8 +109,8 @@ public class Word2VecDataGenerator2 {
 		 * System.out.println(result.toString());
 		 */
 
-		// generateWord2VecData();
-		saveWord2VecFeaturesAsHashFile(ProjectPaths.CSV_TRAIN_W2V_SUM_SIM_PARTS2, ProjectPaths.W2V_SIM_ADD_TRAIN2);
+		//generateWord2VecData();
+		//saveWord2VecFeaturesAsHashFile(ProjectPaths.CSV_TRAIN_W2V_SUM_SIM_PARTS2, ProjectPaths.W2V_SIM_ADD_TRAIN2);
 		saveWord2VecFeaturesAsHashFile(ProjectPaths.CSV_TEST_W2V_SUM_SIM_PARTS2, ProjectPaths.W2V_SIM_ADD_TEST2);
 	}
 
