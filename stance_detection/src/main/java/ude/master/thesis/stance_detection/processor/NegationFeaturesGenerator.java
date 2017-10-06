@@ -105,7 +105,11 @@ public class NegationFeaturesGenerator {
 
 		// lemm = new Lemmatizer();
 		// porter = new Porter();
+		
+		
 		getNegFeaturesForData();
+		
+		
 		// out.flush();
 		// out.close();
 		/*
