@@ -108,14 +108,14 @@ public class NegationFeaturesGenerator2 {
 		// out.write("==========================");
 		// out.newLine();
 
-		// lemm = new Lemmatizer();
-		// porter = new Porter();
+		lemm = new Lemmatizer();
+		porter = new Porter();
 		
 		
 		
 		
 		
-		//getNegFeaturesForData();
+		getNegFeaturesForData();
 		
 		saveNegFeaturesAsHashFile(ProjectPaths.CSV_NEG_FEATURE_TRAIN2, ProjectPaths.NEG_FEATURE_TRAIN2);
 		saveNegFeaturesAsHashFile(ProjectPaths.CSV_NEG_FEATURE_TEST2, ProjectPaths.NEG_FEATURE_TEST2);
