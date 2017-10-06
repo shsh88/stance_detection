@@ -102,18 +102,18 @@ public class StanfordDependencyParser2 {
 	}
 
 	public static void main(String[] args) throws Exception {
-		/*StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
 				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2,
 				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2);
 
-		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
-				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2));
-		generateRootDistFeaturesAndSave(trainingSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TRAIN2);
+		//HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
+			//	.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2));
+		//generateRootDistFeaturesAndSave(trainingSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TRAIN2);
 
-		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
-				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2));
-		generateRootDistFeaturesAndSave(testSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2);*/
-		saveRootDistFeaturesAsHashFile(ProjectPaths.CSV_ROOT_DIST_FEATURE_TRAIN2, ProjectPaths.ROOT_DIST_FEATURE_TRAIN2);
+		//HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
+			//	.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2));
+		//generateRootDistFeaturesAndSave(testSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2);
+		//saveRootDistFeaturesAsHashFile(ProjectPaths.CSV_ROOT_DIST_FEATURE_TRAIN2, ProjectPaths.ROOT_DIST_FEATURE_TRAIN2);
 		saveRootDistFeaturesAsHashFile(ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2, ProjectPaths.ROOT_DIST_FEATURE_TEST2);
 
 		/*
