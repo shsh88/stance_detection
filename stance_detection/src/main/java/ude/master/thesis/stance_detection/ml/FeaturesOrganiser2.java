@@ -324,27 +324,12 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (useBinaryCooccurraneStopFeatures) {
-			// Old way
-			// features.add(new
-			// Attribute(FNCConstants.BINARY_COOCCURANCE_STOP_COUNT));
-			// features.add(new
-			// Attribute(FNCConstants.BINARY_COOCCURANCE_STOP_COUNT_FIRST_255));
 			for (int i = 0; i < 9; i++) {
 				features.add(new Attribute(FNCConstants.BINARY_COOCCURANCE_STOP_COUNT + i));
 			}
 		}
 
 		if (useCharGramsFeatures) {
-			// Old way
-			/*
-			 * int[] cgramSizes = { 2, 8, 4, 16 }; for (int size : cgramSizes) {
-			 * features.add(new Attribute(FNCConstants.CHAR_GRAMS_HITS + size));
-			 * features.add(new Attribute(FNCConstants.CHAR_GRAMS_EARLY_HITS +
-			 * size)); features.add(new
-			 * Attribute(FNCConstants.CHAR_GRAMS_FIRST_HITS + size)); // TODO:
-			 * Not in baseline // features.add(new Attribute("cgram_tail_hits_"
-			 * + size)); }
-			 */
 			int featSize = (3 * BodySummerizer2.NUM_SENT_BEG) + (3 * BodySummerizer2.NUM_SENT_END)
 					+ 3 * 3;
 			for (int i = 0; i < featSize; i++) {
@@ -352,16 +337,7 @@ public class FeaturesOrganiser2 {
 			}
 		}
 
-		if (useWordGramsFeatures) {
-			// Old way
-			/*
-			 * int[] ngramSizes = { 2, 3, 4, 5, 6 }; for (int size : ngramSizes)
-			 * { features.add(new Attribute(FNCConstants.NGRAM_HITS + size));
-			 * features.add(new Attribute(FNCConstants.NGRAM_EARLY_HITS +
-			 * size)); // TODO: Not in baseline // features.add(new
-			 * Attribute("ngram_tail_hits" + size)); }
-			 */
-			
+		if (useWordGramsFeatures) {			
 			int featSize = (4 * BodySummerizer2.NUM_SENT_BEG) + (4 * BodySummerizer2.NUM_SENT_END)
 					+ 4 * 2;
 			for (int i = 0; i < featSize; i++) {
@@ -588,20 +564,12 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (useOverlapFeature) {
-			// old way
-			/*
-			 * Attribute wordOverlapAtt =
-			 * instances.attribute(FNCConstants.WORD_OVERLAP);
-			 * instance.setValue(wordOverlapAtt,
-			 * FeatureExtractorWithModifiedBL.getWordOverlapFeature(headline,
-			 * bodyParts.get(0) + " " + bodyParts.get(1)));
-			 */
 			ArrayList<Double> wordOverlap = null;
 			wordOverlap = trainWordOverlap.get(headline + bodyId);
 			if (wordOverlap == null)
 				wordOverlap = testWordOverlap.get(headline + bodyId);
 
-			for (int i = 0; i < 11; i++) {
+			for (int i = 0; i < 9; i++) {
 				Attribute wordOverlapAtt = instances.attribute(FNCConstants.WORD_OVERLAP + i);
 				instance.setValue(wordOverlapAtt, wordOverlap.get(i));
 			}
@@ -639,102 +607,48 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (useBinaryCooccurraneStopFeatures) {
-			// Old way
-			/*
-			 * List<Integer> f =
-			 * FeatureExtractorWithModifiedBL.getBinaryCoOccurenceStopFeatures(
-			 * headline, bodyParts.get(0) + " " + bodyParts.get(1)); Attribute
-			 * binCoOccAtt =
-			 * instances.attribute(FNCConstants.BINARY_COOCCURANCE_STOP_COUNT);
-			 * instance.setValue(binCoOccAtt, f.get(0));
-			 * 
-			 * Attribute binCoOccEarlyAtt = instances.attribute(FNCConstants.
-			 * BINARY_COOCCURANCE_STOP_COUNT_FIRST_255);
-			 * instance.setValue(binCoOccEarlyAtt, f.get(1));
-			 */
-
 			ArrayList<Integer> coOccuranceStop = null;
 			coOccuranceStop = trainCoOccuranceStop.get(headline + bodyId);
 			if (coOccuranceStop == null)
 				coOccuranceStop = testCoOccuranceStop.get(headline + bodyId);
 
-			for (int i = 0; i < 12; i++) {
+			for (int i = 0; i < 9; i++) {
 				Attribute coOccuranceStopAtt = instances.attribute(FNCConstants.BINARY_COOCCURANCE_STOP_COUNT + i);
 				instance.setValue(coOccuranceStopAtt, coOccuranceStop.get(i));
 			}
 		}
 
 		if (useCharGramsFeatures) {
-			// Old way
-			/*
-			 * int[] cgramSizes = { 2, 4, 8, 16 }; // int[] cgramSizes = {8,
-			 * 16}; for (int size : cgramSizes) { List<Integer> f =
-			 * FeatureExtractorWithModifiedBL.getCharGramsFeatures(headline,
-			 * bodyParts.get(0) + " " + bodyParts.get(1), size);
-			 * 
-			 * Attribute cgramHitsAtt =
-			 * instances.attribute(FNCConstants.CHAR_GRAMS_HITS + size);
-			 * instance.setValue(cgramHitsAtt, f.get(0));
-			 * 
-			 * Attribute cgramEarlyHitsAtt =
-			 * instances.attribute(FNCConstants.CHAR_GRAMS_EARLY_HITS + size);
-			 * instance.setValue(cgramEarlyHitsAtt, f.get(1));
-			 * 
-			 * Attribute cgramFirstHitsAtt =
-			 * instances.attribute(FNCConstants.CHAR_GRAMS_FIRST_HITS + size);
-			 * instance.setValue(cgramFirstHitsAtt, f.get(2)); // TODO: Not in
-			 * baseline // features.add(new Attribute("cgram_tail_hits_" +
-			 * size)); }
-			 */
-
 			ArrayList<Integer> cgram = null;
 			cgram = trainCgram.get(headline + bodyId);
 			if (cgram == null)
 				cgram = testCgram.get(headline + bodyId);
+			
+			int featSize = (3 * BodySummerizer2.NUM_SENT_BEG) + (3 * BodySummerizer2.NUM_SENT_END)
+					+ 3 * 3;
 
-			for (int i = 0; i < 39; i++) {
+			for (int i = 0; i < featSize; i++) {
 				Attribute cgramAtt = instances.attribute(FNCConstants.CHAR_GRAMS_HITS + i);
 				instance.setValue(cgramAtt, cgram.get(i));
 			}
-
 		}
 
 		if (useWordGramsFeatures) {
-			// Old way
-			/*
-			 * int[] ngramSizes = { 2, 3, 4, 5, 6 }; for (int size : ngramSizes)
-			 * { List<Integer> f =
-			 * FeatureExtractorWithModifiedBL.getNGramsFeatures(headline,
-			 * bodyParts.get(0) + " " + bodyParts.get(1), size);
-			 * 
-			 * Attribute ngramHitAtt =
-			 * instances.attribute(FNCConstants.NGRAM_HITS + size);
-			 * instance.setValue(ngramHitAtt, f.get(0));
-			 * 
-			 * Attribute ngramEarlyHitsAtt =
-			 * instances.attribute(FNCConstants.NGRAM_EARLY_HITS + size);
-			 * instance.setValue(ngramEarlyHitsAtt, f.get(1)); }
-			 */
-
+			int featSize = (4 * BodySummerizer2.NUM_SENT_BEG) + (4 * BodySummerizer2.NUM_SENT_END)
+					+ 4 * 2;
+			
 			ArrayList<Integer> ngram = null;
 			ngram = trainNgram.get(headline + bodyId);
 			if (ngram == null)
 				ngram = testNgram.get(headline + bodyId);
 
-			for (int i = 0; i < 48; i++) {
+			for (int i = 0; i < featSize; i++) {
 				Attribute ngramAtt = instances.attribute(FNCConstants.NGRAM_HITS + i);
 				instance.setValue(ngramAtt, ngram.get(i));
 			}
 		}
 
 		if (useleskOverlap) {
-			// Old way
-			/*
-			 * double overlapscore = lgo.overlap(headline, bodyParts.get(0) +
-			 * " " + bodyParts.get(1)); Attribute leskAtt =
-			 * instances.attribute(FNCConstants.LESK_OVERLAP);
-			 * instance.setValue(leskAtt, overlapscore);
-			 */
 			ArrayList<Double> lesk = null;
 			lesk = trainLeskOverlap.get(headline + bodyId);
 			if (lesk == null)
@@ -761,25 +675,12 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (useMetricCosineSimilarity) {
-			// Old Way
-			/*
-			 * Attribute cosAtt =
-			 * instances.attribute(FNCConstants.COSINE_METRIC_SIM);
-			 * 
-			 * String headlineLemma =
-			 * FeatureExtractorWithModifiedBL.clean(titlesLemmas.get(headline));
-			 * 
-			 * String bodyLem =
-			 * FeatureExtractorWithModifiedBL.clean(bodyParts.get(0) + " " +
-			 * bodyParts.get(1)); instance.setValue(cosAtt,
-			 * cosSimMetric.distance(headlineLemma, bodyLem));
-			 */
 			ArrayList<Double> cos = null;
 			cos = trainStrMetricCosSim.get(headline + bodyId);
 			if (cos == null)
 				cos = testStrMetricCosSim.get(headline + bodyId);
 
-			for (int i = 0; i < 11; i++) {
+			for (int i = 0; i < 9; i++) {
 				Attribute cosAtt = instances.attribute(FNCConstants.COSINE_METRIC_SIM + i);
 				instance.setValue(cosAtt, cos.get(i));
 			}
@@ -791,7 +692,7 @@ public class FeaturesOrganiser2 {
 			if (hyp == null)
 				hyp = testHypSimilarity.get(headline + bodyId);
 
-			for (int i = 0; i < 11; i++) {
+			for (int i = 0; i < 9; i++) {
 				Attribute cosAtt = instances.attribute(FNCConstants.HYP_SIM + i);
 				instance.setValue(cosAtt, hyp.get(i));
 			}
@@ -802,8 +703,8 @@ public class FeaturesOrganiser2 {
 
 	public void loadData() throws IOException {
 		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
-				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2,
-				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2);
+				ProjectPaths.TRAIN_STANCES_LESS2_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2,
+				ProjectPaths.TEST_STANCESS_LESS2_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2);
 
 		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES));
 		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES));
