@@ -88,7 +88,7 @@ public class SVOFeaturesGenerator2 {
 		 * "BrFidel Castro is dead, according to viral Twitter rumors"; String
 		 * testTxt = "We have no information on whether users are at risk";
 		 */
-/*
+
 		StanceDetectionDataReader sddr = null;
 		try {
 			sddr = new StanceDetectionDataReader(true, true, ProjectPaths.TRAIN_STANCES_PREPROCESSED,
@@ -130,11 +130,11 @@ public class SVOFeaturesGenerator2 {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-*/
-		// saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SVO_FEATURE_TRAIN2,
-		// ProjectPaths.SVO_FEATURE_TRAIN2);
-		// saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SVO_FEATURE_TEST2,
-		// ProjectPaths.SVO_FEATURE_TEST2);
+
+		//saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TRAIN2,
+		//ProjectPaths.SVO_FEATURE_TRAIN2);
+		//saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TEST2,
+		//ProjectPaths.SVO_FEATURE_TEST2);
 		
 		 saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TRAIN2, ProjectPaths.SUMMED_SVO_FEATURE_TRAIN2);
 		 saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TEST2, ProjectPaths.SUMMED_SVO_FEATURE_TEST2);
