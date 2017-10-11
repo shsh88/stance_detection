@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.clapper.util.misc.FileHashMap;
@@ -27,6 +29,7 @@ import ude.master.thesis.stance_detection.processor.FeatureExtractorWithModified
 import ude.master.thesis.stance_detection.processor.HypernymSimilarity;
 import ude.master.thesis.stance_detection.processor.Lemmatizer;
 import ude.master.thesis.stance_detection.processor.NegationFeaturesGenerator2;
+import ude.master.thesis.stance_detection.processor.NegationFeaturesGeneratorWithArguments;
 import ude.master.thesis.stance_detection.processor.RelatedUnrelatedFeatureGenerator;
 import ude.master.thesis.stance_detection.processor.SVOFeaturesGenerator2;
 import ude.master.thesis.stance_detection.processor.SimilarityFeatures;
@@ -66,6 +69,7 @@ public class FeaturesOrganiser2 {
 	private boolean useBodyBoWCounterFeature = false;
 	private boolean useWord2VecAddSimilarity = false;
 	private boolean useHypernymsSimilarity = false;
+	private boolean useNegFromArguments = false;
 
 	// Added features
 	private boolean useTitleAndBodyParagraphVecs = false;
@@ -133,6 +137,8 @@ public class FeaturesOrganiser2 {
 	private DocToVec doc2vec;
 	private List<String> stanceValues;
 	private LeskGlossOverlaps lgo;
+	private FileHashMap<String, Integer> trainArgNeg;
+	private FileHashMap<String, Integer> testArgNeg;
 
 	/**
 	 * @throws IOException
@@ -236,6 +242,12 @@ public class FeaturesOrganiser2 {
 			testLeskOverlap = SimilarityFeatures.loadLeskFeaturesAsHashFile(ProjectPaths.TEST_LESK_PATH2);
 		}
 
+		if(useNegFromArguments){
+			trainArgNeg = NegationFeaturesGeneratorWithArguments
+					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_ARG_TRAIN);
+			testArgNeg = NegationFeaturesGeneratorWithArguments
+					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_ARG_TEST);
+		}
 		// Load Lemmatized data
 		titlesLemmas = Lemmatizer.loadTitlesLemmasAsHashFiles(ProjectPaths.TITLES_LEMMAS);
 		bodiesLemmas = Lemmatizer.loadBodiesLemmasAsHashFiles(ProjectPaths.BODIES_LEMMAS);
@@ -278,6 +290,10 @@ public class FeaturesOrganiser2 {
 		if (useNegFeature) {
 			for (int i = 0; i < 8; i++)
 				features.add(new Attribute(FNCConstants.NEG_FEATURE + i));
+		}
+		
+		if(useNegFromArguments){
+			features.add(new Attribute(FNCConstants.NEG_FEATURE_ARG));
 		}
 
 		if (useWord2VecAddSimilarity) {
@@ -522,6 +538,16 @@ public class FeaturesOrganiser2 {
 				instance.setValue(instances.attribute(FNCConstants.NEG_FEATURE + i), neg[i]);
 		}
 
+		if(useNegFromArguments){
+			Integer neg = null;
+
+			neg = trainArgNeg.get(headline + bodyId);
+			if (neg == null)
+				neg = testArgNeg.get(headline + bodyId);
+
+			instance.setValue(instances.attribute(FNCConstants.NEG_FEATURE_ARG), neg);
+		}
+
 		if (useWord2VecAddSimilarity) {
 			double[] sim = null;
 
@@ -703,16 +729,47 @@ public class FeaturesOrganiser2 {
 
 	public void loadData() throws IOException {
 		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
-				ProjectPaths.TRAIN_STANCES_LESS2_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2,
-				ProjectPaths.TEST_STANCESS_LESS2_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2);
+				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES,
+				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES);
 
 		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES));
 		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES));
-
+/*
+		int[] delSetTest = {192, 196, 2229, 2108, 671, 870, 596, 1578, 113, 1576,
+			2301, 753, 995, 2466, 314, 954, 1617, 52, 2505, 2243, 2001, 2361, 1470, 2041, 
+			1270, 1701, 1, 485, 1105, 2512, 201, 1665, 2279, 1783, 1386, 926, 927, 1108, 
+			1163, 293, 492, 1998, 1238, 1114, 1675, 1674, 814, 1639, 1713, 1373, 180, 2460, 2140, 
+			1050, 143, 264, 1766, 540, 1600, 1963, 1203, 268, 1960, 1200, 1882, 864, 1928, 1328};
+		int[] delSetTrain = {192, 196, 2229, 2108, 671, 870, 596, 1578, 113, 1576, 2301, 
+				753, 995, 2466, 314, 954, 1617, 52, 2505, 2243, 2001, 2361, 1470, 2041, 
+				1270, 1701, 1, 485, 1105, 2512, 201, 1665, 2279, 1783, 1386, 926, 927, 
+				1108, 1163, 293, 492, 1998, 1238, 1114, 1675, 1674, 814, 1639, 1713, 
+				1373, 180, 2460, 2140, 1050, 143, 264, 1766, 540, 1600, 1963, 1203, 268, 
+				1960, 1200, 1882, 864, 1928, 1328};
+		*/
 		trainingStances = sddr.getTrainStances();
 		System.out.println(trainingStances.size());
+		
+		//	trainingStances = removeInstances(trainingStances, trainingSummIdBoyMap, delSetTrain);
 
 		testStances = sddr.getTestStances();
+		// testStances =  removeInstances(testStances, testSummIdBoyMap, delSetTest);
+		
+	}
+
+	private List<List<String>> removeInstances(List<List<String>> stances, HashMap<Integer, Map<Integer, String>> idBoyMap, int[] delSet) {
+		Set<Integer> del = new HashSet<>();
+		for(int d: delSet)
+			del.add(d);
+		List<List<String>> newStances = new ArrayList<>();
+		
+		for(List<String> s : stances){
+			Integer bodyId = Integer.valueOf(s.get(1));
+			if (!del.contains(bodyId))
+				newStances.add(s);
+		}
+			
+		return newStances;
 	}
 
 	public boolean isUseRootDistFeature() {
@@ -931,6 +988,14 @@ public class FeaturesOrganiser2 {
 
 	public void useTitleLength(boolean useTitleLength) {
 		this.useTitleLength = useTitleLength;
+	}
+
+	public boolean isNegFromArgumentsUsed() {
+		return useNegFromArguments;
+	}
+
+	public void useNegFromArguments(boolean useNegFromArguments) {
+		this.useNegFromArguments = useNegFromArguments;
 	}
 
 }
