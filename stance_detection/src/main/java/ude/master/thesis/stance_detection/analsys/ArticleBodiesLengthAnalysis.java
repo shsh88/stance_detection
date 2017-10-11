@@ -20,9 +20,7 @@ import com.opencsv.CSVWriter;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.stanford.nlp.time.SUTime.TimeIndex;
 import edu.stanford.nlp.util.CoreMap;
-import ude.master.thesis.stance_detection.processor.FeatureExtractorWithModifiedBL;
 import ude.master.thesis.stance_detection.util.ProjectPaths;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
 
