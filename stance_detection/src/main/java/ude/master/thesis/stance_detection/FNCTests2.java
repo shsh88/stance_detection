@@ -55,11 +55,19 @@ public class FNCTests2 {
 		Instances baselineTest = StanceDetectionDataReader
 				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "baseline_bin_new_10-03_11-21_tset.arff");
 
-		Instances ferrTrain = StanceDetectionDataReader
-				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "ferr_BoW1000_newBparts10-03_15-02_train.arff");
-		Instances ferrTest = StanceDetectionDataReader
-				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "full_instances_bow1000_unlabeled_newBparts_10-03_15-02_tset.arff");
+		//Instances ferrTrain = StanceDetectionDataReader
+			//	.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "ferr_BoW1000_newBparts10-03_15-02_train.arff");
+		//Instances ferrTest = StanceDetectionDataReader
+			//	.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "full_instances_bow1000_unlabeled_newBparts_10-03_15-02_tset.arff");
 
+		
+		//Adding neg arg
+		Instances ferrTrain = StanceDetectionDataReader
+				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "ferr_BoW1000_newBparts10-11_12-46_train.arff");
+		Instances ferrTest = StanceDetectionDataReader
+				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "full_instances_bow1000_unlabeled_newBparts_10-11_12-46_tset.arff");
+
+		
 		// train classifier on BL features
 		LibLINEAR blClassifier = new LibLINEAR();
 		blClassifier.setOptions(weka.core.Utils.splitOptions("-S 6 -C 1.0 -E 0.001 -B 1.0 -L 0.1 -I 1000"));
@@ -78,7 +86,7 @@ public class FNCTests2 {
 		String time2 = FNCConstants.getCurrentTimeStamp();
 		// ct2.train(true, ProjectPaths.RESULTS_PATH + "Ferr_related" + time2);
 		// deserialize model
-		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ProjectPaths.RESULTS_PATH + "modi_ferr_1000f_newBparts_10-03_15-02.model"));
+		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ProjectPaths.RESULTS_PATH + "modi_ferr_1000f_newBparts_10-11_12-46.model"));
 		ferrClassifier = (LibLINEAR) ois.readObject();
 		ois.close();
 
@@ -116,11 +124,14 @@ public class FNCTests2 {
 	}
 
 	public static void loadData() throws IOException {
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, ProjectPaths.TRAIN_STANCES_LESS2_PREPROCESSED,
-				ProjectPaths.SUMMARIZED_TRAIN_BODIES, ProjectPaths.TEST_STANCESS_LESS2_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES);
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true, 
+				ProjectPaths.TRAIN_STANCES,
+				ProjectPaths.SUMMARIZED_TRAIN_BODIES2, 
+				ProjectPaths.TEST_STANCESS, 
+				ProjectPaths.SUMMARIZED_TEST_BODIES2);
 
-		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES));
-		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES));
+		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2));
+		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2));
 
 		trainingStances = sddr.getTrainStances();
 
@@ -137,11 +148,11 @@ public class FNCTests2 {
 		fo.useCharGramsFeatures(true);
 		fo.useWordGramsFeatures(true);
 		fo.useMetricCosineSimilarity(true);
-		fo.useHypernymsSimilarity(true);
+		fo.useHypernymsSimilarity(false);
 		
 		fo.usePPDBFeature(false);
 		fo.useWord2VecAddSimilarity(false);
-		fo.useLeskOverlap(true);
+		fo.useLeskOverlap(false);
 		fo.useTitleAndBodyParagraphVecs(false);
 		
 		fo.useTitleLength(true);
@@ -179,9 +190,12 @@ public class FNCTests2 {
 		fo.useTitleLength(false);
 		fo.useBodyBoWCounterFeature(true);
 		fo.useRootDistFeature(true);
-		fo.usePPDBFeature(true);
+		fo.usePPDBFeature(false);
 		fo.useSVOFeature(true);//using the sum
+		
 		fo.useNegFeature(true);
+		fo.useNegFromArguments(true);
+		
 		fo.useWord2VecAddSimilarity(false);
 		fo.useTitleAndBodyParagraphVecs(false);
 		fo.useRelatedClasses(true);
