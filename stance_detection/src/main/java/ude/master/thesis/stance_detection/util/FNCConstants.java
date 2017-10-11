@@ -41,6 +41,8 @@ public class FNCConstants {
 	public static final String TITLE_Q = "Q";
 	public static final String HYP_SIM = "hyp_sim";
 	public static final String TITLE_LENGTH = "t_len";
+	public static final String BODY_SUMM_BOW_COUNTER = "bow_summ";
+	public static final String NEG_FEATURE_ARG = "neg_arg";
 	
 	
 	public static String getCurrentTimeStamp() {
