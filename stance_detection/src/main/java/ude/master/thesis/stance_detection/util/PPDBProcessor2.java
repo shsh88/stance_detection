@@ -153,7 +153,7 @@ public class PPDBProcessor2 {
 				 ProjectPaths.PPDB_HUNG_SCORES_IDXS_TRAIN2);
 		
 		saveHungarianScoreInFileMap(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2,
-				ProjectPaths.PPDB_SCORES_IDXS_TEST2);
+				ProjectPaths.PPDB_HUNG_SCORES_IDXS_TEST2);
 		
 		savePPDBFeaturesAsHashFiles(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2, ProjectPaths.PPDB_HUNG_FEATURE_TRAIN2);
 		savePPDBFeaturesAsHashFiles(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2, ProjectPaths.PPDB_HUNG_FEATURE_TEST2);
