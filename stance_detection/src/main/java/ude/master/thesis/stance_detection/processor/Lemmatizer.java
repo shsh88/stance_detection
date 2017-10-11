@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -148,25 +149,67 @@ public class Lemmatizer {
 		saveBodiesLemmasAsHashFile(trainingSummIdBoyMap, testSummIdBoyMap, ProjectPaths.BODIES_LEMMAS);
 	}
 
+	/**
+	 * This method isused to lemmatize body as complete, not parts
+	 * Titles don't need to be lemmatized here.. it's the same no change to ProjectPaths.TITLES_LEMMAS
+	 * @throws IOException
+	 * @throws ObjectExistsException
+	 * @throws ClassNotFoundException
+	 * @throws VersionMismatchException
+	 */
+	public static void lemmatizeDataASWholeAndSavInHashFile()
+			throws IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
+		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.ARGUMENTED_BODIES_TRAIN,
+				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.ARGUMENTED_BODIES_TEST);
+
+		Map<Integer, String> trainingIdBoyMap = sddr.getTrainIdBodyMap();
+		HashMap<Integer, String> testIdBoyMap = sddr.getTestIdBodyMap();
+
+		saveBodiesAsWholeLemmasAsHashFile(trainingIdBoyMap, testIdBoyMap, ProjectPaths.ARGS_BODIES_LEMMAS);
+	}
+
+	private static void saveBodiesAsWholeLemmasAsHashFile(Map<Integer, String> trainingIdBoyMap,
+			HashMap<Integer, String> testIdBoyMap, String argsBodiesLemmasPath) throws NotSerializableException, IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
+		FileHashMap<Integer, String> bodiesLemmas = new FileHashMap<>(argsBodiesLemmasPath,
+				FileHashMap.FORCE_OVERWRITE);
+		Lemmatizer lemm = new Lemmatizer();
+		
+		for(Entry<Integer, String> e: trainingIdBoyMap.entrySet()){
+		    String bodyLemmas = concatToText(lemm.lemmatize(e.getValue()));
+			bodiesLemmas.put(e.getKey(), bodyLemmas);
+		}
+		
+		for(Entry<Integer, String> e: testIdBoyMap.entrySet()){
+		    String bodyLemmas = concatToText(lemm.lemmatize(e.getValue()));
+			bodiesLemmas.put(e.getKey(), bodyLemmas);
+		}
+		bodiesLemmas.save();
+		bodiesLemmas.close();
+		
+	}
+
 	private static void saveBodiesLemmasAsHashFile(HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap,
-			HashMap<Integer, Map<Integer, String>> testSummIdBoyMap, String bodiesLemmasPath) throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException, IOException {
+			HashMap<Integer, Map<Integer, String>> testSummIdBoyMap, String bodiesLemmasPath)
+			throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException,
+			IOException {
 
 		FileHashMap<Integer, Map<Integer, String>> bodiesLemmas = new FileHashMap<>(bodiesLemmasPath,
 				FileHashMap.FORCE_OVERWRITE);
 		Lemmatizer lemm = new Lemmatizer();
-		
-		for(Entry<Integer, Map<Integer, String>> e: trainingSummIdBoyMap.entrySet()){
+
+		for (Entry<Integer, Map<Integer, String>> e : trainingSummIdBoyMap.entrySet()) {
 			Map<Integer, String> partsMap = new HashMap<>();
-			for(int i = 1; i <= 3; i++){
+			for (int i = 1; i <= 3; i++) {
 				String partLemma = concatToText(lemm.lemmatize(e.getValue().get(i)));
 				partsMap.put(i, partLemma);
 			}
 			bodiesLemmas.put(e.getKey(), partsMap);
 		}
-		
-		for(Entry<Integer, Map<Integer, String>> e: testSummIdBoyMap.entrySet()){
+
+		for (Entry<Integer, Map<Integer, String>> e : testSummIdBoyMap.entrySet()) {
 			Map<Integer, String> partsMap = new HashMap<>();
-			for(int i = 1; i <= 3; i++){
+			for (int i = 1; i <= 3; i++) {
 				String partLemma = concatToText(lemm.lemmatize(e.getValue().get(i)));
 				partsMap.put(i, partLemma);
 			}
@@ -202,7 +245,7 @@ public class Lemmatizer {
 		titlesLemmas.close();
 
 	}
-	
+
 	public static FileHashMap<String, String> loadTitlesLemmasAsHashFiles(String hashFileName)
 			throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException,
 			IOException {
@@ -210,18 +253,25 @@ public class Lemmatizer {
 				FileHashMap.RECLAIM_FILE_GAPS);
 		return titlesLemmas;
 	}
-	
+
 	public static FileHashMap<Integer, Map<Integer, String>> loadBodiesLemmasAsHashFiles(String hashFileName)
 			throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException,
 			IOException {
-		FileHashMap<Integer, Map<Integer, String>> bodiesLemmas = new FileHashMap<Integer, Map<Integer, String>>(hashFileName,
-				FileHashMap.RECLAIM_FILE_GAPS);
+		FileHashMap<Integer, Map<Integer, String>> bodiesLemmas = new FileHashMap<Integer, Map<Integer, String>>(
+				hashFileName, FileHashMap.RECLAIM_FILE_GAPS);
+		return bodiesLemmas;
+	}
+	public static FileHashMap<Integer, String> loadBodiesAsWholeLemmasAsHashFiles(String hashFileName)
+			throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException,
+			IOException {
+		FileHashMap<Integer, String> bodiesLemmas = new FileHashMap<Integer, String>(
+				hashFileName, FileHashMap.RECLAIM_FILE_GAPS);
 		return bodiesLemmas;
 	}
 
 	public static void main(String[] args)
 			throws ObjectExistsException, ClassNotFoundException, VersionMismatchException, IOException {
-		Lemmatizer lemm = new Lemmatizer();
+		//Lemmatizer lemm = new Lemmatizer();
 
 		String str = "(NEWSER) – Wonder how long a Quarter Pounder with cheese can "
 				+ "last? Two Australians say they bought a few McDonald's burgers for "
@@ -243,10 +293,12 @@ public class Lemmatizer {
 				+ "Beyond Blue, which helps Australians battle anxiety and depression. "
 				+ "(A few years ago, a man sold a 20-year-old bottle of McDonald's "
 				+ "McJordan sauce for $10,000. Here's why Mickey D's food seemingly " + "never decays.)";
-		String resultString = str.replaceAll("\\W", " ").toLowerCase();
+		// String resultString = str.replaceAll("\\W", " ").toLowerCase();
 		// String resultString = cleanText(str);
-		System.out.println(lemm.lemmatize("Next-generation Apple iPhones features leaked: it's not good"));
-	
-	lemmatizeDataAndSavInHashFile();
+		// System.out.println(lemm.lemmatize("Next-generation Apple iPhones
+		// features leaked: it's not good"));
+		//System.out.println(lemm.lemmatize(str));
+		//lemmatizeDataAndSavInHashFile();
+		lemmatizeDataASWholeAndSavInHashFile();
 	}
 }
