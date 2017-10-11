@@ -21,6 +21,7 @@ import com.opencsv.CSVWriter;
 import java_cup.production;
 import ude.master.thesis.stance_detection.util.BodySummerizer2;
 import ude.master.thesis.stance_detection.util.PPDBProcessor;
+import ude.master.thesis.stance_detection.util.PPDBProcessor2;
 import ude.master.thesis.stance_detection.util.ProjectPaths;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
 import ude.master.thesis.stance_detection.util.TitleAndBodyTextPreprocess;
@@ -180,13 +181,13 @@ public class NegationFeaturesGenerator2 {
 				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2));
 		List<List<String>> testStances = sddr.getTestStances();
 		generateNegFeaturesAndSave(testSummIdBoyMap, testStances, testTMap, testBMap,
-				ProjectPaths.CSV_NEG_FEATURE_TEST2, ProjectPaths.PPDB_SCORES_IDXS_TEST2);
+				ProjectPaths.CSV_NEG_FEATURE_TEST2, ProjectPaths.PPDB_HUNG_SCORES_IDXS_TEST2);
 
 	}
 
 	private static FileHashMap<String, Map<Integer, ArrayList<ArrayList<Integer>>>> loadHungarianScores(
 			String hungarianScorePath) {
-		FileHashMap<String, Map<Integer, ArrayList<ArrayList<Integer>>>> hung_scores = PPDBProcessor
+		FileHashMap<String, Map<Integer, ArrayList<ArrayList<Integer>>>> hung_scores = PPDBProcessor2
 				.loadHungarianScoreFromFileMap(hungarianScorePath);
 		return hung_scores;
 	}
@@ -278,6 +279,8 @@ public class NegationFeaturesGenerator2 {
 
 				Map<Integer, ArrayList<ArrayList<Integer>>> idxsMap = hungScores.get(stance.get(0) + stance.get(1));
 
+				//getidxs just for the first 5 and last 3 sentences
+				//and here get the idxs just for 1 sentence
 				ArrayList<Integer> hScoreidxs = new ArrayList<>();
 				if ((j >= 0) && (j < 5)) {
 					hScoreidxs = idxsMap.get(1).get(j);
