@@ -46,11 +46,11 @@ public class MidBodiesToFiles {
 
 	public void loadData() throws IOException {
 		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
-				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES_PARTS_NOARGS,
-				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES_PARTS_NOARGS);
+				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES_PARTS33_NOARGS,
+				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES_PARTS33_NOARGS);
 
-		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES_PARTS_NOARGS));
-		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES_PARTS_NOARGS));
+		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES_PARTS33_NOARGS));
+		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES_PARTS33_NOARGS));
 
 		testSummArgIdBoyMap = new HashMap<>();
 		trainingSummArgIdBoyMap = new HashMap<>();
@@ -97,29 +97,32 @@ public class MidBodiesToFiles {
 		File[] files = new File(ProjectPaths.ARGUMENTED_BODIES_FILES).listFiles();
 		// If this pathname does not denote a directory, then listFiles()
 		// returns null.
-
+		int count = 0;
 		for (File file : files) {
 			String fileName = file.getName();
 			Integer bodyId = Integer.valueOf(fileName.substring(0, fileName.lastIndexOf(".txt")));
 			String midBodyText = getArgumentedTextFromCSV(file);
+			if(midBodyText.isEmpty())
+				count++;
 			if (testSummIdBoyMap.containsKey(bodyId)) {
 				Map<Integer, String> parts = new HashMap<>();
-				parts.put(1, testSummArgIdBoyMap.get(bodyId).get(1));
+				parts.put(1, testSummIdBoyMap.get(bodyId).get(1));
 				parts.put(2, midBodyText);
-				parts.put(3, testSummArgIdBoyMap.get(bodyId).get(3));
+				parts.put(3, testSummIdBoyMap.get(bodyId).get(3));
 				testSummArgIdBoyMap.put(bodyId, parts);
 			} else if (trainingSummIdBoyMap.containsKey(bodyId)) {
 				Map<Integer, String> parts = new HashMap<>();
-				parts.put(1, trainingSummArgIdBoyMap.get(bodyId).get(1));
+				parts.put(1, trainingSummIdBoyMap.get(bodyId).get(1));
 				parts.put(2, midBodyText);
-				parts.put(3, trainingSummArgIdBoyMap.get(bodyId).get(3));
+				parts.put(3, trainingSummIdBoyMap.get(bodyId).get(3));
 				trainingSummArgIdBoyMap.put(bodyId, parts);
 			}
 		}
+		System.out.println(count);
 		System.out.println(testSummArgIdBoyMap.size());
 		System.out.println(trainingSummArgIdBoyMap.size());
-		saveIdBoyMapInCSV(trainingSummArgIdBoyMap, ProjectPaths.ARGUMENTED_MID_BODIES_TRAIN);
-		saveIdBoyMapInCSV(testSummArgIdBoyMap, ProjectPaths.ARGUMENTED_MID_BODIES_TEST);
+		saveIdBoyMapInCSV(trainingSummArgIdBoyMap, ProjectPaths.ARGUMENTED_MID_BODIES33_TRAIN);
+		saveIdBoyMapInCSV(testSummArgIdBoyMap, ProjectPaths.ARGUMENTED_MID_BODIES33_TEST);
 	}
 
 	private void saveIdBoyMapInCSV(HashMap<Integer, Map<Integer, String>> summArgIdMidBoyMap, String path)
@@ -161,8 +164,8 @@ public class MidBodiesToFiles {
 	public static void main(String[] args) throws IOException {
 		MidBodiesToFiles bf = new MidBodiesToFiles();
 		bf.loadData();
-		bf.saveBodiesFiles(ProjectPaths.SUMMARIZED_TRAIN_BODIES_PARTS_NOARGS);
-		bf.saveBodiesFiles(ProjectPaths.SUMMARIZED_TEST_BODIES_PARTS_NOARGS);
-		//bf.readArgumentedBodiesPartsFromFiles();
+		//bf.saveBodiesFiles(ProjectPaths.SUMMARIZED_TRAIN_BODIES_PARTS33_NOARGS);
+		//bf.saveBodiesFiles(ProjectPaths.SUMMARIZED_TEST_BODIES_PARTS33_NOARGS);
+		bf.readArgumentedBodiesPartsFromFiles();
 	}
 }
