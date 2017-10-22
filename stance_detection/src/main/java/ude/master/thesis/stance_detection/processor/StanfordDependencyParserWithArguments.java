@@ -187,10 +187,10 @@ public class StanfordDependencyParserWithArguments {
 			
 			//System.out.println(entry.size());
 
-			double avgDisc = getAvgDiscRootDist(discussRootDistVec);
+			double avgDisc = getAvgRootDist(discussRootDistVec);
 			entry.add(Double.toString(avgDisc));
 
-			double avgRef = getAvgDiscRootDist(refuteRootDistVec);
+			double avgRef = getAvgRootDist(refuteRootDistVec);
 			entry.add(Double.toString(avgRef));
 
 			double minDisc = 1000.0;
@@ -223,11 +223,11 @@ public class StanfordDependencyParserWithArguments {
 
 	}
 
-	private static double getAvgDiscRootDist(List<Double> discussRootDistVec) {
+	private static double getAvgRootDist(List<Double> discussRootDistVec) {
 		double avgDisc = 0;
 		int howMany = 0;
 		for (Double d : discussRootDistVec)
-			if (d > 1000) {
+			if (d < 1000) {
 				avgDisc += d;
 				howMany++;
 			}
