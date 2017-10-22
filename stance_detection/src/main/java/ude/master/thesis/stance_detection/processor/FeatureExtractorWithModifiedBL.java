@@ -91,7 +91,6 @@ public class FeatureExtractorWithModifiedBL {
 		return sum % 2;
 	}
 
-	// TODO what about that it is done without lemmatization in baseline
 	public static List<Integer> getBinaryCoOccurenceFeatures(String headline, String body) {
 		int binCount = 0;
 		int binCountEarly = 0;
