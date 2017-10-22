@@ -7,6 +7,7 @@ public class FNCConstants {
 
 	public static final String ROOT_DIST_REFUTE = "root_dis_ref_";
 	public static final String ROOT_DIST_DISCUSS = "root_dis_disc_";
+	public static final String ROOT_DIST = "root_dis_";
 	public static final String SVO = "svo_";
 	public static final String PPDB_HUNG = "ppdb_";
 	public static final String NEG_FEATURE = "neg";
@@ -20,7 +21,7 @@ public class FNCConstants {
 	public static final String ALL_STANCE_CLASSES[] = new String[] { "agree", "disagree", "discuss", "unrelated" };
 	public static final String RELATED_STANCE_CLASSES[] = new String[] { "agree", "disagree", "discuss"};
 	public static final String BINARY_STANCE_CLASSES[] = new String[] { "related", "unrelated" };
-	public static final String TEST = "_tset";
+	public static final String TEST = "_test";
 	public static final String TRAIN = "_train";
 	public static final String BODY_BOW_COUNTER = "body_Summ";
 	public static final String WORD_OVERLAP = "word_overlap";
@@ -43,6 +44,7 @@ public class FNCConstants {
 	public static final String TITLE_LENGTH = "t_len";
 	public static final String BODY_SUMM_BOW_COUNTER = "bow_summ";
 	public static final String NEG_FEATURE_ARG = "neg_arg";
+	public static final String WORD2VEC_MLULT_SIM = "w2v_mult_sim";
 	
 	
 	public static String getCurrentTimeStamp() {
