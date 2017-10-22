@@ -106,7 +106,7 @@ public class BodySummerizer2 {
 			Map<Integer, String> partsMap = new HashMap<>();
 			partsMap.put(1, begPart);
 			partsMap.put(2, midBody);
-			partsMap.put(3, midBody);
+			partsMap.put(3, endPart);
 			summBodies.put(e.getKey(), partsMap);
 
 			List<String> entry = new ArrayList<>();
