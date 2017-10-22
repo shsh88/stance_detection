@@ -35,6 +35,7 @@ import ude.master.thesis.stance_detection.processor.SVOFeaturesGenerator2;
 import ude.master.thesis.stance_detection.processor.SimilarityFeatures;
 import ude.master.thesis.stance_detection.processor.StanfordDependencyParser2;
 import ude.master.thesis.stance_detection.processor.Word2VecDataGenerator2;
+import ude.master.thesis.stance_detection.processor.Word2VecMultiplyDataGenerator2;
 import ude.master.thesis.stance_detection.util.BodySummerizer2;
 import ude.master.thesis.stance_detection.util.FNCConstants;
 import ude.master.thesis.stance_detection.util.LeskGlossOverlaps;
@@ -89,6 +90,8 @@ public class FeaturesOrganiser2 {
 	private boolean useleskOverlap = false;
 	private boolean useTitleQuestionMark = false;
 	private boolean useTitleLength = false;
+	
+	private boolean useW2VMulSim = false;
 
 	private static StringDistance cosSimMetric;
 
@@ -139,6 +142,8 @@ public class FeaturesOrganiser2 {
 	private LeskGlossOverlaps lgo;
 	private FileHashMap<String, Integer> trainArgNeg;
 	private FileHashMap<String, Integer> testArgNeg;
+	private FileHashMap<String, double[]> w2vMultSimTrain;
+	private FileHashMap<String, double[]> w2vMultSimTest;
 
 	/**
 	 * @throws IOException
@@ -174,8 +179,8 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (useSVOFeature) {
-			trainSVO = SVOFeaturesGenerator2.loadSVOFeaturesAsHashFile(ProjectPaths.SUMMED_SVO_FEATURE_TRAIN2);
-			testSVO = SVOFeaturesGenerator2.loadSVOFeaturesAsHashFile(ProjectPaths.SUMMED_SVO_FEATURE_TEST2);
+			trainSVO = SVOFeaturesGenerator2.loadSVOFeaturesAsHashFile(ProjectPaths.SVO_FEATURE_TLDR_TRAIN2);
+			testSVO = SVOFeaturesGenerator2.loadSVOFeaturesAsHashFile(ProjectPaths.SVO_FEATURE_TLDR_TEST2);
 		}
 
 		if (usePPDBFeature) {
@@ -190,8 +195,8 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (useWord2VecAddSimilarity) {
-			trainW2VSim = Word2VecDataGenerator2.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_ADD_TRAIN2);
-			testW2VSim = Word2VecDataGenerator2.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_ADD_TEST2);
+			trainW2VSim = Word2VecDataGenerator2.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_ADD_TRAIN22);
+			testW2VSim = Word2VecDataGenerator2.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_ADD_TEST22);
 
 		}
 
@@ -244,9 +249,14 @@ public class FeaturesOrganiser2 {
 
 		if(useNegFromArguments){
 			trainArgNeg = NegationFeaturesGeneratorWithArguments
-					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_ARG_TRAIN);
+					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_ARG_TRAIN);// we changed it to the arguments because it gets better resultas
 			testArgNeg = NegationFeaturesGeneratorWithArguments
 					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_ARG_TEST);
+		}
+		
+		if(useW2VMulSim){
+			w2vMultSimTrain = Word2VecMultiplyDataGenerator2.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_MUL_TRAIN2);
+			w2vMultSimTest = Word2VecMultiplyDataGenerator2.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_MUL_TEST2);
 		}
 		// Load Lemmatized data
 		titlesLemmas = Lemmatizer.loadTitlesLemmasAsHashFiles(ProjectPaths.TITLES_LEMMAS);
@@ -283,8 +293,10 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (usePPDBFeature) {
-			for (int i = 0; i < 10; i++)
-				features.add(new Attribute(FNCConstants.PPDB_HUNG + i));
+			//for (int i = 0; i < 11; i++)
+				//features.add(new Attribute(FNCConstants.PPDB_HUNG + i));
+				//features.add(new Attribute(FNCConstants.PPDB_HUNG + 9));
+				features.add(new Attribute(FNCConstants.PPDB_HUNG + 5));
 		}
 
 		if (useNegFeature) {
@@ -295,14 +307,19 @@ public class FeaturesOrganiser2 {
 		if(useNegFromArguments){
 			features.add(new Attribute(FNCConstants.NEG_FEATURE_ARG));
 		}
+		
+		if(useW2VMulSim){
+			for (int i = 0; i < 2; i++)
+				features.add(new Attribute(FNCConstants.WORD2VEC_MLULT_SIM + i));
+		}
 
 		if (useWord2VecAddSimilarity) {
-			for (int i = 0; i < 3; i++)
-				features.add(new Attribute(FNCConstants.WORD2VEC_ADD_SIM + i));
+			//for (int i = 0; i < 3; i++)
+				features.add(new Attribute(FNCConstants.WORD2VEC_ADD_SIM ));
 		}
 
 		if (useSVOFeature) {
-			for (int i = 0; i < 12; i++) {
+			for (int i = 12; i < 24; i++) {
 				features.add(new Attribute(FNCConstants.SVO + i));
 			}
 		}
@@ -455,9 +472,13 @@ public class FeaturesOrganiser2 {
 					String bodyPart2 = FeatureExtractor
 							.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(3));
 
+					String bodyPart3 = FeatureExtractor
+							.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(3));
+					
 					ArrayList<String> bodyParts = new ArrayList<>();
 					bodyParts.add(bodyPart1);
 					bodyParts.add(bodyPart2);
+					bodyParts.add(bodyPart3);
 
 					DenseInstance instance = createInstance(headline, bodyParts, stance.get(1), instances,
 							featuresSize);
@@ -521,9 +542,11 @@ public class FeaturesOrganiser2 {
 			if (ppdb == null)
 				ppdb = testPPDB.get(headline + bodyId);
 
-			for (int i = 0; i < 10; i++) {
-				instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG + i), ppdb[i]);
-			}
+			//for (int i = 0; i < 11; i++) {
+				instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG + 5), ppdb[5]);
+				//instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG + 9), ppdb[9]);
+				//instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG + 10), ppdb[10]);
+			//}
 
 		}
 
@@ -547,6 +570,17 @@ public class FeaturesOrganiser2 {
 
 			instance.setValue(instances.attribute(FNCConstants.NEG_FEATURE_ARG), neg);
 		}
+		
+		if(useW2VMulSim){
+			
+			double[] sim = null;
+			sim=w2vMultSimTrain.get(headline + bodyId);
+			if(sim==null)
+				sim=w2vMultSimTest.get(headline + bodyId);
+			
+			for (int i = 0; i < 2; i++)
+				instance.setValue(instances.attribute(FNCConstants.WORD2VEC_MLULT_SIM + i), sim[i]);
+		}
 
 		if (useWord2VecAddSimilarity) {
 			double[] sim = null;
@@ -555,8 +589,9 @@ public class FeaturesOrganiser2 {
 			if (sim == null)
 				sim = testW2VSim.get(headline + bodyId);
 			
-			for(int i = 0; i < sim.length; i++)
-				instance.setValue(instances.attribute(FNCConstants.WORD2VEC_ADD_SIM + i), sim[i]);
+			//for(int i = 0; i < sim.length; i++)
+				//instance.setValue(instances.attribute(FNCConstants.WORD2VEC_ADD_SIM + i), sim[i]);
+			instance.setValue(instances.attribute(FNCConstants.WORD2VEC_ADD_SIM ), sim[1]);
 		}
 
 		if (useSVOFeature) {
@@ -567,7 +602,7 @@ public class FeaturesOrganiser2 {
 				svos = testSVO.get(headline + bodyId);
 
 			// add svo features vector
-			for (int i = 0; i < svos.size(); i++) {
+			for (int i = 12; i < 24; i++) {
 				instance.setValue(instances.attribute(FNCConstants.SVO + i), svos.get(i));
 			}
 		}
@@ -611,15 +646,14 @@ public class FeaturesOrganiser2 {
 		// TODO: split to 2 features use
 		if (usePolarityFeatures) {
 			Attribute headPolarityAtt = instances.attribute(FNCConstants.TITLE_POLARITY);
-			// String headlineLemma =
-			// FeatureExtractor.getLemmatizedCleanStr(headline);
+			
 			String headlineLemma = FeatureExtractorWithModifiedBL.clean(titlesLemmas.get(headline));
 
 			instance.setValue(headPolarityAtt, FeatureExtractorWithModifiedBL.calculatePolarity(headlineLemma));
 
 			Attribute bodyPolarityAtt = instances.attribute(FNCConstants.BODY_POLARITY);
 			instance.setValue(bodyPolarityAtt,
-					FeatureExtractorWithModifiedBL.calculatePolarity(bodyParts.get(0) + " " + bodyParts.get(1)));
+					FeatureExtractorWithModifiedBL.calculatePolarity(FeatureExtractorWithModifiedBL.getLemmatizedCleanStr((bodyParts.get(0) + " " + bodyParts.get(1) + " " + bodyParts.get(2)))));
 		}
 		// TODO: split to 2 features use
 		if (useBinaryCooccurraneFeatures) {
@@ -996,6 +1030,14 @@ public class FeaturesOrganiser2 {
 
 	public void useNegFromArguments(boolean useNegFromArguments) {
 		this.useNegFromArguments = useNegFromArguments;
+	}
+
+	public boolean isW2VMulSimUsed() {
+		return useW2VMulSim;
+	}
+
+	public void useW2VMulSim(boolean useW2VMulSim) {
+		this.useW2VMulSim = useW2VMulSim;
 	}
 
 }
