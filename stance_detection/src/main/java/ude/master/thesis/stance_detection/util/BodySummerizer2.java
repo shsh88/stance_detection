@@ -99,19 +99,20 @@ public class BodySummerizer2 {
 				endPart = getTextFromEnd(NUM_SENT_END, allSentences);
 			}
 
-			String allBody = getTextFromSetences(allSentences);
+			//String allBody = getTextFromSetences(allSentences);
+			String midBody = getTextFromMiddle(allSentences);
 
 			// add to the file map
 			Map<Integer, String> partsMap = new HashMap<>();
 			partsMap.put(1, begPart);
-			partsMap.put(2, allBody);
-			partsMap.put(3, endPart);
+			partsMap.put(2, midBody);
+			partsMap.put(3, midBody);
 			summBodies.put(e.getKey(), partsMap);
 
 			List<String> entry = new ArrayList<>();
 			entry.add(e.getKey().toString());
 			entry.add(begPart);
-			entry.add(allBody);
+			entry.add(midBody);
 			entry.add(endPart);
 
 			entries.add(entry.toArray(new String[0]));
@@ -126,6 +127,15 @@ public class BodySummerizer2 {
 		writer.close();
 		System.out.println("saved saved saved");
 
+	}
+
+	private String getTextFromMiddle(List<String> allSentences) {
+		String mid = "";
+		if(allSentences.size() > NUM_SENT_BEG + NUM_SENT_END)
+			for(int i = NUM_SENT_BEG; i<allSentences.size() - NUM_SENT_END; i++){
+				mid += allSentences.get(i) + " ";
+			}
+		return mid;
 	}
 
 	private String getTextFromEnd(int numSentEnd, List<String> allSentences) {
@@ -156,10 +166,10 @@ public class BodySummerizer2 {
 			throws IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
 		BodySummerizer2 bs = new BodySummerizer2();
 		bs.loadData();
-		bs.summarize(bs.getTrainingSummIdBoyMap(), ProjectPaths.SUMMARIZED_TRAIN_BODIES2,
-				ProjectPaths.MAP_SUMMARIZED_TRAIN_BODIES2);
-		bs.summarize(bs.getTestSummIdBoyMap(), ProjectPaths.SUMMARIZED_TEST_BODIES2,
-				ProjectPaths.MAP_SUMMARIZED_TEST_BODIES2);
+		bs.summarize(bs.getTrainingSummIdBoyMap(), ProjectPaths.SUMMARIZED_TRAIN_BODIES2_WITH_MID,
+				ProjectPaths.MAP_SUMMARIZED_TRAIN_BODIES2_WITH_MID);
+		bs.summarize(bs.getTestSummIdBoyMap(), ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID,
+				ProjectPaths.MAP_SUMMARIZED_TEST_BODIES2_WITH_MID);
 	}
 
 	public HashMap<Integer, Map<Integer, String>> getTrainingSummIdBoyMap() {
