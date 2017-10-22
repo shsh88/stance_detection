@@ -24,7 +24,7 @@ import edu.stanford.nlp.util.CoreMap;
 
 public class BodySummarizerWithArguments {
 
-	public static final int NUM_SENT_BEG = 5;
+	public static final int NUM_SENT_BEG = 3;
 	public static final int NUM_SENT_END = 3;
 	private Map<Integer, String> trainingIdBoyMap;
 	private Map<Integer, String> testIdBoyMap;
@@ -151,10 +151,10 @@ public class BodySummarizerWithArguments {
 			throws IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
 		BodySummarizerWithArguments bs = new BodySummarizerWithArguments();
 		bs.loadData();
-		bs.summarize(bs.getTrainingIdBoyMap(), ProjectPaths.SUMMARIZED_TRAIN_BODIES_PARTS_NOARGS,
-				ProjectPaths.MAP_SUMMARIZED_TRAIN_BODIES_PARTS_NOARGS);
-		bs.summarize(bs.getTestIdBoyMap(), ProjectPaths.SUMMARIZED_TEST_BODIES_PARTS_NOARGS,
-				ProjectPaths.MAP_SUMMARIZED_TEST_BODIES_PARTS_NOARGS);
+		bs.summarize(bs.getTrainingIdBoyMap(), ProjectPaths.SUMMARIZED_TRAIN_BODIES_PARTS33_NOARGS,
+				ProjectPaths.MAP_SUMMARIZED_TRAIN_BODIES_PARTS33_NOARGS);
+		bs.summarize(bs.getTestIdBoyMap(), ProjectPaths.SUMMARIZED_TEST_BODIES_PARTS33_NOARGS,
+				ProjectPaths.MAP_SUMMARIZED_TEST_BODIES_PARTS33_NOARGS);
 	}
 
 	public Map<Integer, String> getTrainingIdBoyMap() {
