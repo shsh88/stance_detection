@@ -35,8 +35,8 @@ public class Word2VecDataGenerator2 {
 
 	public static void main(String[] args)
 			throws IOException, ObjectExistsException, ClassNotFoundException, VersionMismatchException {
-		//vec = loadGoogleNewsVec();
-		//lemm = new Lemmatizer();
+		vec = loadGoogleNewsVec();
+		lemm = new Lemmatizer();
 		String txt = "Kim Jong-un has broken both of his ankles and is now in the hospital after undergoing "
 				+ "surgery, a report in a South Korean newspaper claims. The North Korean leader has "
 				+ "been missing for more than three weeks, fueling speculation about what could cause his "
@@ -109,9 +109,9 @@ public class Word2VecDataGenerator2 {
 		 * System.out.println(result.toString());
 		 */
 
-		//generateWord2VecData();
-		//saveWord2VecFeaturesAsHashFile(ProjectPaths.CSV_TRAIN_W2V_SUM_SIM_PARTS2, ProjectPaths.W2V_SIM_ADD_TRAIN2);
-		saveWord2VecFeaturesAsHashFile(ProjectPaths.CSV_TEST_W2V_SUM_SIM_PARTS2, ProjectPaths.W2V_SIM_ADD_TEST2);
+		generateWord2VecData();
+		saveWord2VecFeaturesAsHashFile(ProjectPaths.CSV_TRAIN_W2V_SUM_SIM_PARTS22, ProjectPaths.W2V_SIM_ADD_TRAIN22);
+		saveWord2VecFeaturesAsHashFile(ProjectPaths.CSV_TEST_W2V_SUM_SIM_PARTS22, ProjectPaths.W2V_SIM_ADD_TEST22);
 	}
 
 	private static void generateWord2VecData()
@@ -129,10 +129,10 @@ public class Word2VecDataGenerator2 {
 		List<List<String>> testStances = sddr.getTestStances();
 
 		generateAddWord2VecAndSave(trainingSummIdBoyMap, trainingStances, testSummIdBoyMap, testStances,
-				ProjectPaths.BODIES_W2V_SUM2, ProjectPaths.TITLES_W2V_SUM2);
+				ProjectPaths.BODIES_W2V_SUM22, ProjectPaths.TITLES_W2V_SUM22);
 
-		generateWord2VecAddSimFeaturesAndSave(trainingStances, ProjectPaths.CSV_TRAIN_W2V_SUM_SIM_PARTS2);
-		generateWord2VecAddSimFeaturesAndSave(testStances, ProjectPaths.CSV_TEST_W2V_SUM_SIM_PARTS2);
+		generateWord2VecAddSimFeaturesAndSave(trainingStances, ProjectPaths.CSV_TRAIN_W2V_SUM_SIM_PARTS22);
+		generateWord2VecAddSimFeaturesAndSave(testStances, ProjectPaths.CSV_TEST_W2V_SUM_SIM_PARTS22);
 
 	}
 
@@ -179,7 +179,7 @@ public class Word2VecDataGenerator2 {
 			String bTxt = "";
 			Map<Integer, double[]> partsVecs = new HashMap<>();
 			for (int i = 1; i <= 3; i++) {
-				bTxt += e.getValue().get(i);
+				bTxt = e.getValue().get(i);
 				double[] bVec = getGoogleVec(bTxt);
 				partsVecs.put(i, bVec);
 			}
@@ -195,8 +195,8 @@ public class Word2VecDataGenerator2 {
 	private static void generateWord2VecAddSimFeaturesAndSave(List<List<String>> stances, String filename)
 			throws IOException {
 
-		FileHashMap<String, double[]> titlesVec = loadTitlesVecs();
-		FileHashMap<Integer, Map<Integer, double[]>> bodiesVecs = loadBodiesVecs();
+		FileHashMap<String, double[]> titlesVec = loadTitlesVecs(ProjectPaths.TITLES_W2V_SUM22);
+		FileHashMap<Integer, Map<Integer, double[]>> bodiesVecs = loadBodiesVecs(ProjectPaths.BODIES_W2V_SUM22);
 
 		//
 		generateWord2VecSim(stances, filename, titlesVec, bodiesVecs);
@@ -245,11 +245,10 @@ public class Word2VecDataGenerator2 {
 		System.out.println("saved saved saved");
 	}
 
-	private static FileHashMap<Integer, Map<Integer, double[]>> loadBodiesVecs() {
+	private static FileHashMap<Integer, Map<Integer, double[]>> loadBodiesVecs(String path) {
 		FileHashMap<Integer, Map<Integer, double[]>> bodiesVecs = null;
 		try {
-			bodiesVecs = new FileHashMap<Integer, Map<Integer, double[]>>(ProjectPaths.BODIES_W2V_SUM2,
-					FileHashMap.RECLAIM_FILE_GAPS);
+			bodiesVecs = new FileHashMap<Integer, Map<Integer, double[]>>(path, FileHashMap.RECLAIM_FILE_GAPS);
 		} catch (ObjectExistsException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -269,11 +268,10 @@ public class Word2VecDataGenerator2 {
 		return bodiesVecs;
 	}
 
-	private static FileHashMap<String, double[]> loadTitlesVecs() {
+	private static FileHashMap<String, double[]> loadTitlesVecs(String path) {
 		FileHashMap<String, double[]> titlesVecs = null;
 		try {
-			titlesVecs = new FileHashMap<String, double[]>("C:/thesis_stuff/help_files/titles_sum_word2vec",
-					FileHashMap.RECLAIM_FILE_GAPS);
+			titlesVecs = new FileHashMap<String, double[]>(path, FileHashMap.RECLAIM_FILE_GAPS);
 		} catch (ObjectExistsException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
