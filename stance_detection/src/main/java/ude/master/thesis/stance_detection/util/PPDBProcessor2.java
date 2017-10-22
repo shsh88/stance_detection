@@ -37,6 +37,9 @@ public class PPDBProcessor2 {
 
 	public static final String PPDB_2_XXL_ALL = "C:/Master UDE/thesis/software/ppdb-2.0-xxl-all/ppdb-2.0-xxl-all";
 	public static final String MAP_PPDB_2_XXL_ALL = "C:/Master UDE/thesis/software/ppdb-2.0-xxl-all/map_ppdb-2.0-xxl-all";
+	
+	public static final String PPDB_2_TLDR = "C:/Master UDE/thesis/software/ppdb-2.0-tldr/ppdb-2.0-tldr";
+	public static final String MAP_PPDB_2_TLDR = "C:/Master UDE/thesis/software/ppdb-2.0-tldr/map_ppdb-2.0-tldr";
 
 	static FileHashMap<String, ArrayList<ArrayList<String>>> ppdbData;
 	private static Lemmatizer lemm;
@@ -44,13 +47,14 @@ public class PPDBProcessor2 {
 
 	public static void main(String[] args) throws Exception {
 		pipeline = TitleAndBodyTextPreprocess.getStanfordPipeline();
-		// extractParaphrases(PPDB_2_XXL_ALL, MAP_PPDB_2_XXL_ALL);
+		//extractParaphrases(PPDB_2_TLDR, MAP_PPDB_2_TLDR);
 
 		// **************************************** read saved map
 
 		// loadPPDB2("C:/Master UDE/thesis/software/mydata");
-		ppdbData = loadPPDB2("C:/Master UDE/thesis/software/mydata");
+		ppdbData = loadPPDB2(MAP_PPDB_2_TLDR);
 		lemm = new Lemmatizer();
+		
 		/*
 		 * //discuss -6 String headline =
 		 * "ISIL Beheads American Photojournalist in Iraq"; String body =
@@ -132,31 +136,31 @@ public class PPDBProcessor2 {
 
 		// Generate the features from data and save them
 		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
-				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2,
-				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2);
+				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2_WITH_MID,
+				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID);
 
 
 		List<List<String>> trainingStances = sddr.getTrainStances();
 		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
-				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2));
+				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2_WITH_MID));
 		generateHungarianPPDBFeaturesAndSave(trainingSummIdBoyMap, trainingStances,
-				ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2);
+				ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2_TLDR);
 
 		List<List<String>> testStances = sddr.getTestStances();
 
 		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
-				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2));
+				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID));
 		generateHungarianPPDBFeaturesAndSave(testSummIdBoyMap, testStances,
-				ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2);
+				ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2_TLDR);
 		
-		saveHungarianScoreInFileMap(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2,
-				 ProjectPaths.PPDB_HUNG_SCORES_IDXS_TRAIN2);
+		saveHungarianScoreInFileMap(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2_TLDR,
+				 ProjectPaths.PPDB_HUNG_SCORES_IDXS_TRAIN2_TLDR);
 		
-		saveHungarianScoreInFileMap(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2,
-				ProjectPaths.PPDB_HUNG_SCORES_IDXS_TEST2);
+		saveHungarianScoreInFileMap(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2_TLDR,
+				ProjectPaths.PPDB_HUNG_SCORES_IDXS_TEST2_TLDR);
 		
-		savePPDBFeaturesAsHashFiles(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2, ProjectPaths.PPDB_HUNG_FEATURE_TRAIN2);
-		savePPDBFeaturesAsHashFiles(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2, ProjectPaths.PPDB_HUNG_FEATURE_TEST2);
+		savePPDBFeaturesAsHashFiles(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2_TLDR, ProjectPaths.PPDB_HUNG_FEATURE_TRAIN2_TLDR);
+		savePPDBFeaturesAsHashFiles(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2_TLDR, ProjectPaths.PPDB_HUNG_FEATURE_TEST2_TLDR);
 		
 		// Test saved Hungarian_Score Data
 		// FileHashMap<String, ArrayList<Integer>> hung_scores =
@@ -278,7 +282,7 @@ public class PPDBProcessor2 {
 			throws Exception {
 		List<String[]> entries = new ArrayList<>();
 
-		String[] header = new String[14];
+		String[] header = new String[15];
 		header[0] = "title";
 		header[1] = "Body ID";
 		header[2] = "Stance";
@@ -294,7 +298,8 @@ public class PPDBProcessor2 {
 				header[j + 2] = "endpart_ppdb_hung_score_with_idexes";
 			}
 		}
-		header[11+2] = "all_ppdb_hung_score_with_idexes";
+		header[11+2] = "mid_ppdb_hung_score_with_idexes_not_counted";
+		header[12+2] = "all_ppdb_hung_score_with_idexes";
 		entries.add(header);
 
 		int i = 0;
@@ -311,20 +316,27 @@ public class PPDBProcessor2 {
 				String part = bodyParts.get(k);
 				if (k != 2) {
 					processPart(s.get(0), entry, part, k);
-				}else{
-					processPartAsAll(s.get(0), entry, part);
+				}
+			}
+			if(entry.size() != 13)
+				throw new Exception("not 10 values");
+			
+			for (int k = 1; k <= 3; k++) {// ***
+				String part = bodyParts.get(k);
+				if (k == 2) {
+					processPartAsSentences(s.get(0), entry, part);
 				}
 			}
 			
-			if(entry.size() != 14)
-				throw new Exception("not 11 values");
+			processPartAsAll(s.get(0), entry, bodyParts.get(1) + bodyParts.get(2) + bodyParts.get(3));
+			
 			
 			entries.add(entry.toArray(new String[0]));
 
 			i++;
 			// if (i == 10)
 			// break;
-			if (i % 1000 == 0)
+			if (i % 100 == 0)
 				System.out.println("processed: " + i);
 		}
 
@@ -334,6 +346,29 @@ public class PPDBProcessor2 {
 
 	}
 	
+	private static void processPartAsSentences(String title, List<String> entry, String part) throws FileNotFoundException, IOException {
+		List<String> scoreList = new ArrayList<>();
+
+		// get each sentence alone from the part
+		Annotation doc = new Annotation(part);
+		pipeline.annotate(doc);
+		List<CoreMap> sentences = doc.get(SentencesAnnotation.class);
+
+		for (CoreMap sent : sentences) {
+			ArrayList<Integer> indexes = new ArrayList<>();
+			double score = calculateHungarianAlignmentScore(title, sent.toString(), indexes);
+	
+			scoreList.add(Double.toString(score) + "|" + indexes.toString());
+		}
+		
+		ArrayList<Integer> partIndexes = new ArrayList<>();
+		double partScore = calculateHungarianAlignmentScore(title, part, partIndexes);
+		scoreList.add(Double.toString(partScore) + "|" + partIndexes.toString());
+		
+		entry.addAll(scoreList);
+		
+	}
+
 	/**
 	 * Here we save just the score without the indecies
 	 * @param csvfilePath
