@@ -34,6 +34,7 @@ import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.trees.GrammaticalRelation;
 import edu.stanford.nlp.util.CoreMap;
 import ude.master.thesis.stance_detection.util.PPDBProcessor;
+import ude.master.thesis.stance_detection.util.PPDBProcessor2;
 import ude.master.thesis.stance_detection.util.ProjectPaths;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
 
@@ -116,7 +117,7 @@ public class SVOFeaturesGenerator2 {
 
 		// extractTitlesAndBodiesSVOsAndSave();
 		// ppdb: paraphrase, score, entailment
-		ppdbData = PPDBProcessor.loadPPDB2(PPDBProcessor.MAP_PPDB_2_XXL_ALL);
+		ppdbData = PPDBProcessor2.loadPPDB2(PPDBProcessor2.MAP_PPDB_2_TLDR);
 
 		try {
 			titlesSVOsMap = new FileHashMap<String, List<Map<String, String>>>(ProjectPaths.TITLES_SVO_TRAIN_TEST,
@@ -124,20 +125,20 @@ public class SVOFeaturesGenerator2 {
 			bodiesSVOsMap = new FileHashMap<String, Map<Integer, List<Map<String, String>>>>(
 					ProjectPaths.BODIES_SVO_TRAIN_TEST2, FileHashMap.RECLAIM_FILE_GAPS);
 
-			generateDataSummedSVOFeatureVector(trainingStances, ProjectPaths.CSV_SUMMED_SVO_FEATURE_TRAIN2);
-			generateDataSummedSVOFeatureVector(testStances, ProjectPaths.CSV_SUMMED_SVO_FEATURE_TEST2);
+			//generateDataSummedSVOFeatureVector(trainingStances, ProjectPaths.CSV_SUMMED_SVO_FEATURE_TRAIN2);
+			//generateDataSummedSVOFeatureVector(testStances, ProjectPaths.CSV_SUMMED_SVO_FEATURE_TEST2);
+			generateDataSVOFeatureVector(trainingStances, ProjectPaths.CSV_SVO_FEATURE_TLDR_TRAIN2);
+			generateDataSVOFeatureVector(testStances, ProjectPaths.CSV_SVO_FEATURE_TLDR_TEST2);
 		} catch (ObjectExistsException | ClassNotFoundException | VersionMismatchException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		//saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TRAIN2,
-		//ProjectPaths.SVO_FEATURE_TRAIN2);
-		//saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TEST2,
-		//ProjectPaths.SVO_FEATURE_TEST2);
+		saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SVO_FEATURE_TLDR_TRAIN2, ProjectPaths.SVO_FEATURE_TLDR_TRAIN2);
+		saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SVO_FEATURE_TLDR_TEST2, ProjectPaths.SVO_FEATURE_TLDR_TEST2);
 		
-		 saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TRAIN2, ProjectPaths.SUMMED_SVO_FEATURE_TRAIN2);
-		 saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TEST2, ProjectPaths.SUMMED_SVO_FEATURE_TEST2);
+		 //saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TRAIN2, ProjectPaths.SUMMED_SVO_FEATURE_TRAIN2);
+		 //saveSVOFeaturesAsHashFile(ProjectPaths.CSV_SUMMED_SVO_FEATURE_TEST2, ProjectPaths.SUMMED_SVO_FEATURE_TEST2);
 	}
 
 	public static void generateDataSVOFeatureVector(List<List<String>> stances, String csvFilepath) throws Exception {
