@@ -51,9 +51,9 @@ public class FNCTests2 {
 		// load arff data
 
 		Instances baselineTrain = StanceDetectionDataReader
-				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "baseline_bin_new_10-03_11-21_train.arff");
+				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "baseline_bin_new_10-21_19-13_train.arff");
 		Instances baselineTest = StanceDetectionDataReader
-				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "baseline_bin_new_10-03_11-21_tset.arff");
+				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "baseline_bin_new_10-21_19-13_tset.arff");
 
 		//Instances ferrTrain = StanceDetectionDataReader
 			//	.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "ferr_BoW1000_newBparts10-03_15-02_train.arff");
@@ -63,9 +63,9 @@ public class FNCTests2 {
 		
 		//Adding neg arg
 		Instances ferrTrain = StanceDetectionDataReader
-				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "ferr_BoW1000_newBparts10-11_12-46_train.arff");
+				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "ferr_BoW1000_newBparts10-20_09-21_train.arff");
 		Instances ferrTest = StanceDetectionDataReader
-				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "full_instances_bow1000_unlabeled_newBparts_10-11_12-46_tset.arff");
+				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "full_instances_bow1000_unlabeled_newBparts_10-20_09-21_tset.arff");
 
 		
 		// train classifier on BL features
@@ -73,7 +73,7 @@ public class FNCTests2 {
 		blClassifier.setOptions(weka.core.Utils.splitOptions("-S 6 -C 1.0 -E 0.001 -B 1.0 -L 0.1 -I 1000"));
 
 		ClassifierTools ct1 = new ClassifierTools(baselineTrain, baselineTest, blClassifier);
-
+		
 		String time1 = FNCConstants.getCurrentTimeStamp();
 		ct1.train(true, ProjectPaths.RESULTS_PATH + "baseline_bin" + time1);
 
@@ -86,7 +86,7 @@ public class FNCTests2 {
 		String time2 = FNCConstants.getCurrentTimeStamp();
 		// ct2.train(true, ProjectPaths.RESULTS_PATH + "Ferr_related" + time2);
 		// deserialize model
-		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ProjectPaths.RESULTS_PATH + "modi_ferr_1000f_newBparts_10-11_12-46.model"));
+		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ProjectPaths.RESULTS_PATH + "modi_ferr_1000f_newBparts_10-20_09-21.model"));
 		ferrClassifier = (LibLINEAR) ois.readObject();
 		ois.close();
 
@@ -150,9 +150,9 @@ public class FNCTests2 {
 		fo.useMetricCosineSimilarity(true);
 		fo.useHypernymsSimilarity(false);
 		
-		fo.usePPDBFeature(false);
-		fo.useWord2VecAddSimilarity(false);
-		fo.useLeskOverlap(false);
+		fo.usePPDBFeature(true);
+		fo.useWord2VecAddSimilarity(true); //does not help
+		fo.useLeskOverlap(true);
 		fo.useTitleAndBodyParagraphVecs(false);
 		
 		fo.useTitleLength(true);
@@ -187,16 +187,18 @@ public class FNCTests2 {
 		fo.usePolarityFeatures(false);
 		
 		fo.useTitleQuestionMark(true);
-		fo.useTitleLength(false);
+		fo.useTitleLength(true);
 		fo.useBodyBoWCounterFeature(true);
 		fo.useRootDistFeature(true);
-		fo.usePPDBFeature(false);
-		fo.useSVOFeature(true);//using the sum
+		fo.usePPDBFeature(true);
+		fo.useSVOFeature(true);//using the sum and tldr --> no change
 		
 		fo.useNegFeature(true);
-		fo.useNegFromArguments(true);
+		fo.useNegFromArguments(false);
 		
-		fo.useWord2VecAddSimilarity(false);
+		fo.useW2VMulSim(true);
+		
+		fo.useWord2VecAddSimilarity(true);
 		fo.useTitleAndBodyParagraphVecs(false);
 		fo.useRelatedClasses(true);
 		fo.useUnlabeledTestset(true);
@@ -251,42 +253,6 @@ public class FNCTests2 {
 		// "modi_ferr");
 		ct.train(true, ProjectPaths.RESULTS_PATH + "modi_ferr_1000f_newBparts_" + time);
 		ct.evaluateOnTestset(ProjectPaths.RESULTS_PATH + "modi_BoW1000_1000f_newBparts_" + time);
-
-		/*
-		 * 
-		 * //use filter on all data FeaturesOrganiser2 fo1 = new
-		 * FeaturesOrganiser2(); fo1.loadData();
-		 * 
-		 * fo1.useBodyBoWCounterFeature(true); fo1.useRootDistFeature(true);
-		 * fo1.usePPDBFeature(true); fo1.useSVOFeature(true);
-		 * fo1.useNegFeature(true); fo1.useWord2VecAddSimilarity(true);
-		 * fo1.useTitleAndBodyParagraphVecs(false); fo1.useAllClasses(true);
-		 * fo1.useUnlabeledTestset(false);
-		 * 
-		 * String fname = "Ferr_1000bow"; fo1.setArffFilename(fname);
-		 * fo1.initializeFeatures(false);
-		 * 
-		 * 
-		 * Instances newTestInstances =
-		 * Filter.useFilter(fo1.getUnlabeledTestInstances(), bow); Instances
-		 * fullUnlabeledTestInstances = Filter.useFilter(newTestInstances,
-		 * attSelct); /* Remove remove = new Remove();
-		 * remove.setInputFormat(fullTestInstances);
-		 * remove.setAttributeIndices("last");
-		 * 
-		 * Instances fullTestInstancesUnlabeled =
-		 * Filter.useFilter(fullTestInstances, remove);
-		 */
-		// fullTestInstances.deleteAttributeAt(fullTestInstances.attribute("stance_class").index());
-
-		// ArffSaver saver = new ArffSaver();
-		// saver.setInstances(fullUnlabeledTestInstances);
-
-		/*
-		 * try { saver.setFile(new File(ProjectPaths.ARFF_DATA_PATH +
-		 * "full_instances_bow1000_unlabeled" + FNCConstants.TEST + ".arff"));
-		 * saver.writeBatch(); } catch (IOException e) { e.printStackTrace(); }
-		 */
 
 	}
 
