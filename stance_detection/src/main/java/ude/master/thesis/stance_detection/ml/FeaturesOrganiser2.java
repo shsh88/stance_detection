@@ -24,11 +24,16 @@ import org.simmetrics.simplifiers.Simplifiers;
 import org.simmetrics.tokenizers.Tokenizers;
 
 import edu.mit.jwi.IDictionary;
+import ude.master.thesis.stance_detection.featureengineering.ArgumentsCounter;
+import ude.master.thesis.stance_detection.featureengineering.BiasLexiconFeatureGenerator;
+import ude.master.thesis.stance_detection.featureengineering.PunctuationCounter;
+import ude.master.thesis.stance_detection.featureengineering.SentimentAnalysis;
 import ude.master.thesis.stance_detection.processor.FeatureExtractor;
 import ude.master.thesis.stance_detection.processor.FeatureExtractorWithModifiedBL;
 import ude.master.thesis.stance_detection.processor.HypernymSimilarity;
 import ude.master.thesis.stance_detection.processor.Lemmatizer;
 import ude.master.thesis.stance_detection.processor.NegationFeaturesGenerator2;
+import ude.master.thesis.stance_detection.processor.NegationFeaturesGenerator2WithMid;
 import ude.master.thesis.stance_detection.processor.NegationFeaturesGeneratorWithArguments;
 import ude.master.thesis.stance_detection.processor.RelatedUnrelatedFeatureGenerator;
 import ude.master.thesis.stance_detection.processor.SVOFeaturesGenerator2;
@@ -90,8 +95,15 @@ public class FeaturesOrganiser2 {
 	private boolean useleskOverlap = false;
 	private boolean useTitleQuestionMark = false;
 	private boolean useTitleLength = false;
-	
+
 	private boolean useW2VMulSim = false;
+
+	private boolean usePuncCount = false;
+	private boolean useArgsCount = false;
+	private boolean useSentiments = false;
+	private boolean usePPDB_TLDRFeature = false;
+	private boolean useNegTLDRFeature = false;
+	private boolean useBiasCount = false;
 
 	private static StringDistance cosSimMetric;
 
@@ -144,6 +156,16 @@ public class FeaturesOrganiser2 {
 	private FileHashMap<String, Integer> testArgNeg;
 	private FileHashMap<String, double[]> w2vMultSimTrain;
 	private FileHashMap<String, double[]> w2vMultSimTest;
+	private FileHashMap<String, int[]> bodyPuncFeatures;
+	private FileHashMap<String, Integer> bodyArgsCountFeatures;
+	private FileHashMap<String, Integer> titleSentiment;
+	private FileHashMap<String, ArrayList<Integer>> bodiesSentiments;
+	private FileHashMap<String, double[]> trainPPDB_TLDR;
+	private FileHashMap<String, double[]> testPPDB_TLDR;
+	private FileHashMap<String, int[]> trainNegTLDR;
+	private FileHashMap<String, int[]> testNegTLDR;
+	private FileHashMap<String, Integer> titleBiasCount;
+	private FileHashMap<String, Integer> bodiesBiasCount;
 
 	/**
 	 * @throws IOException
@@ -172,9 +194,9 @@ public class FeaturesOrganiser2 {
 
 		if (useRootDistFeature) {
 			trainRootDist = StanfordDependencyParser2
-					.loadRootDistFeaturesAsHashFile(ProjectPaths.ROOT_DIST_FEATURE_TRAIN2);
+					.loadRootDistFeaturesAsHashFile(ProjectPaths.ROOT_DIST_FEATURE_TRAIN2_WITH_MID);
 			testRootDist = StanfordDependencyParser2
-					.loadRootDistFeaturesAsHashFile(ProjectPaths.ROOT_DIST_FEATURE_TEST2);
+					.loadRootDistFeaturesAsHashFile(ProjectPaths.ROOT_DIST_FEATURE_TEST2_WITH_MID);
 
 		}
 
@@ -189,9 +211,21 @@ public class FeaturesOrganiser2 {
 
 		}
 
+		if (usePPDB_TLDRFeature) {
+			trainPPDB_TLDR = PPDBProcessor2.loadPPDBFeaturesAsHashFiles(ProjectPaths.PPDB_HUNG_FEATURE_TRAIN2_TLDR);
+			testPPDB_TLDR = PPDBProcessor2.loadPPDBFeaturesAsHashFiles(ProjectPaths.PPDB_HUNG_FEATURE_TEST2_TLDR);
+		}
+
 		if (useNegFeature) {
 			trainNeg = NegationFeaturesGenerator2.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_TRAIN2);
 			testNeg = NegationFeaturesGenerator2.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_TEST2);
+		}
+
+		if (useNegTLDRFeature) {
+			trainNegTLDR = NegationFeaturesGenerator2WithMid
+					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_TRAIN2_TLDR);
+			testNegTLDR = NegationFeaturesGenerator2WithMid
+					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_TEST2_TLDR);
 		}
 
 		if (useWord2VecAddSimilarity) {
@@ -217,7 +251,8 @@ public class FeaturesOrganiser2 {
 		if (useCharGramsFeatures) {
 			trainCgram = RelatedUnrelatedFeatureGenerator
 					.loadCharGramsFeaturesAsHashFile(ProjectPaths.TRAIN_CGRAMS_PATH2);
-			testCgram = RelatedUnrelatedFeatureGenerator.loadCharGramsFeaturesAsHashFile(ProjectPaths.TEST_CGRAMS_PATH2);
+			testCgram = RelatedUnrelatedFeatureGenerator
+					.loadCharGramsFeaturesAsHashFile(ProjectPaths.TEST_CGRAMS_PATH2);
 		}
 
 		if (useWordGramsFeatures) {
@@ -247,16 +282,50 @@ public class FeaturesOrganiser2 {
 			testLeskOverlap = SimilarityFeatures.loadLeskFeaturesAsHashFile(ProjectPaths.TEST_LESK_PATH2);
 		}
 
-		if(useNegFromArguments){
+		if (useNegFromArguments) {
 			trainArgNeg = NegationFeaturesGeneratorWithArguments
-					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_ARG_TRAIN);// we changed it to the arguments because it gets better resultas
+					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_ARG_TRAIN);// we
+																					// changed
+																					// it
+																					// to
+																					// the
+																					// arguments
+																					// because
+																					// it
+																					// gets
+																					// better
+																					// resultas
 			testArgNeg = NegationFeaturesGeneratorWithArguments
 					.loadNegFeaturesAsHashFile(ProjectPaths.NEG_FEATURE_ARG_TEST);
 		}
-		
-		if(useW2VMulSim){
-			w2vMultSimTrain = Word2VecMultiplyDataGenerator2.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_MUL_TRAIN2);
-			w2vMultSimTest = Word2VecMultiplyDataGenerator2.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_MUL_TEST2);
+
+		if (useW2VMulSim) {
+			w2vMultSimTrain = Word2VecMultiplyDataGenerator2
+					.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_MUL_TRAIN2);
+			w2vMultSimTest = Word2VecMultiplyDataGenerator2
+					.loadWord2VecFeaturesAsHashFile(ProjectPaths.W2V_SIM_MUL_TEST2);
+		}
+
+		if (usePuncCount) {
+			bodyPuncFeatures = PunctuationCounter.loadPuncFeaturesAsHashFiles(ProjectPaths.PUNC_COUNT_TRAIN_TEST);
+		}
+
+		if (useArgsCount) {
+			bodyArgsCountFeatures = ArgumentsCounter
+					.loadArgsCountFeaturesAsHashFiles(ProjectPaths.ARG_COUNT_TRAIN_TEST);
+		}
+
+		if (useSentiments) {
+			titleSentiment = SentimentAnalysis.loadTitleSentimentsAsHashFile(ProjectPaths.TITLES_SENIMENTS);
+			// bodiesSentiments =
+			// SentimentAnalysis.loadBodiesSentimentsAsHashFile(ProjectPaths.BODIES_SENIMENTS);
+		}
+
+		if (useBiasCount) {
+			titleBiasCount = BiasLexiconFeatureGenerator
+					.loadBiasLexCountAsHashFile(ProjectPaths.TITLE_BAIS_COUNT_TRAIN_TEST);
+			bodiesBiasCount = BiasLexiconFeatureGenerator
+					.loadBiasLexCountAsHashFile(ProjectPaths.BODY_BAIS_COUNT_TRAIN_TEST);
 		}
 		// Load Lemmatized data
 		titlesLemmas = Lemmatizer.loadTitlesLemmasAsHashFiles(ProjectPaths.TITLES_LEMMAS);
@@ -285,37 +354,74 @@ public class FeaturesOrganiser2 {
 			features.add(new Attribute(FNCConstants.BODY_BOW_COUNTER, (List<String>) null));
 		}
 		if (useRootDistFeature) {
-			for (int i = 0; i < 8; i++)
-				features.add(new Attribute(FNCConstants.ROOT_DIST_REFUTE + i));
+			/*
+			 * for (int i = 0; i < 8; i++) features.add(new
+			 * Attribute(FNCConstants.ROOT_DIST_REFUTE + i));
+			 * 
+			 * for (int i = 0; i < 8; i++) features.add(new
+			 * Attribute(FNCConstants.ROOT_DIST_DISCUSS + i));
+			 */
 
-			for (int i = 0; i < 8; i++)
-				features.add(new Attribute(FNCConstants.ROOT_DIST_DISCUSS + i));
+			for (int i = 0; i < 22; i++)
+				features.add(new Attribute(FNCConstants.ROOT_DIST + i));
 		}
 
 		if (usePPDBFeature) {
-			//for (int i = 0; i < 11; i++)
-				//features.add(new Attribute(FNCConstants.PPDB_HUNG + i));
-				//features.add(new Attribute(FNCConstants.PPDB_HUNG + 9));
-				features.add(new Attribute(FNCConstants.PPDB_HUNG + 5));
+			// for (int i = 0; i < 11; i++)
+			// features.add(new Attribute(FNCConstants.PPDB_HUNG + i));
+			// features.add(new Attribute(FNCConstants.PPDB_HUNG + 9));
+			features.add(new Attribute(FNCConstants.PPDB_HUNG + 5));
+		}
+
+		if (usePPDB_TLDRFeature) {
+			// for (int i = 0; i < 11; i++)
+			features.add(new Attribute(FNCConstants.PPDB_TLDR_HUNG));
 		}
 
 		if (useNegFeature) {
 			for (int i = 0; i < 8; i++)
 				features.add(new Attribute(FNCConstants.NEG_FEATURE + i));
 		}
-		
-		if(useNegFromArguments){
+
+		if (useNegTLDRFeature) {
+			// for (int i = 0; i < 8; i++)
+			features.add(new Attribute(FNCConstants.NEG_TLDR_FEATURE));
+		}
+
+		if (useNegFromArguments) {
 			features.add(new Attribute(FNCConstants.NEG_FEATURE_ARG));
 		}
-		
-		if(useW2VMulSim){
-			for (int i = 0; i < 2; i++)
+
+		if (useW2VMulSim) {
+			for (int i = 0; i < 10; i++)
 				features.add(new Attribute(FNCConstants.WORD2VEC_MLULT_SIM + i));
 		}
 
+		if (usePuncCount) {
+			for (int i = 0; i < 2; i++)
+				features.add(new Attribute(FNCConstants.PUNC_COUNT + i));
+		}
+
+		if (useArgsCount) {
+			features.add(new Attribute(FNCConstants.ARGS_COUNT));
+		}
+
+		if (useSentiments) {
+			features.add(new Attribute(FNCConstants.TITLE_SENTIMENT));
+			/*
+			 * for (int i = 0; i < 10; i++) features.add(new
+			 * Attribute(FNCConstants.BODY_SENTIMENTS + i));
+			 */
+		}
+
+		if (useBiasCount) {
+			features.add(new Attribute(FNCConstants.TITLE_BIAS_COUNT));
+			//features.add(new Attribute(FNCConstants.BODY_BIAS_COUNT));
+		}
+
 		if (useWord2VecAddSimilarity) {
-			//for (int i = 0; i < 3; i++)
-				features.add(new Attribute(FNCConstants.WORD2VEC_ADD_SIM ));
+			// for (int i = 0; i < 3; i++)
+			features.add(new Attribute(FNCConstants.WORD2VEC_ADD_SIM));
 		}
 
 		if (useSVOFeature) {
@@ -363,16 +469,14 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (useCharGramsFeatures) {
-			int featSize = (3 * BodySummerizer2.NUM_SENT_BEG) + (3 * BodySummerizer2.NUM_SENT_END)
-					+ 3 * 3;
+			int featSize = (3 * BodySummerizer2.NUM_SENT_BEG) + (3 * BodySummerizer2.NUM_SENT_END) + 3 * 3;
 			for (int i = 0; i < featSize; i++) {
 				features.add(new Attribute(FNCConstants.CHAR_GRAMS_HITS + i));
 			}
 		}
 
-		if (useWordGramsFeatures) {			
-			int featSize = (4 * BodySummerizer2.NUM_SENT_BEG) + (4 * BodySummerizer2.NUM_SENT_END)
-					+ 4 * 2;
+		if (useWordGramsFeatures) {
+			int featSize = (4 * BodySummerizer2.NUM_SENT_BEG) + (4 * BodySummerizer2.NUM_SENT_END) + 4 * 2;
 			for (int i = 0; i < featSize; i++) {
 				features.add(new Attribute(FNCConstants.NGRAM_HITS + i));
 			}
@@ -398,8 +502,8 @@ public class FeaturesOrganiser2 {
 		if (useTitleQuestionMark) {
 			features.add(new Attribute(FNCConstants.TITLE_Q));
 		}
-		
-		if(useTitleLength){
+
+		if (useTitleLength) {
 			features.add(new Attribute(FNCConstants.TITLE_LENGTH));
 		}
 
@@ -474,7 +578,7 @@ public class FeaturesOrganiser2 {
 
 					String bodyPart3 = FeatureExtractor
 							.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(3));
-					
+
 					ArrayList<String> bodyParts = new ArrayList<>();
 					bodyParts.add(bodyPart1);
 					bodyParts.add(bodyPart2);
@@ -528,10 +632,17 @@ public class FeaturesOrganiser2 {
 			if (rootdist == null)
 				rootdist = testRootDist.get(bodyId);
 
-			for (int i = 0; i < rootdist.size()/2; i++)
-				instance.setValue(instances.attribute(FNCConstants.ROOT_DIST_REFUTE + i), rootdist.get(i));
-			for (int i = 0; i < rootdist.size()/2; i++)
-				instance.setValue(instances.attribute(FNCConstants.ROOT_DIST_DISCUSS + i), rootdist.get(i + rootdist.size()/2));
+			/*
+			 * for (int i = 0; i < rootdist.size() / 2; i++)
+			 * instance.setValue(instances.attribute(FNCConstants.
+			 * ROOT_DIST_REFUTE + i), rootdist.get(i)); for (int i = 0; i <
+			 * rootdist.size() / 2; i++)
+			 * instance.setValue(instances.attribute(FNCConstants.
+			 * ROOT_DIST_DISCUSS + i), rootdist.get(i + rootdist.size() / 2));
+			 */
+
+			for (int i = 0; i < rootdist.size(); i++)
+				instance.setValue(instances.attribute(FNCConstants.ROOT_DIST + i), rootdist.get(i));
 
 		}
 
@@ -542,11 +653,29 @@ public class FeaturesOrganiser2 {
 			if (ppdb == null)
 				ppdb = testPPDB.get(headline + bodyId);
 
-			//for (int i = 0; i < 11; i++) {
-				instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG + 5), ppdb[5]);
-				//instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG + 9), ppdb[9]);
-				//instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG + 10), ppdb[10]);
-			//}
+			// for (int i = 0; i < 11; i++) {
+			instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG + 5), ppdb[5]);
+			// instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG +
+			// 9), ppdb[9]);
+			// instance.setValue(instances.attribute(FNCConstants.PPDB_HUNG +
+			// 10), ppdb[10]);
+			// }
+
+		}
+
+		if (usePPDB_TLDRFeature) {
+			double[] ppdb = null;
+
+			ppdb = trainPPDB_TLDR.get(headline + bodyId);
+			if (ppdb == null)
+				ppdb = testPPDB_TLDR.get(headline + bodyId);
+
+			// for (int i = 0; i < 10; i++)
+			// instance.setValue(instances.attribute(FNCConstants.PPDB_TLDR_HUNG
+			// + i), ppdb[i]);
+
+			// use the score for all article
+			instance.setValue(instances.attribute(FNCConstants.PPDB_TLDR_HUNG), ppdb[ppdb.length - 1]);
 
 		}
 
@@ -557,11 +686,25 @@ public class FeaturesOrganiser2 {
 			if (neg == null)
 				neg = testNeg.get(headline + bodyId);
 
-			for(int i = 0; i < neg.length; i++)
+			for (int i = 0; i < neg.length; i++)
 				instance.setValue(instances.attribute(FNCConstants.NEG_FEATURE + i), neg[i]);
 		}
 
-		if(useNegFromArguments){
+		if (useNegTLDRFeature) {
+			int[] neg = null;
+
+			neg = trainNegTLDR.get(headline + bodyId);
+			if (neg == null)
+				neg = testNegTLDR.get(headline + bodyId);
+
+			int sneg = 0;
+			for (int i = 0; i < neg.length; i++)
+				sneg += neg[i];
+
+			instance.setValue(instances.attribute(FNCConstants.NEG_TLDR_FEATURE), sneg);
+		}
+
+		if (useNegFromArguments) {
 			Integer neg = null;
 
 			neg = trainArgNeg.get(headline + bodyId);
@@ -570,16 +713,48 @@ public class FeaturesOrganiser2 {
 
 			instance.setValue(instances.attribute(FNCConstants.NEG_FEATURE_ARG), neg);
 		}
-		
-		if(useW2VMulSim){
-			
+
+		if (useW2VMulSim) {
+
 			double[] sim = null;
-			sim=w2vMultSimTrain.get(headline + bodyId);
-			if(sim==null)
-				sim=w2vMultSimTest.get(headline + bodyId);
-			
-			for (int i = 0; i < 2; i++)
+			sim = w2vMultSimTrain.get(headline + bodyId);
+			if (sim == null)
+				sim = w2vMultSimTest.get(headline + bodyId);
+
+			for (int i = 0; i < sim.length; i++)
 				instance.setValue(instances.attribute(FNCConstants.WORD2VEC_MLULT_SIM + i), sim[i]);
+		}
+
+		if (usePuncCount) {
+			int[] punc = bodyPuncFeatures.get(bodyId);
+			for (int i = 0; i < punc.length; i++)
+				instance.setValue(instances.attribute(FNCConstants.PUNC_COUNT + i), punc[i]);
+		}
+
+		if (useArgsCount) {
+			int c = bodyArgsCountFeatures.get(bodyId);
+			instance.setValue(instances.attribute(FNCConstants.ARGS_COUNT), c);
+		}
+
+		if (useSentiments) {
+			int tSent = titleSentiment.get(headline);
+			instance.setValue(instances.attribute(FNCConstants.TITLE_SENTIMENT), tSent);
+
+			/*
+			 * ArrayList<Integer> bSent = bodiesSentiments.get(bodyId); while
+			 * (bSent.size() < 10) bSent.add(-1); for (int i = 0; i < 10; i++) {
+			 * instance.setValue(instances.attribute(FNCConstants.
+			 * BODY_SENTIMENTS + i), bSent.get(i)); }
+			 */
+		}
+		
+		if(useBiasCount){
+			int tBias = titleBiasCount.get(headline);
+			instance.setValue(instances.attribute(FNCConstants.TITLE_BIAS_COUNT), tBias);
+			
+			//int bBias = bodiesBiasCount.get(bodyId);
+			//instance.setValue(instances.attribute(FNCConstants.BODY_BIAS_COUNT), bBias);
+			
 		}
 
 		if (useWord2VecAddSimilarity) {
@@ -588,10 +763,11 @@ public class FeaturesOrganiser2 {
 			sim = trainW2VSim.get(headline + bodyId);
 			if (sim == null)
 				sim = testW2VSim.get(headline + bodyId);
-			
-			//for(int i = 0; i < sim.length; i++)
-				//instance.setValue(instances.attribute(FNCConstants.WORD2VEC_ADD_SIM + i), sim[i]);
-			instance.setValue(instances.attribute(FNCConstants.WORD2VEC_ADD_SIM ), sim[1]);
+
+			// for(int i = 0; i < sim.length; i++)
+			// instance.setValue(instances.attribute(FNCConstants.WORD2VEC_ADD_SIM
+			// + i), sim[i]);
+			instance.setValue(instances.attribute(FNCConstants.WORD2VEC_ADD_SIM), sim[1]);
 		}
 
 		if (useSVOFeature) {
@@ -646,14 +822,16 @@ public class FeaturesOrganiser2 {
 		// TODO: split to 2 features use
 		if (usePolarityFeatures) {
 			Attribute headPolarityAtt = instances.attribute(FNCConstants.TITLE_POLARITY);
-			
+
 			String headlineLemma = FeatureExtractorWithModifiedBL.clean(titlesLemmas.get(headline));
 
 			instance.setValue(headPolarityAtt, FeatureExtractorWithModifiedBL.calculatePolarity(headlineLemma));
 
 			Attribute bodyPolarityAtt = instances.attribute(FNCConstants.BODY_POLARITY);
 			instance.setValue(bodyPolarityAtt,
-					FeatureExtractorWithModifiedBL.calculatePolarity(FeatureExtractorWithModifiedBL.getLemmatizedCleanStr((bodyParts.get(0) + " " + bodyParts.get(1) + " " + bodyParts.get(2)))));
+					FeatureExtractorWithModifiedBL
+							.calculatePolarity(FeatureExtractorWithModifiedBL.getLemmatizedCleanStr(
+									(bodyParts.get(0) + " " + bodyParts.get(1) + " " + bodyParts.get(2)))));
 		}
 		// TODO: split to 2 features use
 		if (useBinaryCooccurraneFeatures) {
@@ -683,9 +861,8 @@ public class FeaturesOrganiser2 {
 			cgram = trainCgram.get(headline + bodyId);
 			if (cgram == null)
 				cgram = testCgram.get(headline + bodyId);
-			
-			int featSize = (3 * BodySummerizer2.NUM_SENT_BEG) + (3 * BodySummerizer2.NUM_SENT_END)
-					+ 3 * 3;
+
+			int featSize = (3 * BodySummerizer2.NUM_SENT_BEG) + (3 * BodySummerizer2.NUM_SENT_END) + 3 * 3;
 
 			for (int i = 0; i < featSize; i++) {
 				Attribute cgramAtt = instances.attribute(FNCConstants.CHAR_GRAMS_HITS + i);
@@ -694,9 +871,8 @@ public class FeaturesOrganiser2 {
 		}
 
 		if (useWordGramsFeatures) {
-			int featSize = (4 * BodySummerizer2.NUM_SENT_BEG) + (4 * BodySummerizer2.NUM_SENT_END)
-					+ 4 * 2;
-			
+			int featSize = (4 * BodySummerizer2.NUM_SENT_BEG) + (4 * BodySummerizer2.NUM_SENT_END) + 4 * 2;
+
 			ArrayList<Integer> ngram = null;
 			ngram = trainNgram.get(headline + bodyId);
 			if (ngram == null)
@@ -727,8 +903,8 @@ public class FeaturesOrganiser2 {
 			Attribute qAtt = instances.attribute(FNCConstants.TITLE_Q);
 			instance.setValue(qAtt, q);
 		}
-		
-		if(useTitleLength){
+
+		if (useTitleLength) {
 			int len = headline.split("\\s+").length;
 			Attribute lenAtt = instances.attribute(FNCConstants.TITLE_LENGTH);
 			instance.setValue(lenAtt, len);
@@ -768,41 +944,45 @@ public class FeaturesOrganiser2 {
 
 		trainingSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES));
 		testSummIdBoyMap = sddr.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES));
-/*
-		int[] delSetTest = {192, 196, 2229, 2108, 671, 870, 596, 1578, 113, 1576,
-			2301, 753, 995, 2466, 314, 954, 1617, 52, 2505, 2243, 2001, 2361, 1470, 2041, 
-			1270, 1701, 1, 485, 1105, 2512, 201, 1665, 2279, 1783, 1386, 926, 927, 1108, 
-			1163, 293, 492, 1998, 1238, 1114, 1675, 1674, 814, 1639, 1713, 1373, 180, 2460, 2140, 
-			1050, 143, 264, 1766, 540, 1600, 1963, 1203, 268, 1960, 1200, 1882, 864, 1928, 1328};
-		int[] delSetTrain = {192, 196, 2229, 2108, 671, 870, 596, 1578, 113, 1576, 2301, 
-				753, 995, 2466, 314, 954, 1617, 52, 2505, 2243, 2001, 2361, 1470, 2041, 
-				1270, 1701, 1, 485, 1105, 2512, 201, 1665, 2279, 1783, 1386, 926, 927, 
-				1108, 1163, 293, 492, 1998, 1238, 1114, 1675, 1674, 814, 1639, 1713, 
-				1373, 180, 2460, 2140, 1050, 143, 264, 1766, 540, 1600, 1963, 1203, 268, 
-				1960, 1200, 1882, 864, 1928, 1328};
-		*/
+		/*
+		 * int[] delSetTest = {192, 196, 2229, 2108, 671, 870, 596, 1578, 113,
+		 * 1576, 2301, 753, 995, 2466, 314, 954, 1617, 52, 2505, 2243, 2001,
+		 * 2361, 1470, 2041, 1270, 1701, 1, 485, 1105, 2512, 201, 1665, 2279,
+		 * 1783, 1386, 926, 927, 1108, 1163, 293, 492, 1998, 1238, 1114, 1675,
+		 * 1674, 814, 1639, 1713, 1373, 180, 2460, 2140, 1050, 143, 264, 1766,
+		 * 540, 1600, 1963, 1203, 268, 1960, 1200, 1882, 864, 1928, 1328}; int[]
+		 * delSetTrain = {192, 196, 2229, 2108, 671, 870, 596, 1578, 113, 1576,
+		 * 2301, 753, 995, 2466, 314, 954, 1617, 52, 2505, 2243, 2001, 2361,
+		 * 1470, 2041, 1270, 1701, 1, 485, 1105, 2512, 201, 1665, 2279, 1783,
+		 * 1386, 926, 927, 1108, 1163, 293, 492, 1998, 1238, 1114, 1675, 1674,
+		 * 814, 1639, 1713, 1373, 180, 2460, 2140, 1050, 143, 264, 1766, 540,
+		 * 1600, 1963, 1203, 268, 1960, 1200, 1882, 864, 1928, 1328};
+		 */
 		trainingStances = sddr.getTrainStances();
 		System.out.println(trainingStances.size());
-		
-		//	trainingStances = removeInstances(trainingStances, trainingSummIdBoyMap, delSetTrain);
+
+		// trainingStances = removeInstances(trainingStances,
+		// trainingSummIdBoyMap, delSetTrain);
 
 		testStances = sddr.getTestStances();
-		// testStances =  removeInstances(testStances, testSummIdBoyMap, delSetTest);
-		
+		// testStances = removeInstances(testStances, testSummIdBoyMap,
+		// delSetTest);
+
 	}
 
-	private List<List<String>> removeInstances(List<List<String>> stances, HashMap<Integer, Map<Integer, String>> idBoyMap, int[] delSet) {
+	private List<List<String>> removeInstances(List<List<String>> stances,
+			HashMap<Integer, Map<Integer, String>> idBoyMap, int[] delSet) {
 		Set<Integer> del = new HashSet<>();
-		for(int d: delSet)
+		for (int d : delSet)
 			del.add(d);
 		List<List<String>> newStances = new ArrayList<>();
-		
-		for(List<String> s : stances){
+
+		for (List<String> s : stances) {
 			Integer bodyId = Integer.valueOf(s.get(1));
 			if (!del.contains(bodyId))
 				newStances.add(s);
 		}
-			
+
 		return newStances;
 	}
 
@@ -1038,6 +1218,54 @@ public class FeaturesOrganiser2 {
 
 	public void useW2VMulSim(boolean useW2VMulSim) {
 		this.useW2VMulSim = useW2VMulSim;
+	}
+
+	public boolean isPuncCountUsed() {
+		return usePuncCount;
+	}
+
+	public void usePuncCount(boolean usePuncCount) {
+		this.usePuncCount = usePuncCount;
+	}
+
+	public boolean isArgsCountUsed() {
+		return useArgsCount;
+	}
+
+	public void useArgsCount(boolean useArgsCount) {
+		this.useArgsCount = useArgsCount;
+	}
+
+	public boolean isSentimentsUsed() {
+		return useSentiments;
+	}
+
+	public void useSentiments(boolean useSentiments) {
+		this.useSentiments = useSentiments;
+	}
+
+	public boolean isPPDB_TLDRFeatureUsed() {
+		return usePPDB_TLDRFeature;
+	}
+
+	public void usePPDB_TLDRFeature(boolean usePPDB_TLDRFeature) {
+		this.usePPDB_TLDRFeature = usePPDB_TLDRFeature;
+	}
+
+	public boolean isNegTLDRFeatureUsed() {
+		return useNegTLDRFeature;
+	}
+
+	public void useNegTLDRFeature(boolean useNegTLDRFeature) {
+		this.useNegTLDRFeature = useNegTLDRFeature;
+	}
+
+	public boolean isBiasCountUsed() {
+		return useBiasCount;
+	}
+
+	public void useBiasCount(boolean useBiasCount) {
+		this.useBiasCount = useBiasCount;
 	}
 
 }
