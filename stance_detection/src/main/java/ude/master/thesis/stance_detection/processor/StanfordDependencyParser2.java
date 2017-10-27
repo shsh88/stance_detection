@@ -103,18 +103,20 @@ public class StanfordDependencyParser2 {
 
 	public static void main(String[] args) throws Exception {
 		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
-				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2,
-				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2);
+				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2_WITH_MID,
+				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID);
 
-		//HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
-			//	.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2));
-		//generateRootDistFeaturesAndSave(trainingSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TRAIN2);
+		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2_WITH_MID));
+		generateRootDistFeaturesAndSave(trainingSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TRAIN2_WITH_MID);
 
-		//HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
-			//	.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2));
-		//generateRootDistFeaturesAndSave(testSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2);
-		//saveRootDistFeaturesAsHashFile(ProjectPaths.CSV_ROOT_DIST_FEATURE_TRAIN2, ProjectPaths.ROOT_DIST_FEATURE_TRAIN2);
-		saveRootDistFeaturesAsHashFile(ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2, ProjectPaths.ROOT_DIST_FEATURE_TEST2);
+		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
+				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID));
+		generateRootDistFeaturesAndSave(testSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2_WITH_MID);
+		saveRootDistFeaturesAsHashFile(ProjectPaths.CSV_ROOT_DIST_FEATURE_TRAIN2_WITH_MID,
+				ProjectPaths.ROOT_DIST_FEATURE_TRAIN2_WITH_MID);
+		saveRootDistFeaturesAsHashFile(ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2_WITH_MID,
+				ProjectPaths.ROOT_DIST_FEATURE_TEST2_WITH_MID);
 
 		/*
 		 * String text3 =
@@ -125,7 +127,7 @@ public class StanfordDependencyParser2 {
 		 */
 
 		// Task: save dependencies already
-		//saveDepsListsMaps();
+		// saveDepsListsMaps();
 
 		String txt = "Kim Jong-un has broken both of his ankles and is now in the hospital after undergoing "
 				+ "surgery, a report in a South Korean newspaper claims. The North Korean leader has "
@@ -143,7 +145,7 @@ public class StanfordDependencyParser2 {
 			String filename) throws Exception {
 		List<String[]> entries = new ArrayList<>();
 
-		String[] header = new String[17];
+		String[] header = new String[23];
 		header[0] = "Body ID";
 		for (int j = 1; j < 9; j++) {
 			if (j >= 1 && j <= 5) {
@@ -160,6 +162,15 @@ public class StanfordDependencyParser2 {
 				header[j] = "end_ref_RootDist" + j;
 			}
 		}
+
+		for (int j = 17; j < 23; j++) {
+			if (j >= 17 && j <= 19) {
+				header[j] = "mid_ref_RootDist" + j;
+			} else {
+				header[j] = "mid_disc_RootDist" + j;
+			}
+		}
+
 		entries.add(header);
 
 		int i = 0;
@@ -205,8 +216,32 @@ public class StanfordDependencyParser2 {
 
 			}
 
-			if (entry.size() != 17)
-				throw new Exception("not 16 features");
+			// add features from mid part
+			// ******
+			String partText = e.getValue().get(3);
+			Annotation doc = buildAnnotatedDoc(partText);
+			// System.out.println(e.getValue());
+			List<SemanticGraph> graphs = buildDependencyGraph(doc);
+
+			// for Refute rootDist
+			List<Double> refuteRootDistVec = getRefuteRootDistFeatureVecFromMid(graphs);
+
+			for (Double d : refuteRootDistVec)
+				entry.add(Double.toString(d));
+
+			List<Double> discussRootDistVec = getDiscussRootDistFeatureVecFromMid(graphs);
+			for (Double d : discussRootDistVec)
+				entry.add(Double.toString(d));
+
+			// double avgDisc = getAvgRootDist(discussRootDistVec);
+			// entry.add(Double.toString(avgDisc));
+
+			// double avgRef = getAvgRootDist(refuteRootDistVec);
+			// entry.add(Double.toString(avgRef));
+			// ******
+
+			if (entry.size() != 23)
+				throw new Exception("not 22 features");
 			entries.add(entry.toArray(new String[0]));
 			i++;
 
@@ -219,13 +254,14 @@ public class StanfordDependencyParser2 {
 		}
 
 	}
-	
+
 	/**
 	 * This represent 2 features: the distance from the root of a sentence to a
 	 * refuting/discussing word saving the map as [
 	 * <body_id>,["ref_RootDist","disc_RootDist"]] These 2 features are
 	 * calculated for each sentence in the body (5 from the beginning and 3 at
 	 * last) So the feature vector is of length 10
+	 * 
 	 * @param csvfilePath
 	 * @param hashFileName
 	 * @throws FileNotFoundException
@@ -259,7 +295,7 @@ public class StanfordDependencyParser2 {
 		rootDistData.close();
 
 	}
-	
+
 	public static FileHashMap<String, ArrayList<Double>> loadRootDistFeaturesAsHashFile(String hashFileName)
 			throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException,
 			IOException {
@@ -404,18 +440,18 @@ public class StanfordDependencyParser2 {
 		// ProjectPaths.SUMMARIZED_TRAIN_BODIES, ProjectPaths.TEST_STANCESS,
 		// ProjectPaths.SUMMARIZED_TEST_BODIES);
 		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
-				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2,
-				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2);
+				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2_WITH_MID,
+				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID);
 
 		// ******************* Do training data ****************************
 		// Use summarized bodies instead
 		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
-				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2));
+				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2_WITH_MID));
 		List<List<String>> trainingStances = sddr.getTrainStances();
 
 		// Do the training bodies
 		FileHashMap<Integer, Map<Integer, List<String>>> trainBDepsMap = new FileHashMap<Integer, Map<Integer, List<String>>>(
-				ProjectPaths.TRAIN_BODIES_DEPS2, FileHashMap.FORCE_OVERWRITE);
+				ProjectPaths.TRAIN_BODIES_DEPS2_WITH_MID, FileHashMap.FORCE_OVERWRITE);
 
 		for (Entry<Integer, Map<Integer, String>> b : trainingSummIdBoyMap.entrySet()) {
 			Map<Integer, List<String>> partsDeps = new HashMap<>();
@@ -432,29 +468,26 @@ public class StanfordDependencyParser2 {
 		trainBDepsMap.close();
 
 		// Do the titles
-		FileHashMap<String, List<String>> trainTDepsMap = new FileHashMap<String, List<String>>(
-				ProjectPaths.TRAIN_TITLES_DEPS2, FileHashMap.FORCE_OVERWRITE);
-		Set<String> testTitlesSet = new HashSet<>();
-		for (List<String> s : trainingStances) {
-			testTitlesSet.add(s.get(0));
-		}
-		for (String t : testTitlesSet) {
-			List<String> deps = getDependenciesAsTxtList(t);
-			trainTDepsMap.put(t, deps);
-		}
-		trainTDepsMap.save();
-		trainTDepsMap.close();
+		/*
+		 * FileHashMap<String, List<String>> trainTDepsMap = new
+		 * FileHashMap<String, List<String>>( ProjectPaths.TRAIN_TITLES_DEPS2,
+		 * FileHashMap.FORCE_OVERWRITE); Set<String> testTitlesSet = new
+		 * HashSet<>(); for (List<String> s : trainingStances) {
+		 * testTitlesSet.add(s.get(0)); } for (String t : testTitlesSet) {
+		 * List<String> deps = getDependenciesAsTxtList(t); trainTDepsMap.put(t,
+		 * deps); } trainTDepsMap.save(); trainTDepsMap.close();
+		 */
 
 		// ******************* Do Test data ****************************
 		// HashMap<Integer, String> testIdBodyMap = sddr.getTestIdBodyMap();
 		// Use summarized bodies instead
 		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
-				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2));
+				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID));
 		List<List<String>> testStances = sddr.getTestStances();
 
 		// Do the training bodies
 		FileHashMap<Integer, Map<Integer, List<String>>> testBDepsMap = new FileHashMap<Integer, Map<Integer, List<String>>>(
-				ProjectPaths.TEST_BODIES_DEPS2, FileHashMap.FORCE_OVERWRITE);
+				ProjectPaths.TEST_BODIES_DEPS2_WITH_MID, FileHashMap.FORCE_OVERWRITE);
 		for (Entry<Integer, Map<Integer, String>> b : testSummIdBoyMap.entrySet()) {
 			Map<Integer, List<String>> partsDeps = new HashMap<>();
 
@@ -470,18 +503,15 @@ public class StanfordDependencyParser2 {
 		testBDepsMap.close();
 
 		// Do the titles
-		FileHashMap<String, List<String>> testTDepsMap = new FileHashMap<String, List<String>>(
-				ProjectPaths.TEST_TITLES_DEPS2, FileHashMap.FORCE_OVERWRITE);
-		Set<String> trainTitlesSet = new HashSet<>();
-		for (List<String> s : testStances) {
-			trainTitlesSet.add(s.get(0));
-		}
-		for (String t : trainTitlesSet) {
-			List<String> deps = getDependenciesAsTxtList(t);
-			testTDepsMap.put(t, deps);
-		}
-		testTDepsMap.save();
-		testTDepsMap.close();
+		/*
+		 * FileHashMap<String, List<String>> testTDepsMap = new
+		 * FileHashMap<String, List<String>>( ProjectPaths.TEST_TITLES_DEPS2,
+		 * FileHashMap.FORCE_OVERWRITE); Set<String> trainTitlesSet = new
+		 * HashSet<>(); for (List<String> s : testStances) {
+		 * trainTitlesSet.add(s.get(0)); } for (String t : trainTitlesSet) {
+		 * List<String> deps = getDependenciesAsTxtList(t); testTDepsMap.put(t,
+		 * deps); } testTDepsMap.save(); testTDepsMap.close();
+		 */
 	}
 
 	/**
@@ -505,6 +535,105 @@ public class StanfordDependencyParser2 {
 			depLists.add(depList);
 		}
 		return depLists;
+	}
+
+	private static List<Double> getDiscussRootDistFeatureVecFromMid(List<SemanticGraph> graphs) {
+		List<String> discuss_words = Arrays.asList(FeatureExtractorWithModifiedBL.discussWordsJoined);
+
+		List<Double> mins_dist = new ArrayList<>();
+
+		for (SemanticGraph graph : graphs) {
+			int minDiscussDist = 1000;
+
+			IndexedWord root = graph.getFirstRoot(); // TODO: it it precise to
+														// take only the first
+														// root
+			if (graph.getRoots().size() > 1)
+				System.out.println("num of roots: " + graph.getRoots().size());
+
+			// traverse the nodes in the graph
+			for (int i = 1; i <= graph.size(); i++) {
+				IndexedWord idxW = graph.getNodeByIndexSafe(i);
+				if (idxW != null)
+					if (idxW.word() != null)
+						if ((discuss_words.contains(idxW.word().toLowerCase()))) {
+							int dist = graph.getShortestDirectedPathEdges(root, graph.getNodeByIndex(i)).size();
+
+							if (dist < minDiscussDist)
+								minDiscussDist = dist;
+						}
+			}
+			mins_dist.add((double) minDiscussDist);
+
+		}
+
+		// get the values in min_dist that are smaller than 1000 first
+		List<Double> min_dist_red = new ArrayList<>();
+		for (Double m : mins_dist) {
+			if (m < 1000.0)
+				min_dist_red.add(m);
+		}
+		if (min_dist_red.size() >= 3)
+			System.out.println("we got it >= 3!");
+
+		while (min_dist_red.size() > 3) {
+			min_dist_red.remove(min_dist_red.size() - 1);
+		}
+		while (min_dist_red.size() < 3)
+			min_dist_red.add(1000.0);
+
+		return min_dist_red;
+	}
+
+	private static List<Double> getRefuteRootDistFeatureVecFromMid(List<SemanticGraph> graphs) {
+		List<String> refuting_words = Arrays.asList(FeatureExtractorWithModifiedBL.refutingWords);
+
+		List<Double> mins_dist = new ArrayList<>();
+		// get the min rootDist for each graph (2 values vector for each)
+		// System.out.println("graphs.size = " + graphs.size());
+		for (SemanticGraph graph : graphs) {
+			int minRefuteDist = 1000;
+
+			IndexedWord root = graph.getFirstRoot();
+
+			if (graph.getRoots().size() > 1)
+				System.out.println("num of roots: " + graph.getRoots().size());
+
+			// traverse the nodes in the graph
+			for (int i = 1; i <= graph.size(); i++) {
+				IndexedWord idxW = graph.getNodeByIndexSafe(i);
+
+				if ((idxW != null))
+					if (idxW.word() != null)
+						if ((refuting_words.contains(idxW.word().toLowerCase()))) {
+							int dist = graph.getShortestDirectedPathEdges(root, graph.getNodeByIndex(i)).size();
+
+							if (dist < minRefuteDist)
+								minRefuteDist = dist;
+						}
+
+			}
+			mins_dist.add((double) minRefuteDist);
+
+		}
+
+		// get the values in min_dist that are smaller than 1000 first
+		List<Double> min_dist_red = new ArrayList<>();
+		for (Double m : mins_dist) {
+			if (m < 1000.0)
+				min_dist_red.add(m);
+		}
+		if (min_dist_red.size() >= 3)
+			System.out.println("we got it >= 3!");
+
+		while (min_dist_red.size() > 3) {
+			min_dist_red.remove(min_dist_red.size() - 1);
+		}
+
+		while (min_dist_red.size() < 3)
+			min_dist_red.add(1000.0);
+
+		return min_dist_red;
 	}
 
 }
