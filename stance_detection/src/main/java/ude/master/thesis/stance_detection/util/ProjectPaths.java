@@ -37,6 +37,10 @@ public class ProjectPaths {
 	public static final String CSV_ROOT_DIST_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_rootdist2.csv";
 	public static final String CSV_ROOT_DIST_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_rootdist2.csv";
 
+	public static final String CSV_ROOT_DIST_FEATURE_TRAIN2_WITH_MID = "C:/thesis_stuff/features/train_features/train_rootdist2_with_mid.csv";
+	public static final String CSV_ROOT_DIST_FEATURE_TEST2_WITH_MID = "C:/thesis_stuff/features/test_features/test_rootdist2_with_mid.csv";
+
+	
 	public static final String SVO_FEATURE_TRAIN = "C:/thesis_stuff/features/train_features/train_svo_nosvo_features";
 	public static final String SVO_FEATURE_TEST = "C:/thesis_stuff/features/test_features/test_svo_nosvo_features";
 
@@ -121,6 +125,9 @@ public class ProjectPaths {
 	public static final String TEST_BODIES_DEPS2 = "C:/thesis_stuff/help_files/test_bodies_deps2";
 	public static final String TEST_TITLES_DEPS2 = "C:/thesis_stuff/help_files/test_titles_deps2";
 	
+	public static final String TRAIN_BODIES_DEPS2_WITH_MID = "C:/thesis_stuff/help_files/train_bodies_deps2_with_mid";
+	public static final String TEST_BODIES_DEPS2_WITH_MID = "C:/thesis_stuff/help_files/test_bodies_deps2_with_mid";
+	
 	public static final String CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2 = "C:/thesis_stuff/features/train_features/train_hung_ppdb_with_stopwords2.csv";
 	public static final String CSV_PPDB_HUNG_SCORES_IDXS_TEST2 = "C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords2.csv";
 	public static final String PPDB_HUNG_SCORES_IDXS_TRAIN2 = "C:/thesis_stuff/features/train_features/map_train_hung_ppdb_with_stopwords2";
@@ -135,6 +142,12 @@ public class ProjectPaths {
 
 	public static final String CSV_NEG_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_neg_features2.csv";
 	public static final String CSV_NEG_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_neg_features2.csv";
+	
+	public static final String CSV_NEG_FEATURE_TRAIN2_TLDR = "C:/thesis_stuff/features/train_features/train_neg_features2_tldr.csv";
+	public static final String CSV_NEG_FEATURE_TEST2_TLDR = "C:/thesis_stuff/features/test_features/test_neg_features2_tldr.csv";
+	public static final String NEG_FEATURE_TRAIN2_TLDR = "C:/thesis_stuff/features/train_features/train_neg_features2_tldr";
+	public static final String NEG_FEATURE_TEST2_TLDR = "C:/thesis_stuff/features/test_features/test_neg_features2_tldr";
+
 	
 	public static final String TITLES_SVO_TRAIN_TEST = "C:/thesis_stuff/help_files/titles_svos_train_test";
 	public static final String BODIES_SVO_TRAIN_TEST2 = "C:/thesis_stuff/help_files/bodies_svos_train_test2";
@@ -170,6 +183,11 @@ public class ProjectPaths {
 	
 	public static final String ROOT_DIST_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_rootdist2";
 	public static final String ROOT_DIST_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_rootdist2";
+	
+	public static final String ROOT_DIST_FEATURE_TRAIN2_WITH_MID = "C:/thesis_stuff/features/train_features/train_rootdist2_with_mid";
+	public static final String ROOT_DIST_FEATURE_TEST2_WITH_MID = "C:/thesis_stuff/features/test_features/test_rootdist2_with_mid";
+
+	
 	public static final String PPDB_HUNG_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_hung_ppdb_with_stopwords2";
 	public static final String PPDB_HUNG_FEATURE_TEST2 = "C:/thesis_stuff/features/test_features/test_hung_ppdb_with_stopwords2";
 	public static final String NEG_FEATURE_TRAIN2 = "C:/thesis_stuff/features/train_features/train_neg_features2";
@@ -469,5 +487,21 @@ public class ProjectPaths {
 	public static final String TEST_CGRAMS_PARTS_ARG33_PATH = "C:/thesis_stuff/features/test_features/test_cgrams_parts_args33";
 	public static final String TRAIN_NGRAMS_PARTS_ARG33_PATH = "C:/thesis_stuff/features/train_features/train_ngrams_parts_args33";
 	public static final String TEST_NGRAMS_PARTS_ARG33_PATH = "C:/thesis_stuff/features/test_features/test_ngrams_parts_args33";
+	
+	public static final String CSV_PUNC_COUNT_TRAIN_TEST = "C:/thesis_stuff/features/puc_count_train_test.csv";
+	public static final String PUNC_COUNT_TRAIN_TEST = "C:/thesis_stuff/features/puc_count_train_test";
+	public static final String BODY_BAIS_COUNT_TRAIN_TEST = "C:/thesis_stuff/features/body_bais_count_train_test";
+	public static final String CSV_BODY_BAIS_COUNT_TRAIN_TEST = "C:/thesis_stuff/features/body_bais_count_train_test.csv";
+	public static final String TITLE_BAIS_COUNT_TRAIN_TEST = "C:/thesis_stuff/features/title_bais_count_train_test";
+	public static final String CSV_TITLE_BAIS_COUNT_TRAIN_TEST = "C:/thesis_stuff/features/title_bais_count_train_test.csv";
+	
+	public static final String ARG_COUNT_TRAIN_TEST = "C:/thesis_stuff/features/arg_count_train_test";
+	public static final String CSV_ARG_COUNT_TRAIN_TEST = "C:/thesis_stuff/features/arg_count_train_test.csv";
+	public static final String CSV_TITLES_SENIMENTS = "C:/thesis_stuff/features/titles_sentiments.csv";
+	public static final String TITLES_SENIMENTS = "C:/thesis_stuff/features/titles_sentiments";
+	public static final String CSV_BODIES_SENIMENTS = "C:/thesis_stuff/features/bodies_sentiments.csv";
+	public static final String BODIES_SENIMENTS = "C:/thesis_stuff/features/bodies_sentiments";
+	
+	public static final String BIAS_LEX_PATH = "resources/bias-lexicon/bias-lexicon.txt";
 
 }
