@@ -2,6 +2,7 @@ package ude.master.thesis.stance_detection.processor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -28,6 +29,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
 
+import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
@@ -48,7 +50,9 @@ import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.POSTaggerAnnotator;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
+import lombok.val;
 import ude.master.thesis.stance_detection.util.BodySummerizer2;
+import ude.master.thesis.stance_detection.util.PPDBProcessor;
 import ude.master.thesis.stance_detection.util.ProjectPaths;
 import ude.master.thesis.stance_detection.util.StanceDetectionDataReader;
 
@@ -552,8 +556,35 @@ public class HypernymSimilarity2 {
 				ProjectPaths.BODIES_POS_MAP_PATH2);
 		System.out.println(bb.get(476));*/
 
-		hs.getHypSimFeatureVector(trainingStances, trainingSummIdBoyMap, ProjectPaths.TRAIN_HYP_SIM_PATH2);
-		hs.getHypSimFeatureVector(testStances, testSummIdBoyMap, ProjectPaths.TEST_HYP_SIM_PATH2);
+		//hs.getHypSimFeatureVector(trainingStances, trainingSummIdBoyMap, ProjectPaths.TRAIN_HYP_SIM_PATH2);
+		//hs.getHypSimFeatureVector(testStances, testSummIdBoyMap, ProjectPaths.TEST_HYP_SIM_PATH2);
+		//hs.saveHypSimFeatureVectorInHashFile(ProjectPaths.TEST_HYP_SIM_PATH2, ProjectPaths.TEST_HYP_SIM_PATH2+".csv");
+		hs.saveHypSimFeatureVectorInHashFile(ProjectPaths.TRAIN_HYP_SIM_PATH2, ProjectPaths.TRAIN_HYP_SIM_PATH2+".csv");
+	
+	}
+
+	private void saveHypSimFeatureVectorInHashFile(String hashFilePath, String csvFilePath) throws FileNotFoundException, ObjectExistsException, ClassNotFoundException, VersionMismatchException, IOException {
+		FileHashMap<String, ArrayList<Double>> hashFile = new FileHashMap<String, ArrayList<Double>>(hashFilePath,
+				FileHashMap.FORCE_OVERWRITE);
+
+		CSVReader reader = null;
+		reader = new CSVReader(new FileReader(csvFilePath));
+		String[] line;
+		line = reader.readNext();
+
+		while ((line = reader.readNext()) != null) {
+			ArrayList<Double> values = new ArrayList<>();
+			
+			for(int i = 3; i < line.length; i++)
+				values.add(Double.valueOf(line[i]));
+			
+			hashFile.put(line[0] + line[1], values);
+		}
+		reader.close();
+
+		// saving the map file
+		hashFile.save();
+		hashFile.close();
 	}
 
 }
