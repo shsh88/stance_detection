@@ -143,15 +143,15 @@ public class PPDBProcessor2 {
 		List<List<String>> trainingStances = sddr.getTrainStances();
 		HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap = sddr
 				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TRAIN_BODIES2_WITH_MID));
-		generateHungarianPPDBFeaturesAndSave(trainingSummIdBoyMap, trainingStances,
-				ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2_TLDR);
+		//generateHungarianPPDBFeaturesAndSave(trainingSummIdBoyMap, trainingStances,
+			//	ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2_TLDR);
 
 		List<List<String>> testStances = sddr.getTestStances();
 
 		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
 				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID));
-		generateHungarianPPDBFeaturesAndSave(testSummIdBoyMap, testStances,
-				ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2_TLDR);
+		//generateHungarianPPDBFeaturesAndSave(testSummIdBoyMap, testStances,
+			//	ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TEST2_TLDR);
 		
 		saveHungarianScoreInFileMap(ProjectPaths.CSV_PPDB_HUNG_SCORES_IDXS_TRAIN2_TLDR,
 				 ProjectPaths.PPDB_HUNG_SCORES_IDXS_TRAIN2_TLDR);
@@ -184,26 +184,28 @@ public class PPDBProcessor2 {
 
 			while ((line = reader.readNext()) != null) {
 				ArrayList<ArrayList<Integer>> idxListP1 = new ArrayList<>();
-				for (int i = 3; i < 9; i++) {
+				for (int i = 3; i < 8; i++) {
 					String idxStr = line[i].split("\\|")[1];
-					//System.out.println(idxStr);
+					// System.out.println(idxStr);
 					ArrayList<Integer> idxs = getIntList(idxStr);
 					idxListP1.add(idxs);
 				}
 				idxsMap.put(1, idxListP1);
 				
-				
-				String idxStrAll = line[9].split("\\|")[1];
-				//System.out.println(idxStr);
-				ArrayList<Integer> idxsAll = getIntList(idxStrAll);
 				ArrayList<ArrayList<Integer>> idxListP2 = new ArrayList<>();
-				idxListP2.add(idxsAll);
+				for (int i = 13; i < line.length; i++) {
+					String idxStrAll = line[i].split("\\|")[1];
+					// System.out.println(idxStr);
+					ArrayList<Integer> idxsAll = getIntList(idxStrAll);
+					
+					idxListP2.add(idxsAll);
+				}
 				idxsMap.put(2, idxListP2);
-				
+
 				ArrayList<ArrayList<Integer>> idxListP3 = new ArrayList<>();
-				for (int i = 10; i < 14; i++) {
+				for (int i = 9; i < 13; i++) {
 					String idxStr = line[i].split("\\|")[1];
-					//System.out.println(idxStr);
+					// System.out.println(idxStr);
 					ArrayList<Integer> idxs = getIntList(idxStr);
 					idxListP3.add(idxs);
 				}
@@ -392,8 +394,8 @@ public class PPDBProcessor2 {
 		int lineNo = 0;
 
 		while ((line = reader.readNext()) != null) {
-			double[] featureVecor = new double[11];
-			for (int i = 3; i <= 13; i++) {
+			double[] featureVecor = new double[line.length - 3];
+			for (int i = 3; i < line.length; i++) {
 				Double v = Double.valueOf(line[i].split("\\|")[0]);
 				featureVecor[i - 3] = v;
 			}
