@@ -480,7 +480,7 @@ public class FeatureExtractorWithModifiedBL {
 		return clean(lem.trim());
 	}
 	
-	public static List<String> getLemmatizedCleanStrList(String str) {
+	public static List<String> getLemmatizedStrList(String str) {
 		if(lemmatizer == null)
 			lemmatizer = new Lemmatizer();
 		
