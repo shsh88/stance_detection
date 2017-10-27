@@ -54,14 +54,17 @@ public class ClassifierTools {
 		this.classifier = classifier;
 	}
 
-	public AttributeSelection applyAttributSelectionFilter() {
+	public AttributeSelection applyAttributSelectionFilter(boolean useNumToSelect, int NumToSelect) {
 		AttributeSelection attributeFilter = new AttributeSelection();
 
 		ChiSquaredAttributeEval ev2 = new ChiSquaredAttributeEval(); //
 		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
 		Ranker ranker = new Ranker();
-		ranker.setNumToSelect(1000);
+		
+		if(useNumToSelect)
+			ranker.setNumToSelect(NumToSelect);
 		//ranker.setNumToSelect(70);
+		
 		ranker.setThreshold(0.0);
 
 		attributeFilter.setSearch(ranker);
