@@ -72,7 +72,7 @@ public class FNCTests33MidArguments {
 
 		ClassifierTools ct = new ClassifierTools(fo.getTrainingInstances(), fo.getTestInstances(), classifier);
 
-		ct.applyAttributSelectionFilter();
+		ct.applyAttributSelectionFilter(false, -1);
 
 		String time = FNCConstants.getCurrentTimeStamp();
 		ct.saveInstancesToArff("baseline_bin_new_noarg33_" + time);
@@ -134,7 +134,7 @@ public class FNCTests33MidArguments {
 		//AttributeSelection attSelct = ct.applyAttributSelectionFilter(evaluator, searcher);
 		 
 
-		AttributeSelection attSelct = ct.applyAttributSelectionFilter();
+		AttributeSelection attSelct = ct.applyAttributSelectionFilter(true, 1000);
 		unlabeledTestInstances = Filter.useFilter(unlabeledTestInstances, attSelct);
 
 		time = FNCConstants.getCurrentTimeStamp();
