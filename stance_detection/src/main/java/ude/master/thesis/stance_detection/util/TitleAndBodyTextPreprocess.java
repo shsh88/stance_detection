@@ -63,7 +63,7 @@ public class TitleAndBodyTextPreprocess {
 
 		String testTxt = "Newly released audio allegedly records the moment that Officer Darren Wilson "
 				+ "opened fire on unarmed Michael Brown At least ten shots can be heard - in two separate "
-				+ "volleys of gunfire Experts have ? said this indicated a 'moment of contemplation' for Wilson "
+				+ "volleys of gunfire Experts have ? said this : indicated a 'moment of contemplation' for Wilson "
 				+ "FBI has confirmed it has interviewed the man who recorded audio "
 				+ "Is another tantalizing piece of evidence collected in the ongoing case Officer Wilson "
 				+ "claims he felt his life was threatened on August 9 Witnesses . . . and a "
@@ -122,7 +122,7 @@ public class TitleAndBodyTextPreprocess {
 		 * "DR. TWEET, PhD (@Callisto1947) August 24, 2014"));
 		 */
 
-		// System.out.println(fixPunctuationWithNoSpace(testTxt));
+		System.out.println(fixPunctuationSpacing(testTxt));
 		/*
 		 * StanceDetectionDataReader sddr = new StanceDetectionDataReader(true,
 		 * true, "resources/data/train_stances.csv",
