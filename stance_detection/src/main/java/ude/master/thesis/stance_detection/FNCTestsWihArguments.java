@@ -71,7 +71,7 @@ public class FNCTestsWihArguments {
 
 		ClassifierTools ct = new ClassifierTools(fo.getTrainingInstances(), fo.getTestInstances(), classifier);
 
-		ct.applyAttributSelectionFilter();
+		ct.applyAttributSelectionFilter(false, -1);
 
 		String time = FNCConstants.getCurrentTimeStamp();
 		ct.saveInstancesToArff("baseline_bin_arg_" + time);
@@ -115,7 +115,7 @@ public class FNCTestsWihArguments {
 
 		StringToWordVector bow = ct.applyBoWFilter(1000, 1, 2);
 
-		AttributeSelection attSelct = ct.applyAttributSelectionFilter();
+		AttributeSelection attSelct = ct.applyAttributSelectionFilter(true, 1000);
 		String time = FNCConstants.getCurrentTimeStamp();
 		ct.saveInstancesToArff("ferr_BoW1000_args_" + time);
 
