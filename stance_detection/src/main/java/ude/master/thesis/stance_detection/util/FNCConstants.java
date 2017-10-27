@@ -45,6 +45,14 @@ public class FNCConstants {
 	public static final String BODY_SUMM_BOW_COUNTER = "bow_summ";
 	public static final String NEG_FEATURE_ARG = "neg_arg";
 	public static final String WORD2VEC_MLULT_SIM = "w2v_mult_sim";
+	public static final String PUNC_COUNT = "punc_count";
+	public static final String ARGS_COUNT = "args_count";
+	public static final String TITLE_SENTIMENT = "t_senti";
+	public static final String BODY_SENTIMENTS = "b_senti";
+	public static final String PPDB_TLDR_HUNG = "ppdb_tldr";
+	public static final String NEG_TLDR_FEATURE = "neg_tldr";
+	public static final String TITLE_BIAS_COUNT = "t_bias_count";
+	public static final String BODY_BIAS_COUNT = "b_bias_count";
 	
 	
 	public static String getCurrentTimeStamp() {
