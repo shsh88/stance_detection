@@ -167,7 +167,7 @@ public class FerreiraFeaturesClassifier {
 		classifier.setOptions(weka.core.Utils.splitOptions("-S 6 -C 1.0 -E 0.001 -B 1.0 -L 0.1 -I 1000"));
 		ClassifierTools ct = new ClassifierTools(trainingInstances, testInstances, classifier);
 		//ct.applyBoWFilter(1000, 1, 2);
-		ct.applyAttributSelectionFilter();
+		ct.applyAttributSelectionFilter(true, 1000);
 		ct.saveInstancesToArff("ferr_doc2vec100_BoW1000_1200f_attSV");
 		
 		
