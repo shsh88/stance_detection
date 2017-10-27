@@ -155,7 +155,7 @@ public class FNCTests {
 
 		ClassifierTools ct = new ClassifierTools(fo.getTrainingInstances(), fo.getTestInstances(), classifier);
 
-		ct.applyAttributSelectionFilter();
+		ct.applyAttributSelectionFilter(false, -1);
 
 		String time = FNCConstants.getCurrentTimeStamp();
 		ct.saveInstancesToArff("baseline_bin_new_" + time);
@@ -214,7 +214,7 @@ public class FNCTests {
 		//AttributeSelection attSelct = ct.applyAttributSelectionFilter(evaluator, searcher);
 		 
 
-		AttributeSelection attSelct = ct.applyAttributSelectionFilter();
+		AttributeSelection attSelct = ct.applyAttributSelectionFilter(true, 1000);
 		unlabeledTestInstances = Filter.useFilter(unlabeledTestInstances, attSelct);
 
 		time = FNCConstants.getCurrentTimeStamp();
