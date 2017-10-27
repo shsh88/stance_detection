@@ -41,9 +41,9 @@ public class FNCTests2 {
 	private static List<List<String>> testStances;
 
 	public static void main(String[] args) throws Exception {
-		testFerreiraFeatures();
+		//testFerreiraFeatures();
 		//testRelatedUnrelatedClassifying();
-		//testFullClassifier();
+		testFullClassifier();
 	}
 
 	public static void testFullClassifier() throws Exception {
@@ -63,9 +63,9 @@ public class FNCTests2 {
 		
 		//Adding neg arg
 		Instances ferrTrain = StanceDetectionDataReader
-				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "ferr_BoW1000_newBparts10-20_09-21_train.arff");
+				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "ferr_BoW1000_newBparts10-25_09-05_train.arff");
 		Instances ferrTest = StanceDetectionDataReader
-				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "full_instances_bow1000_unlabeled_newBparts_10-20_09-21_tset.arff");
+				.readInstancesFromArff(ProjectPaths.ARFF_DATA_PATH + "full_instances_bow1000_unlabeled_newBparts_10-25_09-05_test.arff");
 
 		
 		// train classifier on BL features
@@ -86,7 +86,7 @@ public class FNCTests2 {
 		String time2 = FNCConstants.getCurrentTimeStamp();
 		// ct2.train(true, ProjectPaths.RESULTS_PATH + "Ferr_related" + time2);
 		// deserialize model
-		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ProjectPaths.RESULTS_PATH + "modi_ferr_1000f_newBparts_10-20_09-21.model"));
+		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ProjectPaths.RESULTS_PATH + "modi_ferr_1000f_newBparts_10-25_09-05.model"));
 		ferrClassifier = (LibLINEAR) ois.readObject();
 		ois.close();
 
@@ -148,15 +148,16 @@ public class FNCTests2 {
 		fo.useCharGramsFeatures(true);
 		fo.useWordGramsFeatures(true);
 		fo.useMetricCosineSimilarity(true);
-		fo.useHypernymsSimilarity(false);
+		fo.useHypernymsSimilarity(true);
 		
 		fo.usePPDBFeature(true);
-		fo.useWord2VecAddSimilarity(true); //does not help
+		fo.useWord2VecAddSimilarity(false); //does not help
 		fo.useLeskOverlap(true);
 		fo.useTitleAndBodyParagraphVecs(false);
 		
-		fo.useTitleLength(true);
+		fo.useTitleLength(true); 
 
+		fo.useW2VMulSim(false); // does not help
 		fo.useBinaryRelatedUnrelatedClasses(true);
 
 		String filename = "baseline_bin_new_";
@@ -168,7 +169,7 @@ public class FNCTests2 {
 
 		ClassifierTools ct = new ClassifierTools(fo.getTrainingInstances(), fo.getTestInstances(), classifier);
 
-		ct.applyAttributSelectionFilter();
+		ct.applyAttributSelectionFilter(false, -1);
 
 		String time = FNCConstants.getCurrentTimeStamp();
 		ct.saveInstancesToArff("baseline_bin_new_" + time);
@@ -193,10 +194,16 @@ public class FNCTests2 {
 		fo.usePPDBFeature(true);
 		fo.useSVOFeature(true);//using the sum and tldr --> no change
 		
-		fo.useNegFeature(true);
+		fo.useNegFeature(false);
 		fo.useNegFromArguments(false);
 		
-		fo.useW2VMulSim(true);
+		fo.useW2VMulSim(false);
+		fo.usePuncCount(true);
+		fo.useArgsCount(false);
+		fo.useSentiments(false);
+		fo.usePPDB_TLDRFeature(false);
+		fo.useNegTLDRFeature(true);
+		fo.useBiasCount(false);
 		
 		fo.useWord2VecAddSimilarity(true);
 		fo.useTitleAndBodyParagraphVecs(false);
@@ -233,7 +240,7 @@ public class FNCTests2 {
 		//AttributeSelection attSelct = ct.applyAttributSelectionFilter(evaluator, searcher);
 		 
 
-		AttributeSelection attSelct = ct.applyAttributSelectionFilter();
+		AttributeSelection attSelct = ct.applyAttributSelectionFilter(true, 1000);
 		unlabeledTestInstances = Filter.useFilter(unlabeledTestInstances, attSelct);
 
 		time = FNCConstants.getCurrentTimeStamp();
