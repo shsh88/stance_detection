@@ -15,11 +15,13 @@ public class FNCConstants {
 	public static final String TITLE_DOC2VEC = "t_d2vec_";
 	public static final String BODY_DOC2VEC = "b_d2vec_";
 	public static final String RELATION_NAME = "fnc-1";
-	
+
 	public static final String CLASS_ATTRIBUTE_NAME = "stance_class";
 
 	public static final String ALL_STANCE_CLASSES[] = new String[] { "agree", "disagree", "discuss", "unrelated" };
-	public static final String RELATED_STANCE_CLASSES[] = new String[] { "agree", "disagree", "discuss"};
+	public static final String RELATED_STANCE_CLASSES[] = new String[] { "agree", "disagree", "discuss" };
+	public static final String DISCUSS_STANCE_CLASSES[] = new String[] { "discuss", "non_discuss" };
+	public static final String AGREE_STANCE_CLASSES[] = new String[] { "agree", "disagree" };
 	public static final String BINARY_STANCE_CLASSES[] = new String[] { "related", "unrelated" };
 	public static final String TEST = "_test";
 	public static final String TRAIN = "_train";
@@ -53,10 +55,13 @@ public class FNCConstants {
 	public static final String NEG_TLDR_FEATURE = "neg_tldr";
 	public static final String TITLE_BIAS_COUNT = "t_bias_count";
 	public static final String BODY_BIAS_COUNT = "b_bias_count";
-	
-	
+	public static final String BODY_IDF = "idf_";
+	public static final String SENTENCE_LENGTH_AVG = "sent_avg";
+	public static final String SENTENCE_LENGTH_MAX = "sent_max";
+	public static final String POS_TAGs_STR = "pos_tags_str";
+
 	public static String getCurrentTimeStamp() {
 		return new SimpleDateFormat("MM-dd_HH-mm").format(new Date());
 	}
-	
+
 }
