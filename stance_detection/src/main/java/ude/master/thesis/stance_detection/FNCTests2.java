@@ -41,9 +41,9 @@ public class FNCTests2 {
 	private static List<List<String>> testStances;
 
 	public static void main(String[] args) throws Exception {
-		//testFerreiraFeatures();
+		testFerreiraFeatures();
 		//testRelatedUnrelatedClassifying();
-		testFullClassifier();
+		//testFullClassifier();
 	}
 
 	public static void testFullClassifier() throws Exception {
@@ -200,10 +200,11 @@ public class FNCTests2 {
 		fo.useW2VMulSim(false);
 		fo.usePuncCount(true);
 		fo.useArgsCount(false);
-		fo.useSentiments(false);
+		fo.useSentiments(true);
 		fo.usePPDB_TLDRFeature(false);
 		fo.useNegTLDRFeature(true);
 		fo.useBiasCount(false);
+		fo.useIDFFeature(true);
 		
 		fo.useWord2VecAddSimilarity(true);
 		fo.useTitleAndBodyParagraphVecs(false);
@@ -220,13 +221,15 @@ public class FNCTests2 {
 		ClassifierTools ct = new ClassifierTools(fo.getTrainingInstances(), fo.getTestInstances(), classifier);
 
 		StringToWordVector bow = ct.applyBoWFilter(1000, 1, 2);
+		
+		//StringToWordVector tfidf = ct.applyTFIDFFilter(1000, 1, 2);
 
 		String time = FNCConstants.getCurrentTimeStamp();
 		ct.saveInstancesToArff("ferr_BoW1000_newBparts" + time);
 
 		// apply to unlabled
 		Instances unlabeledTestInstances = Filter.useFilter(fo.getUnlabeledTestInstances(), bow);
-
+		 //unlabeledTestInstances = Filter.useFilter(unlabeledTestInstances, tfidf);
 		// AttributeSelectioFilter properties
 
 		//CfsSubsetEval evaluator = new CfsSubsetEval();
