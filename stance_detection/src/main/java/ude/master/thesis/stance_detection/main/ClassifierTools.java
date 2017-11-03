@@ -60,11 +60,11 @@ public class ClassifierTools {
 		ChiSquaredAttributeEval ev2 = new ChiSquaredAttributeEval(); //
 		// InfoGainAttributeEval ev = new InfoGainAttributeEval();
 		Ranker ranker = new Ranker();
-		
-		if(useNumToSelect)
+
+		if (useNumToSelect)
 			ranker.setNumToSelect(NumToSelect);
-		//ranker.setNumToSelect(70);
-		
+		// ranker.setNumToSelect(70);
+
 		ranker.setThreshold(0.0);
 
 		attributeFilter.setSearch(ranker);
@@ -144,6 +144,7 @@ public class ClassifierTools {
 
 		str2WordFilter.setTokenizer(tokenizer);
 		str2WordFilter.setWordsToKeep(wordsToKeep);
+		// str2WordFilter.setOutputWordCounts(true);
 		// str2WordFilter.setDoNotOperateOnPerClassBasis(true);
 		str2WordFilter.setLowerCaseTokens(true);
 		str2WordFilter.setMinTermFreq(1);
@@ -184,7 +185,62 @@ public class ClassifierTools {
 			e.printStackTrace();
 		}
 		System.out.println("finished BoW filter");
-		
+
+		return str2WordFilter;
+	}
+
+	public StringToWordVector applyTFIDFFilter(int wordsToKeep, int minNgram, int maxNgram) {
+		System.out.println("started IDF filter");
+		NGramTokenizer tokenizer = new NGramTokenizer();
+		// By using NGram tokenizer
+		tokenizer.setNGramMinSize(minNgram);
+		tokenizer.setNGramMaxSize(maxNgram);
+		tokenizer.setDelimiters("[^0-9a-zA-Z]");
+
+		str2WordFilter = new StringToWordVector();
+
+		str2WordFilter.setTokenizer(tokenizer);
+		str2WordFilter.setWordsToKeep(wordsToKeep);
+		str2WordFilter.setDoNotOperateOnPerClassBasis(true);
+		str2WordFilter.setLowerCaseTokens(true);
+		str2WordFilter.setMinTermFreq(1);
+
+		// Apply Stopwordlist
+		WordsFromFile stopwords = new WordsFromFile();
+		stopwords.setStopwords(new File("resources/stopwords.txt"));
+		str2WordFilter.setStopwordsHandler(stopwords);
+
+		str2WordFilter.setStemmer(null);
+
+		// Apply IDF-TF Weighting + DocLength-Normalization
+		str2WordFilter.setTFTransform(true);
+		str2WordFilter.setIDFTransform(true);
+		str2WordFilter.setNormalizeDocLength(
+				new SelectedTag(StringToWordVector.FILTER_NORMALIZE_ALL, StringToWordVector.TAGS_FILTER));
+
+		// experimental
+		str2WordFilter.setOutputWordCounts(true);
+
+		// always first attribute
+		str2WordFilter.setAttributeIndices("first");
+
+		str2WordFilter.setAttributeNamePrefix("idf_");
+		try {
+			str2WordFilter.setInputFormat(trainingInstances);
+			// trainingInstances.addAll(testInstances);
+			trainingInstances = Filter.useFilter(trainingInstances, str2WordFilter);
+			trainingInstances.setClass(trainingInstances.attribute("stance_class"));
+			System.out.println("train size = " + trainingInstances.size());
+			// if (useTestset) {
+			testInstances = Filter.useFilter(testInstances, str2WordFilter);
+			testInstances.setClass(testInstances.attribute("stance_class"));
+			System.out.println("test size = " + testInstances.size());
+			// }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("finished IDF filter");
+
 		return str2WordFilter;
 	}
 
@@ -256,8 +312,7 @@ public class ClassifierTools {
 
 			if (saveModel) {
 				// serialize model
-				ObjectOutputStream oos = new ObjectOutputStream(
-						new FileOutputStream(modelFilename + ".model"));
+				ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(modelFilename + ".model"));
 				oos.writeObject(classifier);
 				oos.flush();
 				oos.close();
@@ -291,7 +346,7 @@ public class ClassifierTools {
 	public void saveInstancesToArff(String fileName) {
 		ArffSaver saver = new ArffSaver();
 		saver.setInstances(trainingInstances);
-		
+
 		try {
 			saver.setFile(new File(ProjectPaths.ARFF_DATA_PATH + fileName + FNCConstants.TRAIN + ".arff"));
 			saver.writeBatch();
@@ -300,7 +355,7 @@ public class ClassifierTools {
 		}
 		saver = new ArffSaver();
 		saver.setInstances(testInstances);
-		
+
 		try {
 			saver.setFile(new File(ProjectPaths.ARFF_DATA_PATH + fileName + FNCConstants.TEST + ".arff"));
 			saver.writeBatch();
@@ -309,10 +364,11 @@ public class ClassifierTools {
 		}
 
 	}
-	
-	public static void loadData(List<List<String>> trainingStances, Map<Integer, String> trainIdBodyMap, 
-			HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap,List<List<String>> testStances,
-			HashMap<Integer, String> testIdBodyMap,HashMap<Integer, Map<Integer, String>> testSummIdBoyMap) throws IOException {
+
+	public static void loadData(List<List<String>> trainingStances, Map<Integer, String> trainIdBodyMap,
+			HashMap<Integer, Map<Integer, String>> trainingSummIdBoyMap, List<List<String>> testStances,
+			HashMap<Integer, String> testIdBodyMap, HashMap<Integer, Map<Integer, String>> testSummIdBoyMap)
+			throws IOException {
 		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
 				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES,
 				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES);
@@ -323,6 +379,63 @@ public class ClassifierTools {
 		trainingStances = sddr.getTrainStances();
 
 		testStances = sddr.getTestStances();
+	}
+
+	public StringToWordVector applyPOSBoWFilter(int wordsToKeep, int minNgram, int maxNgram) {
+		System.out.println("started POS_BoW filter");
+		NGramTokenizer tokenizer = new NGramTokenizer();
+		// By using NGram tokenizer
+		tokenizer.setNGramMinSize(minNgram);
+		tokenizer.setNGramMaxSize(maxNgram);
+		//tokenizer.setDelimiters("[^0-9a-zA-Z]");
+
+		str2WordFilter = new StringToWordVector();
+
+		str2WordFilter.setTokenizer(tokenizer);
+		str2WordFilter.setWordsToKeep(wordsToKeep);
+		// str2WordFilter.setOutputWordCounts(true);
+		// str2WordFilter.setDoNotOperateOnPerClassBasis(true);
+		str2WordFilter.setLowerCaseTokens(true);
+		str2WordFilter.setMinTermFreq(1);
+
+		// Apply Stopwordlist
+		WordsFromFile stopwords = new WordsFromFile();
+		stopwords.setStopwords(new File("resources/stopwords.txt"));
+		str2WordFilter.setStopwordsHandler(stopwords);
+
+		str2WordFilter.setStemmer(null);
+
+		// Apply IDF-TF Weighting + DocLength-Normalization
+		str2WordFilter.setTFTransform(false);
+		str2WordFilter.setIDFTransform(false);
+		// str2WordFilter.setNormalizeDocLength(
+		// new SelectedTag(StringToWordVector.FILTER_NORMALIZE_ALL,
+		// StringToWordVector.TAGS_FILTER));
+
+		// experimental
+		str2WordFilter.setOutputWordCounts(true);
+
+		// always first attribute
+		str2WordFilter.setAttributeIndices("first");
+
+		str2WordFilter.setAttributeNamePrefix("pos_");
+		try {
+			str2WordFilter.setInputFormat(trainingInstances);
+			// trainingInstances.addAll(testInstances);
+			trainingInstances = Filter.useFilter(trainingInstances, str2WordFilter);
+			trainingInstances.setClass(trainingInstances.attribute("stance_class"));
+			System.out.println("train size = " + trainingInstances.size());
+			// if (useTestset) {
+			testInstances = Filter.useFilter(testInstances, str2WordFilter);
+			testInstances.setClass(testInstances.attribute("stance_class"));
+			System.out.println("test size = " + testInstances.size());
+			// }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("finished POS_BoW filter");
+
+		return str2WordFilter;
 	}
 
 }
