@@ -181,6 +181,7 @@ public class FNCTests2 {
 	}
 
 	public static void testFerreiraFeatures() throws Exception {
+		//Don't forget that you changed the numbed of root dist features 16--> 22
 		FeaturesOrganiser2 fo = new FeaturesOrganiser2();
 		fo.loadData();
 
