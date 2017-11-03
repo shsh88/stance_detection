@@ -13,6 +13,7 @@ public class ProjectPaths {
 	public static final String SUMMARIZED_TRAIN_BODIES = "resources/data/train_bodies_preprocessed_summ.csv";
 	public static final String TEST_STANCESS_PREPROCESSED = "resources/data/test_data/test_stances_preprocessed.csv";
 	public static final String TEST_STANCESS_LESS2_PREPROCESSED = "resources/data/test_data/test_stances_less2_preprocessed.csv";
+	public static final String TEST_STANCES_NO_UNRELATED = "resources/data/test_data/competition_test_stances_no_unrelated.csv";
 	
 	public static final String TEST_STANCESS = "resources/data/test_data/competition_test_stances.csv";
 	public static final String SUMMARIZED_TEST_BODIES = "resources/data/test_data/test_bodies_preprocessed_summ.csv";
@@ -503,5 +504,14 @@ public class ProjectPaths {
 	public static final String BODIES_SENIMENTS = "C:/thesis_stuff/features/bodies_sentiments";
 	
 	public static final String BIAS_LEX_PATH = "resources/bias-lexicon/bias-lexicon.txt";
+	public static final String BODIES_SENTENCE_LENGTH = "C:/thesis_stuff/features/bodies_sentence_length";
+	public static final String CSV_BODIES_SENTENCE_LENGTH = "C:/thesis_stuff/features/bodies_sentence_length.csv";
+	public static final String POS_TAG_TRAIN_TEST = "C:/thesis_stuff/features/bodies_pos_tags";
+	public static final String CSV_POS_TAG_TRAIN_TEST = "C:/thesis_stuff/features/bodies_pos_tags.csv";
+	public static final String POS_TAG_ALL_PARTS_TRAIN_TEST = "C:/thesis_stuff/features/bodies_pos_all_parts_tags";
+	public static final String CSV_POS_TAG_ALL_PARTS_TRAIN_TEST = "C:/thesis_stuff/features/bodies_pos_all_parts_tags.csv";
+	public static final String POS_TAG_MID_PART_TRAIN_TEST = "C:/thesis_stuff/features/bodies_pos_mid_part_tags";
+	public static final String CSV_POS_TAG_MID_PART_TRAIN_TEST = "C:/thesis_stuff/features/bodies_pos_mid_part_tags.csv";
+	
 
 }
