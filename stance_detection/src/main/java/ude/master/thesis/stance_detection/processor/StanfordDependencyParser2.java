@@ -102,7 +102,7 @@ public class StanfordDependencyParser2 {
 	}
 
 	public static void main(String[] args) throws Exception {
-		StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
+		/*StanceDetectionDataReader sddr = new StanceDetectionDataReader(true, true,
 				ProjectPaths.TRAIN_STANCES_PREPROCESSED, ProjectPaths.SUMMARIZED_TRAIN_BODIES2_WITH_MID,
 				ProjectPaths.TEST_STANCESS_PREPROCESSED, ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID);
 
@@ -112,7 +112,7 @@ public class StanfordDependencyParser2 {
 
 		HashMap<Integer, Map<Integer, String>> testSummIdBoyMap = sddr
 				.readSummIdBodiesMap(new File(ProjectPaths.SUMMARIZED_TEST_BODIES2_WITH_MID));
-		generateRootDistFeaturesAndSave(testSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2_WITH_MID);
+		generateRootDistFeaturesAndSave(testSummIdBoyMap, ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2_WITH_MID);*/
 		saveRootDistFeaturesAsHashFile(ProjectPaths.CSV_ROOT_DIST_FEATURE_TRAIN2_WITH_MID,
 				ProjectPaths.ROOT_DIST_FEATURE_TRAIN2_WITH_MID);
 		saveRootDistFeaturesAsHashFile(ProjectPaths.CSV_ROOT_DIST_FEATURE_TEST2_WITH_MID,
@@ -283,7 +283,7 @@ public class StanfordDependencyParser2 {
 		while ((line = reader.readNext()) != null) {
 
 			ArrayList<Double> values = new ArrayList<>();
-			for (int i = 1; i <= 16; i++)
+			for (int i = 1; i <= 22; i++)
 				values.add(Double.valueOf(line[i]));
 
 			rootDistData.put(line[0], values);
