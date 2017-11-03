@@ -104,6 +104,7 @@ public class FeaturesOrganiser2 {
 	private boolean usePPDB_TLDRFeature = false;
 	private boolean useNegTLDRFeature = false;
 	private boolean useBiasCount = false;
+	private boolean useIDFFeature = false;
 
 	private static StringDistance cosSimMetric;
 
@@ -353,6 +354,11 @@ public class FeaturesOrganiser2 {
 		if (useBodyBoWCounterFeature) {
 			features.add(new Attribute(FNCConstants.BODY_BOW_COUNTER, (List<String>) null));
 		}
+		
+		if (useIDFFeature) {
+			features.add(new Attribute(FNCConstants.BODY_IDF, (List<String>) null));
+		}
+		
 		if (useRootDistFeature) {
 			/*
 			 * for (int i = 0; i < 8; i++) features.add(new
@@ -362,7 +368,7 @@ public class FeaturesOrganiser2 {
 			 * Attribute(FNCConstants.ROOT_DIST_DISCUSS + i));
 			 */
 
-			for (int i = 0; i < 22; i++)
+			for (int i = 0; i < 16; i++)
 				features.add(new Attribute(FNCConstants.ROOT_DIST + i));
 		}
 
@@ -577,7 +583,7 @@ public class FeaturesOrganiser2 {
 							.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(3));
 
 					String bodyPart3 = FeatureExtractor
-							.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(3));
+							.getLemmatizedCleanStr(summIdBoyMap.get(Integer.valueOf(stance.get(1))).get(2));
 
 					ArrayList<String> bodyParts = new ArrayList<>();
 					bodyParts.add(bodyPart1);
@@ -624,6 +630,12 @@ public class FeaturesOrganiser2 {
 			instance.setValue(instances.attribute(FNCConstants.BODY_BOW_COUNTER),
 					bodyParts.get(0) + " " + bodyParts.get(1));
 		}
+		
+		if (useIDFFeature) {
+			instance.setValue(instances.attribute(FNCConstants.BODY_IDF),
+					bodyParts.get(0) + " " + bodyParts.get(1));
+		}
+
 
 		if (useRootDistFeature) {
 			ArrayList<Double> rootdist = null;
@@ -641,7 +653,7 @@ public class FeaturesOrganiser2 {
 			 * ROOT_DIST_DISCUSS + i), rootdist.get(i + rootdist.size() / 2));
 			 */
 
-			for (int i = 0; i < rootdist.size(); i++)
+			for (int i = 0; i < 16; i++)
 				instance.setValue(instances.attribute(FNCConstants.ROOT_DIST + i), rootdist.get(i));
 
 		}
@@ -1266,6 +1278,14 @@ public class FeaturesOrganiser2 {
 
 	public void useBiasCount(boolean useBiasCount) {
 		this.useBiasCount = useBiasCount;
+	}
+	
+	public boolean isIDFFeatureUsed() {
+		return useIDFFeature;
+	}
+
+	public void useIDFFeature(boolean useIDFFeature) {
+		this.useIDFFeature = useIDFFeature;
 	}
 
 }
